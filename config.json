@@ -1,0 +1,38 @@
+{
+  "model": "qwen2.5:14b",
+  "ollamaUrl": "http://localhost:11434",
+  "auditBackend": "claude",
+  "claudeMax5x": { "label": "Max x5", "tokenLimit": 220000000, "costLimit": 0 },
+  "auditRounds": 2,
+  "auditRoles": ["factuality", "hallucination", "ccc-fit", "safety"],
+  "search": { "maxResults": 5, "maxCharsPerResult": 1800 },
+  "paths": {
+    "vault": "C:/Users/1kkim/projects/vault",
+    "skills": "C:/Users/1kkim/.claude/skills",
+    "proposals": "proposals",
+    "runs": "runs"
+  },
+  "topics": [
+    {
+      "id": "web-design-trends",
+      "queries": ["UI design trends 2026", "Material Design 3 updates 2026", "Apple Human Interface Guidelines updates 2026"],
+      "target": { "type": "vault", "file": "knowledge/auto/web-design-trends.md" },
+      "risk": "low",
+      "note": "デザイン最新動向を vault に蓄積（低リスク=自動適用）"
+    },
+    {
+      "id": "web-security",
+      "queries": ["OWASP Top 10 2025 changes", "web application security best practices 2026", "frontend security headers CSP 2026"],
+      "target": { "type": "vault", "file": "knowledge/auto/web-security.md" },
+      "risk": "low",
+      "note": "セキュリティ最新動向を vault に蓄積（低リスク=自動適用）"
+    },
+    {
+      "id": "skill-glassmorphism",
+      "queries": ["Apple Liquid Glass CSS implementation 2026", "glassmorphism accessibility contrast best practices"],
+      "target": { "type": "skill", "name": "glassmorphism" },
+      "risk": "high",
+      "note": "skill 更新は提案のみ（承認制）"
+    }
+  ]
+}
