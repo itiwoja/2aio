@@ -1,6 +1,16 @@
 node_modules/
 .env
 .env.local
+*.key
+*.pem
+
+# 実行時ログ・提案下書き (ランタイム生成物・非ソース)
+history/
+runs/
+proposals/
+usage.jsonl
+
+# CCC 出力 (ランタイム生成物)
 output/
 ccc-output/
 _archive/
