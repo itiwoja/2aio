@@ -14,3 +14,7 @@ usage.jsonl
 output/
 ccc-output/
 _archive/
+
+# 制御プレーン (Phase 1): ジョブキュー実体とローカルrepo登録簿
+control/
+repos.json

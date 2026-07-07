@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node run.mjs",
     "dashboard": "node dashboard.mjs",
+    "control": "node control.mjs",
     "test": "node --test"
   }
 }

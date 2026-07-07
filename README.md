@@ -11,7 +11,8 @@
 | `agents/` `commands/` | CCC マルチエージェント（役員17体 + ワークフローコマンド） |
 | `run.mjs` `lib/` `config.json` | CCCForge 自己強化ループ（収集→合成→監査→適用/提案） |
 | `dashboard.mjs` | 監視・手動実行・提案の承認/却下・履歴 rollback |
-| `test/` | 安全分岐・承認反映の回帰テスト（`node --test`） |
+| `control.mjs` | 制御プレーン（複数repoを1画面で進行 / サブスク枠ガバナー＋ジョブキュー）→ [docs/CONTROL-PLANE.md](./docs/CONTROL-PLANE.md) |
+| `test/` | 安全分岐・承認反映・ガバナー/キューの回帰テスト（`node --test`） |
 
 ---
 
@@ -128,12 +129,29 @@ Register-ScheduledTask -TaskName "CCCForge-daily" -Action $act -Trigger $trg -De
 
 ---
 
+## Part 3: 制御プレーン（複数repoを1画面で進行）
+
+**1つのダッシュボードで複数repoを進行**させ、**Claudeサブスク（Max）の共有5時間ブロック**を食い潰さないよう、ジョブを予算ガバナーで直列/少数並列に消化する司令塔（Phase 1）。設計の詳細は [docs/CONTROL-PLANE.md](./docs/CONTROL-PLANE.md)。
+
+```bash
+cp repos.example.json repos.json   # 進行させたいrepoを登録（path=各repoの絶対パス）
+npm run control                    # → http://localhost:7900
+```
+- **ガバナー**（`lib/governor.mjs`）: `ccusage` の現在ブロックを見て、使用率が閾値（既定80%）以上なら新規投入を停止→reset後に自動再開。同時実行は既定1（サブスク枠共有のため直列が安全）。
+- **キュー**（`lib/queue.mjs`）: 投入ジョブを `control/queue.json` に永続化。`build`/`start`/`plan`/`implement` を各repoの `/ccc-*` レーンへ委譲。
+- 設定は `config.json` の `governor: { tokenThreshold, maxConcurrency, pollMs }`。127.0.0.1限定バインド（LAN公開・複数ホスト集約は Phase 3）。
+
+---
+
 ## ファイル
 - `agents/` … CCC 役員エージェント定義（17体）
 - `commands/` … CCC ワークフローコマンド（start-project / plan / implement / build / autorun-batch）
 - `install.ps1` `install.sh` … CCC エージェント/コマンドのインストーラ
 - `run.mjs` … CCCForge オーケストレータ（収集→合成→監査→適用/提案）
 - `dashboard.mjs` … 監視・手動実行・提案の承認/却下・履歴rollback（http://localhost:7878）
+- `control.mjs` … 制御プレーン: 複数repo進行・サブスク枠ガバナー＋キュー（http://localhost:7900）
+- `lib/governor.mjs` … トークン予算ガバナー（サブスク5hブロックの入場判定・純ロジック）
+- `lib/queue.mjs` … 制御プレーンのジョブキュー（永続化・状態遷移）
 - `lib/policy.mjs` … 自動適用可否の判定（安全設計の一元実装）
 - `lib/proposals.mjs` … 提案の解決・承認反映・アーカイブ
 - `lib/paths.mjs` … config パス解決・書き込み先の境界チェック

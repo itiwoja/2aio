@@ -1,0 +1,7 @@
+{
+  "_comment": "これをコピーして repos.json を作成してください（repos.json は git 管理外）。path は各repoの絶対パス。",
+  "repos": [
+    { "id": "sample-web", "path": "C:/Users/1kkim/projects/dev/sample-web", "branch": "main", "defaultLane": "build" },
+    { "id": "sample-api", "path": "C:/Users/1kkim/projects/dev/sample-api", "branch": "main", "defaultLane": "start" }
+  ]
+}
