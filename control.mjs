@@ -8,7 +8,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { claudeUsage } from './lib/ccusage.mjs';
+import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
 import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel } from './lib/queue.mjs';
 
@@ -138,6 +138,11 @@ const server = http.createServer(async (req, res) => {
   if (csrfBlocked(req)) return send(res, 403, 'application/json', JSON.stringify({ ok: false, err: 'cross-origin POST拒否' }));
   if (u.pathname === '/') return send(res, 200, 'text/html; charset=utf-8', HTML);
   if (u.pathname === '/api/control') return send(res, 200, 'application/json', JSON.stringify(overview()));
+  if (u.pathname === '/api/debug') {
+    const g = governorState();
+    claudeUsage(); // 裏で更新を促す
+    return send(res, 200, 'application/json', JSON.stringify({ tokenLimit: TOKEN_LIMIT, governor: g.decision, usage: g.usage, ccusage: ccusageDebug() }, null, 2));
+  }
   if (u.pathname === '/api/enqueue' && req.method === 'POST') {
     const repo = u.searchParams.get('repo') || '';
     const kind = u.searchParams.get('kind') || 'build';
