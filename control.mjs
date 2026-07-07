@@ -178,15 +178,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled{background:rgba(240,98,111,.16);color:var(--bad)}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
 button{cursor:pointer}button:hover{border-color:var(--accent)}
-.gauge{height:10px;background:#0b0e12;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:8px}.gauge>div{height:100%}
 .form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form input{flex:1;min-width:180px}
 </style></head><body>
 <header><h1><b>CCC</b> Control Plane</h1><span class="muted" id="gov">—</span><span class="spacer"></span><span class="muted">Phase 1 · ガバナー＋キュー</span></header>
 <main>
-  <div class="card">
-    <h2>共有トークン予算（Claude Max 5時間ブロック＝律速資源）</h2>
-    <div id="budget" class="muted">—</div><div class="gauge"><div id="bar"></div></div>
-  </div>
   <div class="grid g4" id="kpis"></div>
   <div class="card"><h2>ジョブ投入</h2>
     <div class="form">
@@ -206,15 +201,7 @@ const nf=n=>(n==null?'—':Number(n).toLocaleString());
 function resetIn(iso){if(!iso)return'';try{const m=Math.max(0,Math.round((new Date(iso)-new Date())/60000));return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分';}catch(e){return''}}
 async function load(){
   const o=await(await fetch('/api/control')).json();const g=o.governor;
-  const pct=g.usedPct==null?null:Math.round(g.usedPct*100);
-  const col=pct==null?'var(--sub)':pct>=Math.round(g.threshold*100)?'var(--bad)':pct>=70?'var(--warn)':'var(--ok)';
-  $('#gov').textContent=g.admit?'✅ 投入可':('⏸ 停止: '+(g.reason==='budget'?'予算枠上限':g.reason==='concurrency'?'同時実行上限':g.reason));
-  $('#budget').innerHTML=g.tokenLimit? (
-    '<span class="mono" style="font-size:20px;color:'+col+'">'+nf(g.usedTokens)+'</span> / '+nf(g.tokenLimit)+' tok'+(pct!=null?'（'+pct+'%）':'')+
-    (g.reason==='budget'&&g.resetAt?' ・ リセットまで約'+resetIn(g.resetAt):'')+
-    (!g.usageOk?(g.usagePending?' ・ <span class="badge queued">ccusage取得中</span>':' ・ <span class="badge failed">ccusage取得不可</span>'):'')
-  ):'tokenLimit未設定';
-  $('#bar').style.width=(pct||0)+'%';$('#bar').style.background=col;
+  $('#gov').textContent=g.admit?'✅ 投入可':('⏸ 停止: '+(g.reason==='budget'?('予算枠上限'+(g.resetAt?'（reset約'+resetIn(g.resetAt)+'）'):''):g.reason==='concurrency'?'同時実行上限':g.reason));
   $('#kpis').innerHTML=[['queued',o.stats.queued,''],['running',o.stats.running,'warn'],['done',o.stats.done,'ok'],['failed',o.stats.failed,o.stats.failed?'bad':'']]
     .map(([l,v,c])=>'<div class="card"><div class="kpi '+c+'">'+v+'<small>'+l+'</small></div></div>').join('');
   const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.tokensBefore!=null&&j.tokensAfter!=null?('+'+nf(j.tokensAfter-j.tokensBefore)):'')+'</td><td>'+(j.state==='queued'?'<button onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
