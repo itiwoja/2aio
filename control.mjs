@@ -324,7 +324,7 @@ async function load(){
   const pct=g.usedPct==null?null:Math.round(g.usedPct*100);
   const thr=Math.round(g.threshold*100);
   const col=pct==null?'var(--sub)':pct>=thr?'var(--bad)':pct>=70?'var(--warn)':'var(--ok)';
-  $('#gov').textContent=g.admit?'✅ 投入可':('⏸ 停止: '+(g.reason==='budget'?('予算枠上限'+(g.resetAt?'（reset約'+resetIn(g.resetAt)+'）'):''):g.reason==='concurrency'?'同時実行上限':g.reason));
+  $('#gov').textContent=g.admit?'✅ 投入可':('⏸ 停止: '+(g.reason==='budget'?('予算枠上限'+(g.resetAt?'（reset約'+resetIn(g.resetAt)+'）':'')):g.reason==='concurrency'?'同時実行上限':g.reason));
   const tl=g.tokenLimit?(g.tokenLimit>=1e6?(g.tokenLimit/1e6).toFixed(0)+'M':nf(g.tokenLimit)):'—';
   const ut=g.usedTokens==null?null:(g.usedTokens>=1e6?(g.usedTokens/1e6).toFixed(1)+'M':nf(g.usedTokens));
   $('#budget').innerHTML=g.tokenLimit?(
