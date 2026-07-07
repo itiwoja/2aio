@@ -51,10 +51,13 @@ API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠
 
 ### L3. マルチrepo制御層（1画面で複数repo進行）— Phase 1 ✅
 `control.mjs`（依存ゼロ・127.0.0.1バインド・`node --test`）。
-- `repos.json`: `[{id, path, branch, defaultLane}]`（git管理外・`repos.example.json` を複製して作成）。
+- **リポジトリ登録は HTTPS URL**（`POST /api/register?url=`）: `lib/repo.mjs` の `parseRepoUrl` で解析 → `workspaces/<name>` に `git clone` → `classifyRepo` で **new/existing 判定**。`repos.json`（git管理外）が正本レジストリ。
+  - **new（コード無し）**: `control/intake/<id>.json` に対話を用意（seed質問）。`POST /api/intake/answer` で Claude(サブスク)が次の1問 or 完了(brief) を返す（`lib/intake.mjs`）。完了で `implement` ジョブを自動投入。
+  - **existing（コード有り）**: `POST /api/analyze` で `analyze` ジョブ（README/docs/コード/Issueを読み、理解＋改善案＋CCC強化点を出力）。
 - `lib/queue.mjs`: ジョブを `control/queue.json` に永続化（既存の runs/・history/ と同じ記録思想）。
 - ワーカー: ガバナー許可がある限り `queued` を古い順に起動 → `spawn('claude', ['-p', prompt], { cwd: repo.path })`。
-- API: `GET /api/control`（総覧）／`POST /api/enqueue`／`POST /api/cancel`。CSRF対策（Origin検査）は dashboard.mjs と同一。
+- API: `GET /api/control`／`POST /api/register`／`GET,POST /api/intake[/answer]`／`POST /api/analyze`／`POST /api/enqueue`／`POST /api/cancel`／`GET /api/debug`（ccusage生診断）。CSRF対策（Origin検査）は dashboard.mjs と同一。
+- **対話ヒアリングの方式**: 「ダッシュボード上でAI対話」を採用。headless `claude -p` は非対話だが、UIが1ターンずつ回答を集め、各ターンで `claude -p` に次の質問を生成させることで**Webで完結する真の対話**を実現（サブスク枠を使用）。
 
 ## kind → プロンプト対応（control.mjs `buildPrompt`）
 | kind | 実行プロンプト |

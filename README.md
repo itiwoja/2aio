@@ -131,15 +131,19 @@ Register-ScheduledTask -TaskName "CCCForge-daily" -Action $act -Trigger $trg -De
 
 ## Part 3: 制御プレーン（複数repoを1画面で進行）
 
-**1つのダッシュボードで複数repoを進行**させ、**Claudeサブスク（Max）の共有5時間ブロック**を食い潰さないよう、ジョブを予算ガバナーで直列/少数並列に消化する司令塔（Phase 1）。設計の詳細は [docs/CONTROL-PLANE.md](./docs/CONTROL-PLANE.md)。
+**1つのダッシュボードで複数repoを進行**させ、**Claudeサブスク（Max）の共有5時間ブロック**を食い潰さないよう、ジョブを予算ガバナーで直列/少数並列に消化する司令塔。設計の詳細は [docs/CONTROL-PLANE.md](./docs/CONTROL-PLANE.md)。
 
 ```bash
-cp repos.example.json repos.json   # 進行させたいrepoを登録（path=各repoの絶対パス）
-npm run control                    # → http://localhost:7900
+npm run control    # → http://localhost:7900
 ```
-- **ガバナー**（`lib/governor.mjs`）: `ccusage` の現在ブロックを見て、使用率が閾値（既定80%）以上なら新規投入を停止→reset後に自動再開。同時実行は既定1（サブスク枠共有のため直列が安全）。
-- **キュー**（`lib/queue.mjs`）: 投入ジョブを `control/queue.json` に永続化。`build`/`start`/`plan`/`implement` を各repoの `/ccc-*` レーンへ委譲。
-- 設定は `config.json` の `governor: { tokenThreshold, maxConcurrency, pollMs }`。127.0.0.1限定バインド（LAN公開・複数ホスト集約は Phase 3）。
+- **リポジトリ登録（HTTPS）**: 画面から Git URL を登録すると `workspaces/` に clone。
+  - **新規repo**（コード無し）→ ダッシュボード上で **Claudeが1問ずつ対話ヒアリング**（`lib/intake.mjs`）→ 要件が揃うと計画・実装ジョブを自動投入。
+  - **既存repo**（コード有り）→ **解析ジョブ**でコード/docs/(gh があれば)Issueを読み、目的理解・改善案・CCC強化ポイントを出力。
+  - 新規/既存の判定は `lib/repo.mjs`（`classifyRepo`）。private は事前に git 認証が必要。
+- **5時間ブロックの使用状況**: `ccusage` から使用率(%)・使用/上限トークン・reset目安を常時表示。取得不可時は `/api/debug` で診断。
+- **ガバナー**（`lib/governor.mjs`）: 使用率が閾値（既定80%）以上なら新規投入を停止→reset後に自動再開。同時実行は既定1（サブスク枠共有のため直列が安全）。
+- **キュー**（`lib/queue.mjs`）: 投入ジョブを `control/queue.json` に永続化。`build`/`start`/`plan`/`implement`/`analyze` を各repoへ委譲。
+- 設定は `config.json` の `governor: { tokenThreshold, maxConcurrency, pollMs }`。127.0.0.1限定バインド（LAN公開・複数ホスト集約は将来フェーズ）。`claude` バイナリは `CLAUDE_BIN`/`CCC_CLAUDE_BIN` で指定可。
 
 ---
 
@@ -152,6 +156,8 @@ npm run control                    # → http://localhost:7900
 - `control.mjs` … 制御プレーン: 複数repo進行・サブスク枠ガバナー＋キュー（http://localhost:7900）
 - `lib/governor.mjs` … トークン予算ガバナー（サブスク5hブロックの入場判定・純ロジック）
 - `lib/queue.mjs` … 制御プレーンのジョブキュー（永続化・状態遷移）
+- `lib/repo.mjs` … Git URL解析・新規/既存判定（clone作業ツリーの分類）
+- `lib/intake.mjs` … 新規repoの対話ヒアリング（質問生成・応答検証・brief→実装プロンプト）
 - `lib/policy.mjs` … 自動適用可否の判定（安全設計の一元実装）
 - `lib/proposals.mjs` … 提案の解決・承認反映・アーカイブ
 - `lib/paths.mjs` … config パス解決・書き込み先の境界チェック

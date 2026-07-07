@@ -15,6 +15,7 @@ output/
 ccc-output/
 _archive/
 
-# 制御プレーン (Phase 1): ジョブキュー実体とローカルrepo登録簿
+# 制御プレーン: ジョブキュー実体・ローカルrepo登録簿・clone作業ツリー
 control/
 repos.json
+workspaces/
