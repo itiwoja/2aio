@@ -104,14 +104,17 @@ echo "[codex-run] result=$OUT  log=$LOG"
 echo "[codex-run] audit=$USAGE_LOG"
 
 # A high-quality delegation is planned first: a brief with measurable acceptance
-# criteria + edge cases. Warn (or refuse) when it is missing.
+# criteria + edge cases. REQUIRED BY DEFAULT — a delegation without a written plan
+# is refused, which forces the plan→brief→delegate flow. Opt out with AIO_REQUIRE_BRIEF=0.
 if [ "$BRIEF_PRESENT" -eq 0 ]; then
-  echo "[codex-run] WARNING: no .ai/codex_brief_*.md in $DIR — delegate WITH a written plan"
-  echo "[codex-run]          (measurable acceptance criteria + edge cases). Ideally produced by a"
-  echo "[codex-run]          2aio-planner sub-agent. Set AIO_REQUIRE_BRIEF=1 to enforce."
-  if [ "${AIO_REQUIRE_BRIEF:-0}" = "1" ]; then
-    echo "[codex-run] REFUSING (AIO_REQUIRE_BRIEF=1): write .ai/codex_brief_*.md first."; exit 3
+  if [ "${AIO_REQUIRE_BRIEF:-1}" != "0" ]; then
+    echo "[codex-run] REFUSING: no .ai/codex_brief_*.md in $DIR — PLAN FIRST." >&2
+    echo "[codex-run]   Use the 2aio-planner sub-agent, then write .ai/codex_brief_<slug>.md with" >&2
+    echo "[codex-run]   measurable acceptance criteria + edge cases (+ ## デザイン品質 for UI)." >&2
+    echo "[codex-run]   Quick one-off without a plan: prepend AIO_REQUIRE_BRIEF=0." >&2
+    exit 3
   fi
+  echo "[codex-run] WARNING: delegating without a brief (AIO_REQUIRE_BRIEF=0) — plan quality not guaranteed."
 fi
 
 # Proof-of-delegation is written BEFORE codex runs — survives a kill.

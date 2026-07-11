@@ -56,7 +56,7 @@ argument-hint: <やりたいこと> [--write] [--parallel] [--model auto|luna|te
 - 「Tailwind/shadcn/AI テンプレのデフォルト見た目にしない」を明記
 - 計画時に **styleseed-design-review / ui-craft / anti-ai-design スキル** を 2aio-planner と併せて回し、その路線を Codex にそのまま実装させる
 
-> 注: `codex-run.sh` は `.ai/codex_brief_*.md` が無いと警告する。`AIO_REQUIRE_BRIEF=1` なら計画書が無い委譲を拒否する。**計画書＝この委譲レーンの品質の核**。
+> 注: `codex-run.sh` は **既定で `.ai/codex_brief_*.md` が無い委譲を拒否**（exit 3）する。＝計画は保証される。素早い単発だけ `AIO_REQUIRE_BRIEF=0` で計画書無しを許可。**計画書＝この委譲レーンの品質の核**。
 
 ### Phase 2 — 分岐: 単発 or 並列
 
