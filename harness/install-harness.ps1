@@ -26,6 +26,11 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
         Copy-Item "$harnessDir/codex-router/$f" "$claudeDir/codex-router/$f" -Force
     }
     Write-Host "  codex-router deployed (auto-delegate advisor + default Terra; see /2aio-delegate)"
+    New-Item -ItemType Directory -Force "$claudeDir/front-door" | Out-Null
+    foreach ($f in @("router.mjs","2aio-advisor.mjs","routes.json")) {
+        Copy-Item "$harnessDir/front-door/$f" "$claudeDir/front-door/$f" -Force
+    }
+    Write-Host "  front-door deployed (auto-route business/redesign/research)"
 } else { Write-Host "  node not found - codex-router skipped" }
 
 $settings = "$claudeDir/settings.json"

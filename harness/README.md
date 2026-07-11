@@ -152,7 +152,34 @@ Override the delegation log path with `AIO_USAGE_LOG`. Quick check after a run:
 chat — pass env-var *names* only. Codex output is always reviewed by Claude before integration;
 destructive ops are never delegated.
 
+## Front-door routing (`front-door/`) — 2AIO fires without a `/2aio-*` command
+
+The advisors above cover *how* to do a task (model tier, skills, delegate the coding). The
+front-door covers *which 2AIO pipeline* a request belongs to, so the right heavy machinery
+engages from a plain prompt instead of an ad-hoc answer.
+
+| Lane | Trigger (JP+EN, tunable in `routes.json`) | Directs to |
+|---|---|---|
+| **board** | business idea / viability / revenue / 稼ぐ / 事業 / マネタイズ | `/2aio-start-project` (取締役会: CEO/CFO/CMO/CTO/CSO → PRD) |
+| **redesign** | 作り直し / リデザイン / modernize the UI / restyle | `/2aio-redesign` (audit & improve existing UI in place) |
+| **research** | 競合調査 / 市場調査 / competitive analysis / research the… | `2aio-researcher` + `2aio-r-*` specialists |
+
+`2aio-advisor.mjs` (UserPromptSubmit) picks at most one lane (priority = file order) and injects a
+directive to use it. It deliberately has **no generic build/implement lane** — that is owned by
+`codex-advisor` (delegation), so the four advisors never fight over the same prompt:
+
+| Advisor | Owns |
+|---|---|
+| `model-advisor` | which model tier |
+| `skill-advisor` | which installed skill |
+| `codex-advisor` | delegate the *implementation* to Codex |
+| `2aio-advisor` (front-door) | which *2AIO pipeline* (board / redesign / research) |
+
+All four are advisory (hooks can't call tools or force the model) and fail open. For a hard,
+always-in-context "operate on 2AIO" rule, add a standing instruction to `~/.claude/CLAUDE.md` — that
+file is guard-protected, so only the owner can edit it via `!`.
+
 ## Cost / latency note
 The guard spawns `python` on every intercepted tool call (~100–200 ms). That is the price of a
-live guardrail. Scope is Bash/Write/Edit/MultiEdit/NotebookEdit (Read and MCP are not intercepted,
+live guardrail. Each UserPromptSubmit advisor spawns `node` once per prompt; all four fail open. Scope is Bash/Write/Edit/MultiEdit/NotebookEdit (Read and MCP are not intercepted,
 to keep sessions fast).

@@ -54,11 +54,20 @@ if command -v node >/dev/null 2>&1; then
   chmod +x "$CLAUDE_DIR/codex-router/codex-run.sh" 2>/dev/null || true
   CODEX_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/codex-router/codex-advisor.mjs')).as_posix())")"
   echo "  codex-router deployed (auto-delegate advisor + delegate impl to Codex Terra/Luna)"
+
+  # 2e. front-door router: routes a plain prompt to the right 2AIO pipeline (board/redesign/research)
+  mkdir -p "$CLAUDE_DIR/front-door"
+  cp "$HARNESS_DIR/front-door/router.mjs" "$HARNESS_DIR/front-door/2aio-advisor.mjs" \
+     "$HARNESS_DIR/front-door/routes.json" \
+     "$CLAUDE_DIR/front-door/"
+  FRONTDOOR_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/front-door/2aio-advisor.mjs')).as_posix())")"
+  echo "  front-door deployed (auto-route business/redesign/research to the right 2AIO pipeline)"
 else
   echo "  node not found — model-router + skill-router advisor hooks skipped (guard still armed)"
   ADVISOR_ABS=""
   SKILL_ADVISOR_ABS=""
   CODEX_ADVISOR_ABS=""
+  FRONTDOOR_ADVISOR_ABS=""
 fi
 
 # 3. resolve an absolute, forward-slash hook path python can read on Windows
@@ -71,13 +80,14 @@ STAMP="$(date +%Y%m%d-%H%M%S 2>/dev/null || echo bak)"
 cp "$SETTINGS" "$SETTINGS.bak-$STAMP"
 echo "  backup: settings.json.bak-$STAMP"
 
-PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" CODEX_ADVISOR_ABS="${CODEX_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
+PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" CODEX_ADVISOR_ABS="${CODEX_ADVISOR_ABS:-}" FRONTDOOR_ADVISOR_ABS="${FRONTDOOR_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
 import json, os
 settings_path = os.environ["SETTINGS"]
 hook_abs = os.environ["HOOK_ABS"]
 advisor_abs = os.environ.get("ADVISOR_ABS", "")
 skill_advisor_abs = os.environ.get("SKILL_ADVISOR_ABS", "")
 codex_advisor_abs = os.environ.get("CODEX_ADVISOR_ABS", "")
+frontdoor_advisor_abs = os.environ.get("FRONTDOOR_ADVISOR_ABS", "")
 pybin = os.environ["PYBIN"]
 cmd = f'{pybin} "{hook_abs}"'
 with open(settings_path, encoding="utf-8") as f:
@@ -112,10 +122,11 @@ def wire_ups(abs_path, needle):
 advisor_added = wire_ups(advisor_abs, "model-advisor.mjs")
 skill_added = wire_ups(skill_advisor_abs, "skill-advisor.mjs")
 codex_added = wire_ups(codex_advisor_abs, "codex-advisor.mjs")
+frontdoor_added = wire_ups(frontdoor_advisor_abs, "front-door/2aio-advisor.mjs")
 
 with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
-print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} model-advisor + {skill_added} skill-advisor + {codex_added} codex-advisor")
+print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} model-advisor + {skill_added} skill-advisor + {codex_added} codex-advisor + {frontdoor_added} front-door")
 PYEOF
 
 echo "✓ Harness armed:"
@@ -123,6 +134,7 @@ echo "  - Guard (PreToolUse): blocks irreversible ops on Bash/Write/Edit/MultiEd
 echo "  - Model-router advisor (UserPromptSubmit): recommends /model per task."
 echo "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces relevant skills per task."
 echo "  - Auto-delegate advisor (UserPromptSubmit): detects implementation tasks & directs Claude→Codex."
+echo "  - Front-door advisor (UserPromptSubmit): auto-routes business/redesign/research to the right 2AIO pipeline."
 echo "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
 echo "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — see /2aio-delegate."
 echo "  Re-run this after adding skills to refresh the skill index."
