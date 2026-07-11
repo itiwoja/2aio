@@ -13,6 +13,7 @@ argument-hint: <対象dir|.> [--scope=<glob>] [--fix=CRITICAL|HIGH|MEDIUM] [--au
 |---|---|
 | `{対象dir}` | 強化するプロジェクトルート（省略時カレント `.`） |
 | `--scope=` | 対象を絞る（例 `--scope=src/**`）。省略時は主要コードを自動選定 |
+| `--dimensions=` | 監査する観点をカンマ指定で絞る（`security,code,a11y,perf,observability,tests,design,types`）。**省略時はプロジェクト種別から自動選定**（UI無しなら design/a11y を外す等）。全観点は重い |
 | `--fix=` | 自動修正する下限重大度（既定 `HIGH` = CRITICAL+HIGH を修正。`MEDIUM` で MEDIUM まで） |
 | `--auto` / `--interactive` | 既定 `interactive`。`--auto` は放置運転（ただし後述の絶対停止線では必ず止まる） |
 | `--budget=` | 出力トークン上限。到達したら安全に中断してレポート |
@@ -42,7 +43,13 @@ argument-hint: <対象dir|.> [--scope=<glob>] [--fix=CRITICAL|HIGH|MEDIUM] [--au
 - `2aio-project-auditor` で構成棚卸し（盲点・陳腐化・重複）。強化の当たりを付ける。
 
 ### Phase 2 — 観点別 並列レビュー（各担当agentを並列起動）
-重大度（CRITICAL/HIGH/MEDIUM/LOW）付きで指摘を集約する:
+
+**コスト注意（実測）:** 1周で全観点（6〜9体）を回すと subagent 約 25〜30万トークン消費する。だから:
+- `--dimensions` で観点を絞る（UI無しなら design/a11y を外す、セキュリティ監査なら security+code だけ 等）。省略時はプロジェクト種別から**自動で必要な観点だけ**選ぶ。
+- `--budget` 未指定なら開始時に概算コストを提示し、`--auto` でなければ続行確認する。
+- 各観点は**変更があった領域だけ**再監査する（Phase 4 で全再実行しない）。
+
+重大度（CRITICAL/HIGH/MEDIUM/LOW）付きで指摘を集約する（対象は `--dimensions`）:
 
 | 観点 | 担当agent |
 |---|---|
