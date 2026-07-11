@@ -28,6 +28,17 @@ else
 fi
 [ -f "$HARNESS_DIR/bin/grant-override" ] && { cp "$HARNESS_DIR/bin/grant-override" "$CLAUDE_DIR/bin/"; chmod +x "$CLAUDE_DIR/bin/grant-override" 2>/dev/null || true; }
 
+# 2a. delegation-enforcer (Claude=commander, Codex=implementer): a PreToolUse rule that
+#     blocks Claude from writing a substantial NEW implementation file itself (must delegate).
+cp "$HARNESS_DIR/enforce/delegation-enforcer.py" "$CLAUDE_DIR/hooks/delegation-enforcer.py"
+mkdir -p "$CLAUDE_DIR/enforce"
+if [ -e "$CLAUDE_DIR/enforce/enforce-rules.json" ]; then
+  echo "  keep existing enforce-rules.json (not overwritten)"
+else
+  cp "$HARNESS_DIR/enforce/enforce-rules.json" "$CLAUDE_DIR/enforce/enforce-rules.json"
+fi
+ENFORCER_ABS="$("$PYBIN" -c "import pathlib,os; print(pathlib.Path(os.path.expanduser('~/.claude/hooks/delegation-enforcer.py')).as_posix())")"
+
 # 2b. model-router (auto model selection): copy the whole module
 if command -v node >/dev/null 2>&1; then
   mkdir -p "$CLAUDE_DIR/model-router"
@@ -80,10 +91,11 @@ STAMP="$(date +%Y%m%d-%H%M%S 2>/dev/null || echo bak)"
 cp "$SETTINGS" "$SETTINGS.bak-$STAMP"
 echo "  backup: settings.json.bak-$STAMP"
 
-PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" CODEX_ADVISOR_ABS="${CODEX_ADVISOR_ABS:-}" FRONTDOOR_ADVISOR_ABS="${FRONTDOOR_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
+PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ENFORCER_ABS="${ENFORCER_ABS:-}" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" CODEX_ADVISOR_ABS="${CODEX_ADVISOR_ABS:-}" FRONTDOOR_ADVISOR_ABS="${FRONTDOOR_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
 import json, os
 settings_path = os.environ["SETTINGS"]
 hook_abs = os.environ["HOOK_ABS"]
+enforcer_abs = os.environ.get("ENFORCER_ABS", "")
 advisor_abs = os.environ.get("ADVISOR_ABS", "")
 skill_advisor_abs = os.environ.get("SKILL_ADVISOR_ABS", "")
 codex_advisor_abs = os.environ.get("CODEX_ADVISOR_ABS", "")
@@ -109,6 +121,19 @@ for m in ["Bash", "Write", "Edit", "MultiEdit", "NotebookEdit"]:
         pre.append({"matcher": m, "hooks": [{"type": "command", "command": cmd}]})
         added += 1
 
+# delegation-enforcer: PreToolUse on Write only (block bulk new impl -> delegate to Codex)
+def has_pre_needle(matcher, needle):
+    for e in pre:
+        if e.get("matcher") == matcher:
+            for h in e.get("hooks", []):
+                if needle in h.get("command", ""):
+                    return True
+    return False
+enforcer_added = 0
+if enforcer_abs and not has_pre_needle("Write", "delegation-enforcer"):
+    pre.append({"matcher": "Write", "hooks": [{"type": "command", "command": f'{pybin} "{enforcer_abs}"'}]})
+    enforcer_added = 1
+
 # advisors: UserPromptSubmit (advisory — hooks cannot switch models or call tools)
 ups = hooks.setdefault("UserPromptSubmit", [])
 def wire_ups(abs_path, needle):
@@ -126,11 +151,12 @@ frontdoor_added = wire_ups(frontdoor_advisor_abs, "front-door/2aio-advisor.mjs")
 
 with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
-print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} model-advisor + {skill_added} skill-advisor + {codex_added} codex-advisor + {frontdoor_added} front-door")
+print(f"  merged {added} PreToolUse matcher(s) + {enforcer_added} delegation-enforcer + {advisor_added} model-advisor + {skill_added} skill-advisor + {codex_added} codex-advisor + {frontdoor_added} front-door")
 PYEOF
 
 echo "✓ Harness armed:"
 echo "  - Guard (PreToolUse): blocks irreversible ops on Bash/Write/Edit/MultiEdit/NotebookEdit."
+echo "  - Delegation-enforcer (PreToolUse/Write): blocks Claude writing bulk new impl → forces Codex delegation."
 echo "  - Model-router advisor (UserPromptSubmit): recommends /model per task."
 echo "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces relevant skills per task."
 echo "  - Auto-delegate advisor (UserPromptSubmit): detects implementation tasks & directs Claude→Codex."

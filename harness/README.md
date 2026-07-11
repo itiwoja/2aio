@@ -9,8 +9,9 @@ operating layer with four parts:
    haiku), and the `model-router` picks a tier dynamically from the task at the launch boundary.
 3. **Skill auto-trigger + delegation** — the 66 vendored skills auto-activate by description; the
    board/engineering agents are delegated to by role.
-4. **Codex delegation** — Claude plans, then delegates implementation to the cheaper Codex
-   (Terra/Luna) family via `codex-router/`, keeping expensive Claude tokens for judgment.
+4. **Codex delegation (enforced)** — Claude plans and commands; implementation is delegated to the
+   cheaper Codex (Terra/Luna) family via `codex-router/`. A PreToolUse enforcer blocks Claude from
+   hand-typing bulk new code, so the commander/implementer split is real, not just advised.
 
 ## Arm / disarm
 
@@ -151,6 +152,25 @@ Override the delegation log path with `AIO_USAGE_LOG`. Quick check after a run:
 **Safety:** never put strong-permission secrets (e.g. `service_role`) in a Codex brief or the
 chat — pass env-var *names* only. Codex output is always reviewed by Claude before integration;
 destructive ops are never delegated.
+
+### Hard enforcement — Claude commands, Codex implements (`enforce/`)
+
+The advisors *nudge*; this *enforces*. `delegation-enforcer.py` is a PreToolUse hook (Write only)
+that blocks the one action that breaks the operating model — **Claude writing a substantial new
+implementation file itself** — and tells it to delegate that file to Codex. It is deliberately
+narrow so Claude keeps its **commander** role (plan → drive Codex → review → integrate):
+
+| Blocked (exit 2) | Always allowed |
+|---|---|
+| `Write` of a **new code file** ≥ `min_lines` (40) with a code extension | `Edit`/`MultiEdit` on existing files (review, integration, fixes) |
+| e.g. a from-scratch `app.js`, `index.html`, component, endpoint | planning docs (`.md`, `.ai/`, `.coord/`), config/data (`.json`, `.yml`) |
+| | small/critical files (< 40 lines), tests (`*.test.*`), the 2AIO repo, scratchpad |
+
+So Claude still plans, reviews, and does surgical edits — it just can't hand-type the bulk build.
+Rules/thresholds live in `enforce/enforce-rules.json` (tune the extension set, `min_lines`, and
+allow-lists). Turn it off with `enabled: false` or `touch ~/.claude/.2aio-enforce-off`; one-off
+bypass via the owner `!` prefix. Tested (8 cases: blocks big new .js/.html, allows edits/docs/
+config/small/tests/repo).
 
 ## Front-door routing (`front-door/`) — 2AIO fires without a `/2aio-*` command
 

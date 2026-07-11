@@ -19,6 +19,13 @@ if (-not (Test-Path "$claudeDir/safety-guard/security-rules.json")) {
 } else { Write-Host "  keep existing security-rules.json" }
 if (Test-Path "$harnessDir/bin/grant-override") { Copy-Item "$harnessDir/bin/grant-override" "$claudeDir/bin/" -Force }
 
+# delegation-enforcer (Claude=commander, Codex=implementer): PreToolUse/Write rule
+Copy-Item "$harnessDir/enforce/delegation-enforcer.py" "$claudeDir/hooks/delegation-enforcer.py" -Force
+New-Item -ItemType Directory -Force "$claudeDir/enforce" | Out-Null
+if (-not (Test-Path "$claudeDir/enforce/enforce-rules.json")) {
+    Copy-Item "$harnessDir/enforce/enforce-rules.json" "$claudeDir/enforce/enforce-rules.json" -Force
+} else { Write-Host "  keep existing enforce-rules.json" }
+
 # codex-router (Claude -> Codex delegation): copy module so /2aio-delegate works when installed
 if (Get-Command node -ErrorAction SilentlyContinue) {
     New-Item -ItemType Directory -Force "$claudeDir/codex-router" | Out-Null
