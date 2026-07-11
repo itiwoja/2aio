@@ -50,6 +50,12 @@ argument-hint: <やりたいこと> [--write] [--parallel] [--model auto|luna|te
 
 **codex_brief 必須セクション:** `## 目的` / `## 受け入れ条件（測定可能）` / `## 触る・触らないファイル` / `## エッジケース` / `## データモデル・規約` / `## やらないこと`
 
+**UI/フロントエンド実装なら `## デザイン品質` を必須追加**（量産型AI UI を防ぐ）:
+- **路線を1つに振り切る**（neo-brutalism / editorial / glassmorphism-with-depth / swiss / bento / dark-luxury / retro-futurism 等）。「clean minimal」「グレー地+アクセント1色」で逃げない
+- パレット（意図的）/ タイポの実ペアリング（display + body）/ 余白のリズム（均一にしない）/ 奥行き・レイヤー / **hover・focus・active の状態デザイン**
+- 「Tailwind/shadcn/AI テンプレのデフォルト見た目にしない」を明記
+- 計画時に **styleseed-design-review / ui-craft / anti-ai-design スキル** を 2aio-planner と併せて回し、その路線を Codex にそのまま実装させる
+
 > 注: `codex-run.sh` は `.ai/codex_brief_*.md` が無いと警告する。`AIO_REQUIRE_BRIEF=1` なら計画書が無い委譲を拒否する。**計画書＝この委譲レーンの品質の核**。
 
 ### Phase 2 — 分岐: 単発 or 並列

@@ -11,6 +11,14 @@
     "app", "page", "component", "feature", "form", "endpoint", "dashboard",
     "website", "web app", "webapp", "crud", "cli", "api ", "ui "
   ],
+  "ui_keywords": [
+    "アプリ", "ページ", "画面", "コンポーネント", "サイト", "ダッシュボード", "フォーム",
+    "ランディング", "ボタン", "モーダル", "カード", "レイアウト", "デザイン", "フロントエンド",
+    "見た目", "ui", "画面設計", "lp",
+    "app", "page", "screen", "component", "site", "website", "dashboard", "form",
+    "landing", "button", "modal", "card", "layout", "design", "frontend", "css", "html",
+    "tailwind", "styling", "web app", "webapp"
+  ],
   "exclude_keywords": [
     "レビュー", "説明", "なぜ", "どうやって", "調べて", "確認だけ", "教えて",
     "計画だけ", "相談", "どう思う", "一行", "1行", "タイポ", "誤字",

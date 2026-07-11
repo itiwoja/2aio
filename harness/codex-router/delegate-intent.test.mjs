@@ -23,3 +23,15 @@ test("exclusion wins over implement keyword", () => {
   // has 'アプリ' (implement) but also 'レビュー' (exclude) -> inline
   assert.equal(shouldDelegate("このアプリをレビューして").delegate, false);
 });
+
+test("UI tasks are flagged (ui != null) so a design-quality plan is required", () => {
+  assert.ok(shouldDelegate("ダッシュボードUIを作って").ui);
+  assert.ok(shouldDelegate("build a landing page").ui);
+  assert.ok(shouldDelegate("TODOアプリを作って").ui);
+});
+
+test("non-UI implementation is not flagged as UI", () => {
+  const r = shouldDelegate("CSVをパースするスクリプトを実装して");
+  assert.equal(r.delegate, true);
+  assert.equal(r.ui, null);
+});

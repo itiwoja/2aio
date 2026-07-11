@@ -18,24 +18,31 @@ function firstHit(text, kws) {
   return null;
 }
 
+/** isUiTask(prompt, rules) -> matched UI keyword or null. */
+export function isUiTask(prompt = "", rules) {
+  const r = rules || loadDelegateRules();
+  return firstHit(String(prompt || ""), r.ui_keywords || []);
+}
+
 /**
- * shouldDelegate(prompt, opts) -> { delegate, matched, excluded, reason }
+ * shouldDelegate(prompt, opts) -> { delegate, matched, excluded, reason, ui }
  * delegate=true means: this is an implementation task; direct the assistant to
  * delegate the coding to Codex. Exclusions (questions/review/trivial) win.
+ * ui = matched UI keyword (or null) so the caller can require a design-quality plan.
  */
 export function shouldDelegate(prompt = "", opts = {}) {
   const rules = opts.rules || loadDelegateRules();
   const text = String(prompt || "");
   if (text.trim().length < (rules.min_len || 12)) {
-    return { delegate: false, matched: null, excluded: null, reason: "too short" };
+    return { delegate: false, matched: null, excluded: null, reason: "too short", ui: null };
   }
   const excluded = firstHit(text, rules.exclude_keywords || []);
   if (excluded) {
-    return { delegate: false, matched: null, excluded, reason: `excluded by "${excluded}"` };
+    return { delegate: false, matched: null, excluded, reason: `excluded by "${excluded}"`, ui: null };
   }
   const matched = firstHit(text, rules.implement_keywords || []);
   if (!matched) {
-    return { delegate: false, matched: null, excluded: null, reason: "no implementation intent" };
+    return { delegate: false, matched: null, excluded: null, reason: "no implementation intent", ui: null };
   }
-  return { delegate: true, matched, excluded: null, reason: `implementation intent "${matched}"` };
+  return { delegate: true, matched, excluded: null, reason: `implementation intent "${matched}"`, ui: isUiTask(text, rules) };
 }

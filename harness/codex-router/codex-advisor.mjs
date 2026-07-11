@@ -47,8 +47,19 @@ try {
     `(4) REVIEW Codex's output against the acceptance criteria (git diff) and integrate. ` +
     `Logged to ~/.claude/logs/2aio-usage.jsonl. Only implement inline for a few-line or security/judgment-critical change.`;
 
+  const design = r.ui
+    ? ` DESIGN (this is a UI task, matched "${r.ui}"): the brief MUST contain a "## デザイン品質" section — ` +
+      `commit to ONE opinionated style direction (neo-brutalism / editorial-magazine / glassmorphism-with-depth / ` +
+      `swiss / bento / dark-luxury / retro-futurism — NOT "clean minimal" or default gray-on-white+1-accent), and ` +
+      `specify: intentional palette, a real type pairing (display + body), non-uniform spacing rhythm, depth/layering, ` +
+      `and designed hover/focus/active states. It must NOT look like a generic Tailwind/shadcn/AI template. Plan the ` +
+      `design with the styleseed-design-review + ui-craft + anti-ai-design skills alongside 2aio-planner, and tell ` +
+      `Codex to implement that exact direction (not framework defaults).`
+    : "";
+
+  const full = ctx + design;
   process.stdout.write(JSON.stringify({
-    hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: ctx },
+    hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: full },
   }));
   process.exit(0);
 } catch {
