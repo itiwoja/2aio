@@ -35,9 +35,18 @@ if command -v node >/dev/null 2>&1; then
      "$HARNESS_DIR/model-router/model-advisor.mjs" "$HARNESS_DIR/model-router/routing-rules.json" \
      "$CLAUDE_DIR/model-router/"
   ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/model-router/model-advisor.mjs')).as_posix())")"
+
+  # 2c. skill-router: deploy + build the index over the INSTALLED skills, wire advisor
+  mkdir -p "$CLAUDE_DIR/skill-router"
+  cp "$HARNESS_DIR/skill-router/matcher.mjs" "$HARNESS_DIR/skill-router/build-index.mjs" \
+     "$HARNESS_DIR/skill-router/skill-advisor.mjs" "$HARNESS_DIR/skill-router/synonyms.json" \
+     "$CLAUDE_DIR/skill-router/"
+  node "$CLAUDE_DIR/skill-router/build-index.mjs" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/skill-router/skill-index.json" || echo "  (skill index build skipped)"
+  SKILL_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/skill-router/skill-advisor.mjs')).as_posix())")"
 else
-  echo "  node not found — model-router advisor hook skipped (launcher still usable where node exists)"
+  echo "  node not found — model-router + skill-router advisor hooks skipped (guard still armed)"
   ADVISOR_ABS=""
+  SKILL_ADVISOR_ABS=""
 fi
 
 # 3. resolve an absolute, forward-slash hook path python can read on Windows
@@ -50,11 +59,12 @@ STAMP="$(date +%Y%m%d-%H%M%S 2>/dev/null || echo bak)"
 cp "$SETTINGS" "$SETTINGS.bak-$STAMP"
 echo "  backup: settings.json.bak-$STAMP"
 
-PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
+PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
 import json, os
 settings_path = os.environ["SETTINGS"]
 hook_abs = os.environ["HOOK_ABS"]
 advisor_abs = os.environ.get("ADVISOR_ABS", "")
+skill_advisor_abs = os.environ.get("SKILL_ADVISOR_ABS", "")
 pybin = os.environ["PYBIN"]
 cmd = f'{pybin} "{hook_abs}"'
 with open(settings_path, encoding="utf-8") as f:
@@ -76,23 +86,28 @@ for m in ["Bash", "Write", "Edit", "MultiEdit", "NotebookEdit"]:
         pre.append({"matcher": m, "hooks": [{"type": "command", "command": cmd}]})
         added += 1
 
-# model-router advisor: UserPromptSubmit (advisory — hooks cannot switch models)
-advisor_added = 0
-if advisor_abs:
-    ups = hooks.setdefault("UserPromptSubmit", [])
-    present = any("model-advisor.mjs" in h.get("command", "")
-                 for e in ups for h in e.get("hooks", []))
-    if not present:
-        ups.append({"hooks": [{"type": "command", "command": f'node "{advisor_abs}"'}]})
-        advisor_added = 1
+# advisors: UserPromptSubmit (advisory — hooks cannot switch models or call tools)
+ups = hooks.setdefault("UserPromptSubmit", [])
+def wire_ups(abs_path, needle):
+    if not abs_path:
+        return 0
+    present = any(needle in h.get("command", "") for e in ups for h in e.get("hooks", []))
+    if present:
+        return 0
+    ups.append({"hooks": [{"type": "command", "command": f'node "{abs_path}"'}]})
+    return 1
+advisor_added = wire_ups(advisor_abs, "model-advisor.mjs")
+skill_added = wire_ups(skill_advisor_abs, "skill-advisor.mjs")
 
 with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
-print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} UserPromptSubmit advisor")
+print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} model-advisor + {skill_added} skill-advisor")
 PYEOF
 
 echo "✓ Harness armed:"
 echo "  - Guard (PreToolUse): blocks irreversible ops on Bash/Write/Edit/MultiEdit/NotebookEdit."
 echo "  - Model-router advisor (UserPromptSubmit): recommends /model per task."
+echo "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces relevant skills per task."
 echo "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
+echo "  Re-run this after adding skills to refresh the skill index."
 echo "  Owner bypass: prefix a command with '!'.   Disarm: bash $HARNESS_DIR/uninstall-harness.sh"

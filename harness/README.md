@@ -85,6 +85,29 @@ node model-router/pick.mjs "quick: add a log"  # -> haiku   (for scripts/orchest
 Tests: `cd model-router && node --test` (9 cases). The advisor is wired by `install-harness.sh`
 and fails open (never blocks prompt submission).
 
+## Automatic skill selection (`skill-router/`)
+
+Skills only help if they actually fire. Claude's native skill auto-invocation is description-
+driven and often misses — especially for **Japanese prompts against English-described skills**.
+The skill-router closes that gap: a UserPromptSubmit hook detects which installed skills match the
+prompt and injects a directive to invoke them via the Skill tool.
+
+| Piece | Role |
+|---|---|
+| `build-index.mjs` | scans `~/.claude/skills/*/SKILL.md`, builds a weighted keyword index (name + trigger phrases + description). Run by the installer; re-run after adding skills. |
+| `matcher.mjs` | pure ranker: prompt → top-N skills, with **JP→EN synonym expansion** (`synonyms.json`) so 「UIを作り直して」 matches `redesign-existing-projects`. |
+| `skill-advisor.mjs` | UserPromptSubmit hook: injects `[2AIO skill-router] matches: <skills> — invoke via Skill tool`. Silent when nothing matches; fail-open. |
+
+Tune matching entirely in data: `synonyms.json` (JP↔EN terms) and `routing` weights in
+`build-index.mjs`. Tests: `cd skill-router && node --test`.
+
+Examples (live): 「このダッシュボードUIを作り直したい」→ `redesign-existing-projects, styleseed-design-review`;
+「多エージェントで並列レビュー」→ `review-swarm, agent-task-splitter`; 「セキュリティを強化」→ `security-and-hardening`.
+
+> Like the model advisor, this **cannot invoke the skill itself** (hooks can't call tools) — it
+> injects a strong directive so the assistant reliably reaches for the right skill instead of
+> ignoring it. Re-run `install-harness.sh` after installing new skills to refresh the index.
+
 ## Cost / latency note
 The guard spawns `python` on every intercepted tool call (~100–200 ms). That is the price of a
 live guardrail. Scope is Bash/Write/Edit/MultiEdit/NotebookEdit (Read and MCP are not intercepted,

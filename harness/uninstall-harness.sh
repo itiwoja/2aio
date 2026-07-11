@@ -29,6 +29,7 @@ def strip(event, needle):
 
 strip("PreToolUse", "command-guard.py")
 strip("UserPromptSubmit", "model-advisor.mjs")
+strip("UserPromptSubmit", "skill-advisor.mjs")
 if "hooks" in cfg and not hooks:
     cfg.pop("hooks")
 with open(p, "w", encoding="utf-8") as f: json.dump(cfg, f, indent=2, ensure_ascii=False)
