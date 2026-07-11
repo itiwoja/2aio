@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CCCForge ダッシュボード — ローカルLLM(Ollama)＋自己強化ループの監視
+// 2AIOForge ダッシュボード — ローカルLLM(Ollama)＋自己強化ループの監視
 // 依存ゼロ。 node dashboard.mjs → http://localhost:7878
 import http from 'node:http';
 import fs from 'node:fs';
@@ -15,7 +15,7 @@ const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
 CFG.paths = resolvePaths(ROOT, CFG.paths);
 const OLLAMA = CFG.ollamaUrl || 'http://localhost:11434';
-const PORT = process.env.CCCFORGE_PORT || 7878;
+const PORT = process.env.AIOFORGE_PORT || 7878;
 
 const readJSON = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
 const ls = (d) => { try { return fs.readdirSync(d); } catch { return []; } };
@@ -138,11 +138,11 @@ const server = http.createServer(async (req, res) => {
   send(res, 404, 'text/plain', 'not found');
 });
 // 承認APIがファイル書き込みを伴うため、ローカル限定でバインド
-server.listen(PORT, '127.0.0.1', () => console.log(`[cccforge-dashboard] http://localhost:${PORT}`));
+server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-dashboard] http://localhost:${PORT}`));
 claudeUsage(); // ccusage(初回は数十秒)のプリウォーム。初回ページ表示を待たせない
 
 const HTML = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CCCForge モニター</title><style>
+<title>2AIOForge モニター</title><style>
 :root{--bg:#0f1216;--panel:#161b22;--panel2:#1c232c;--line:#2a323d;--ink:#e6edf3;--sub:#9aa7b4;--accent:#5db0ff;--ok:#3fb950;--warn:#d2a23a;--bad:#f0626f;--mono:"Cascadia Code",ui-monospace,Consolas,monospace}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;line-height:1.5}
 header{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,18,22,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:5}
@@ -193,7 +193,7 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
 </style></head><body>
 <header>
   <span class="dot off" id="oll-dot"></span>
-  <h1><b>CCCForge</b> モニター</h1>
+  <h1><b>2AIOForge</b> モニター</h1>
   <span class="muted" id="sub"></span>
   <span class="spacer"></span>
   <select id="topic" style="background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px"></select>

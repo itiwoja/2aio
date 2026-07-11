@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CCCForge — CCC自己強化ループ（ローカルLLM主体）
+// 2AIOForge — 2AIO自己強化ループ（ローカルLLM主体）
 // 収集(Web検索) → 合成(ローカルLLM起草) → 監査(多役クリティック) → 提案/適用 → 記録
 // 自動適用は「vault × low × 監査PASS」のみ / skills・高リスク・監査NG・--dry は提案のみ(承認制)
 import fs from 'node:fs';
@@ -19,13 +19,13 @@ const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
 CFG.paths = resolvePaths(ROOT, CFG.paths);
 setOllamaUrl(CFG.ollamaUrl);
-const STAMP = process.env.CCCFORGE_STAMP || new Date().toISOString().slice(0, 10); // 呼び出し側で固定可
+const STAMP = process.env.AIOFORGE_STAMP || new Date().toISOString().slice(0, 10); // 呼び出し側で固定可
 const args = process.argv.slice(2);
 const onlyTopic = (args.find(a => a.startsWith('--topic=')) || '').split('=')[1];
 const dry = args.includes('--dry'); // 適用せず提案だけ出す
 
 const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
-const log = (...a) => console.log('[cccforge]', ...a);
+const log = (...a) => console.log('[2aio]', ...a);
 
 function read(p) { try { return fs.readFileSync(p, 'utf8'); } catch { return ''; } }
 
@@ -43,7 +43,7 @@ function sourcesBlock(docs) {
 }
 
 async function synthesize(topic, docs, currentContent) {
-  const sys = `あなたはCCC(Claude向け設計知識ベース)の編集者。与えられたWeb検索結果から、対象ドキュメントに反映すべき"最新かつ確かな"知見だけを抽出し、日本語の更新案を作る。
+  const sys = `あなたは2AIO(Claude向け設計知識ベース)の編集者。与えられたWeb検索結果から、対象ドキュメントに反映すべき"最新かつ確かな"知見だけを抽出し、日本語の更新案を作る。
 規則: 出典に無い断定をしない/古い情報や宣伝を除外/簡潔・箇条書き中心/実装に使える具体(数値・トークン・手法)を優先/不確かなものは「要確認」と明記。`;
   const user = `対象: ${topic.id}（種別: ${topic.target.type}）
 ${currentContent ? `現行ドキュメント(抜粋):\n"""${currentContent.slice(0, 4000)}"""\n` : '(現行ドキュメントなし=新規)\n'}
@@ -57,15 +57,15 @@ JSONで出力: {"summary": "3行要約", "rationale": "提案理由(なぜこの
 const ROLE_PROMPT = {
   factuality: '事実性: 出典で裏が取れない断定・誤りを指摘。ただし**版・日付・数値は「出典に書かれた内容」を一次情報として尊重**し、あなた自身の記憶(学習時点が古い可能性がある)で出典の新しい情報を否定しない。「最新版は◯年」等を自分の知識で断定して弾かないこと。指摘は出典同士の矛盾／出典に全く無い捏造のみに限る。',
   hallucination: '幻覚: 出典に全く現れない数値/API/製品名/URL/手法の捏造のみを指摘。出典に書かれていれば、あなたの記憶に無くても捏造扱いしない。',
-  'ccc-fit': 'CCC適合: 重複/冗長/既存方針との矛盾、対象種別(skill/vault)に不適切な内容を指摘。',
+  '2aio-fit': '2AIO適合: 重複/冗長/既存方針との矛盾、対象種別(skill/vault)に不適切な内容を指摘。',
   safety: '安全性: 危険な助言、秘密情報、ライセンス無視、誤適用リスクを指摘。',
 };
 
 // Claude(ヘッドレス)による高品質監査：4観点を1コールに集約・失敗時はローカルにフォールバック
 async function auditClaude(topic, draft, docs) {
-  const prompt = `あなたはCCC(設計知識ベース)の厳格な監査役。下の「更新案」を、与えた「出典」のみを根拠に監査する。
+  const prompt = `あなたは2AIO(設計知識ベース)の厳格な監査役。下の「更新案」を、与えた「出典」のみを根拠に監査する。
 重要: 版・日付・数値は出典に書かれた内容を一次情報として尊重し、出典に書いてあれば(あなたの知識に無くても)捏造扱いしない。
-観点: 事実性(出典で裏が取れない断定)/幻覚(出典に全く無い捏造)/CCC適合(重複・矛盾・対象種別[${topic.target.type}]に不適切)/安全(危険助言・秘密・ライセンス無視)。
+観点: 事実性(出典で裏が取れない断定)/幻覚(出典に全く無い捏造)/2AIO適合(重複・矛盾・対象種別[${topic.target.type}]に不適切)/安全(危険助言・秘密・ライセンス無視)。
 更新案:
 """${(draft.updated_markdown || '').slice(0, 7000)}"""
 出典:
@@ -99,7 +99,7 @@ async function auditLocal(topic, draft, docs) {
 }
 
 async function revise(topic, draft, issues, docs) {
-  const sys = 'あなたはCCCの編集者。監査の指摘を反映して更新案Markdownを修正する。指摘された箇所のみ直し、出典に無い情報は足さない。';
+  const sys = 'あなたは2AIOの編集者。監査の指摘を反映して更新案Markdownを修正する。指摘された箇所のみ直し、出典に無い情報は足さない。';
   const user = `現行更新案:\n"""${draft.updated_markdown || ''}"""\n監査の指摘:\n- ${issues.join('\n- ')}\n出典:\n"""${sourcesBlock(docs).slice(0, 6000)}"""\nJSONで: {"summary":"...","rationale":"提案理由(指摘反映後)","updated_markdown":"修正後の完成Markdown","key_points":["..."],"uncertainties":["..."]}`;
   return await ollamaJSON([{ role: 'system', content: sys }, { role: 'user', content: user }], { model: CFG.model, temperature: 0.2, onUsage: onUse('revise') });
 }
@@ -111,7 +111,7 @@ function targetPath(topic) {
 }
 
 function vaultContent(topic, draft) {
-  const header = `<!-- CCCForge 自動生成 ${STAMP} / backend:${searchBackend()} / model:${CFG.model} -->\n# ${topic.id}（自動収集ナレッジ）\n\n> CCCForgeが収集→合成→監査PASSした最新知見。低リスクvaultのため自動適用。出典は本文末。\n\n`;
+  const header = `<!-- 2AIOForge 自動生成 ${STAMP} / backend:${searchBackend()} / model:${CFG.model} -->\n# ${topic.id}（自動収集ナレッジ）\n\n> 2AIOForgeが収集→合成→監査PASSした最新知見。低リスクvaultのため自動適用。出典は本文末。\n\n`;
   return header + (draft.updated_markdown || '');
 }
 
