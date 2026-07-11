@@ -1,6 +1,7 @@
 ---
 name: 2aio-prd
 description: 2AIO取締役会のPRDエージェント。CEOの最終判断が approved または conditional の場合に起動される。取締役会全レポートを入力として受け取り、実装可能なPRD（プロダクト要件定義書）を生成する。2AIO 取締役会のオーケストレーター（/2aio-start-project）から全役員レポートを渡されて起動される。2AIO 以外の一般的な仕様書作成依頼には使用しない。
+model: sonnet
 tools: Read, Grep, Glob
 ---
 

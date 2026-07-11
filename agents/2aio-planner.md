@@ -1,6 +1,7 @@
 ---
 name: 2aio-planner
 description: 2AIO取締役会の実装計画担当（アーキテクト/PM視点）。PRDと技術評価を入力に、タスクWBS分解・依存関係・スプリント割り当て・工数見積もりを行う。/2aio-plan-project のオーケストレーターから PRD と CEO 方針を渡されて起動され、CTOと並列で動作する。2AIO 以外の一般的な計画依頼には使用しない。
+model: sonnet
 tools: Read, Grep, Glob
 ---
 

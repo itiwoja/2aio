@@ -1,6 +1,7 @@
 ---
 name: 2aio-qa
 description: 2AIOの品質保証担当。2aio-engineer が実装したコードを受け入れ条件・テスト実行・カバレッジで検証する。失敗箇所を特定して 2aio-engineer へフィードバック（最大2往復）。Pass / Fail を qa-report-sprint{N}.md として出力する。/2aio-implement-project または /2aio-build のオーケストレーターから起動される。単独のテスト依頼には使用しない。
+model: sonnet
 tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 

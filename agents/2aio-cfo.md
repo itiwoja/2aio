@@ -1,6 +1,7 @@
 ---
 name: 2aio-cfo
 description: 2AIO取締役会のCFO（最高財務責任者）。財務試算・収益モデル設計・ROI分析・資金計画を担当する。CMO・CTOのレポートを受けて財務レポートを作成する。/2aio-plan-project では工数→コスト換算・スケジュール検証を担当する。
+model: sonnet
 tools: Read, Grep, Glob
 ---
 
