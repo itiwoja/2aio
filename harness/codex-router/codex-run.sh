@@ -67,14 +67,24 @@ LOG="$DIR/.ai/codex_log_$TS.txt"; mkdir -p "$(dirname "$LOG")"
 
 # --- central audit log helpers -------------------------------------------------
 mkdir -p "$(dirname "$USAGE_LOG")" 2>/dev/null || true
-# JSON-escape: drop newlines/tabs, escape backslash and double-quote.
-esc() { printf '%s' "$1" | tr '\n\r\t' '   ' | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 DIR_ABS="$(cd "$DIR" 2>/dev/null && pwd || echo "$DIR")"
-log_event() { # $1=event  $2=extra-json (may be empty)
-  local extra="${2:-}"
-  { printf '{"ts":"%s","tool":"2aio-codex-run","event":"%s","model":"%s","tier":"%s","sandbox":"%s","dir":"%s","task":"%s","result":"%s","log":"%s"%s}\n' \
-      "$ISO" "$1" "$MODEL_ID" "$TIER" "$SANDBOX" "$(esc "$DIR_ABS")" "$(esc "${PROMPT:0:280}")" "$(esc "$OUT")" "$(esc "$LOG")" \
-      "${extra:+,$extra}" >> "$USAGE_LOG"; } 2>/dev/null || true
+
+# High-quality delegation needs a written plan (acceptance criteria + edge cases).
+BRIEF_PRESENT=0
+if ls "$DIR"/.ai/codex_brief_*.md >/dev/null 2>&1; then BRIEF_PRESENT=1; fi
+
+# JSON line built by node (guaranteed available) — correct UTF-8, no multibyte
+# truncation corruption, proper escaping. task truncated by CODE POINTS not bytes.
+log_event() { # $1=event  $2=optional extra json fragment, e.g. '"exit":0'
+  node -e '
+    const a = process.argv;
+    const o = { ts:a[1], tool:"2aio-codex-run", event:a[2], model:a[3], tier:a[4],
+                sandbox:a[5], dir:a[6], task:[...a[7]].slice(0,280).join(""),
+                result:a[8], log:a[9], brief_present: a[10]==="1" };
+    if (a[11]) { try { Object.assign(o, JSON.parse("{"+a[11]+"}")); } catch {} }
+    process.stdout.write(JSON.stringify(o)+"\n");
+  ' "$ISO" "$1" "$MODEL_ID" "$TIER" "$SANDBOX" "$DIR_ABS" "$PROMPT" "$OUT" "$LOG" "$BRIEF_PRESENT" "${2:-}" \
+    >> "$USAGE_LOG" 2>/dev/null || true
 }
 
 EFFORT_ARG=()
@@ -92,6 +102,17 @@ run() {
 echo "[codex-run] model=$MODEL_ID (tier=$TIER) sandbox=$SANDBOX dir=$DIR"
 echo "[codex-run] result=$OUT  log=$LOG"
 echo "[codex-run] audit=$USAGE_LOG"
+
+# A high-quality delegation is planned first: a brief with measurable acceptance
+# criteria + edge cases. Warn (or refuse) when it is missing.
+if [ "$BRIEF_PRESENT" -eq 0 ]; then
+  echo "[codex-run] WARNING: no .ai/codex_brief_*.md in $DIR — delegate WITH a written plan"
+  echo "[codex-run]          (measurable acceptance criteria + edge cases). Ideally produced by a"
+  echo "[codex-run]          2aio-planner sub-agent. Set AIO_REQUIRE_BRIEF=1 to enforce."
+  if [ "${AIO_REQUIRE_BRIEF:-0}" = "1" ]; then
+    echo "[codex-run] REFUSING (AIO_REQUIRE_BRIEF=1): write .ai/codex_brief_*.md first."; exit 3
+  fi
+fi
 
 # Proof-of-delegation is written BEFORE codex runs — survives a kill.
 log_event "codex_delegate_start"

@@ -35,13 +35,17 @@ try {
 
   const ctx =
     `[2AIO auto-delegate] This looks like an implementation task (matched "${r.matched}"). ` +
-    `Per 2AIO token-saving policy, do NOT hand-write the implementation yourself. Instead: ` +
-    `(1) plan it thoroughly, (2) delegate the coding to Codex by running ` +
-    `\`bash ~/.claude/codex-router/codex-run.sh --write -C <project-dir> "<concrete task>"\` ` +
-    `(auto-picks Terra/Luna; add --bg for large work), then (3) review Codex's output ` +
-    `(git diff + the acceptance criteria) and integrate it. Every delegation is logged to ` +
-    `~/.claude/logs/2aio-usage.jsonl. Only implement inline when the change is a few lines, ` +
-    `or is security/judgment-critical (those stay with you). If you delegate, say so briefly.`;
+    `Per the 2AIO operating model you are the COMMANDER: plan deeply, then delegate the typing to Codex. ` +
+    `Do NOT hand-write the implementation. Steps: ` +
+    `(1) PLAN with a 2AIO sub-agent — launch the \`2aio-planner\` agent (add \`2aio-cto\` for heavy tech, ` +
+    `design skills for UI) to draft WBS + files-in-scope + data model; ` +
+    `(2) as commander, REVIEW its draft and fill the 3 things sub-agents miss — measurable acceptance ` +
+    `criteria, resolved EDGE CASES (don't leave these for Codex), and conventions — then WRITE it to ` +
+    `\`<project-dir>/.ai/codex_brief_<slug>.md\`; ` +
+    `(3) DELEGATE: \`bash ~/.claude/codex-router/codex-run.sh --write -C <project-dir> "implement .ai/codex_brief_<slug>.md exactly"\` ` +
+    `(auto Terra/Luna; --bg for large work); ` +
+    `(4) REVIEW Codex's output against the acceptance criteria (git diff) and integrate. ` +
+    `Logged to ~/.claude/logs/2aio-usage.jsonl. Only implement inline for a few-line or security/judgment-critical change.`;
 
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: ctx },
