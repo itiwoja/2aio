@@ -22,10 +22,10 @@ if (Test-Path "$harnessDir/bin/grant-override") { Copy-Item "$harnessDir/bin/gra
 # codex-router (Claude -> Codex delegation): copy module so /2aio-delegate works when installed
 if (Get-Command node -ErrorAction SilentlyContinue) {
     New-Item -ItemType Directory -Force "$claudeDir/codex-router" | Out-Null
-    foreach ($f in @("codex-router.mjs","pick-codex.mjs","codex-run.sh","routing-rules.json")) {
+    foreach ($f in @("codex-router.mjs","pick-codex.mjs","codex-run.sh","routing-rules.json","delegate-intent.mjs","codex-advisor.mjs","delegate-rules.json")) {
         Copy-Item "$harnessDir/codex-router/$f" "$claudeDir/codex-router/$f" -Force
     }
-    Write-Host "  codex-router deployed (default Terra; see /2aio-delegate)"
+    Write-Host "  codex-router deployed (auto-delegate advisor + default Terra; see /2aio-delegate)"
 } else { Write-Host "  node not found - codex-router skipped" }
 
 $settings = "$claudeDir/settings.json"

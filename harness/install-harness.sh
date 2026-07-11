@@ -48,13 +48,17 @@ if command -v node >/dev/null 2>&1; then
   mkdir -p "$CLAUDE_DIR/codex-router"
   cp "$HARNESS_DIR/codex-router/codex-router.mjs" "$HARNESS_DIR/codex-router/pick-codex.mjs" \
      "$HARNESS_DIR/codex-router/codex-run.sh" "$HARNESS_DIR/codex-router/routing-rules.json" \
+     "$HARNESS_DIR/codex-router/delegate-intent.mjs" "$HARNESS_DIR/codex-router/codex-advisor.mjs" \
+     "$HARNESS_DIR/codex-router/delegate-rules.json" \
      "$CLAUDE_DIR/codex-router/"
   chmod +x "$CLAUDE_DIR/codex-router/codex-run.sh" 2>/dev/null || true
-  echo "  codex-router deployed (delegate impl to Codex Terra/Luna via ~/.claude/codex-router/codex-run.sh)"
+  CODEX_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/codex-router/codex-advisor.mjs')).as_posix())")"
+  echo "  codex-router deployed (auto-delegate advisor + delegate impl to Codex Terra/Luna)"
 else
   echo "  node not found — model-router + skill-router advisor hooks skipped (guard still armed)"
   ADVISOR_ABS=""
   SKILL_ADVISOR_ABS=""
+  CODEX_ADVISOR_ABS=""
 fi
 
 # 3. resolve an absolute, forward-slash hook path python can read on Windows
@@ -67,12 +71,13 @@ STAMP="$(date +%Y%m%d-%H%M%S 2>/dev/null || echo bak)"
 cp "$SETTINGS" "$SETTINGS.bak-$STAMP"
 echo "  backup: settings.json.bak-$STAMP"
 
-PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
+PYBIN="$PYBIN" HOOK_ABS="$HOOK_ABS" ADVISOR_ABS="$ADVISOR_ABS" SKILL_ADVISOR_ABS="${SKILL_ADVISOR_ABS:-}" CODEX_ADVISOR_ABS="${CODEX_ADVISOR_ABS:-}" SETTINGS="$SETTINGS" "$PYBIN" - <<'PYEOF'
 import json, os
 settings_path = os.environ["SETTINGS"]
 hook_abs = os.environ["HOOK_ABS"]
 advisor_abs = os.environ.get("ADVISOR_ABS", "")
 skill_advisor_abs = os.environ.get("SKILL_ADVISOR_ABS", "")
+codex_advisor_abs = os.environ.get("CODEX_ADVISOR_ABS", "")
 pybin = os.environ["PYBIN"]
 cmd = f'{pybin} "{hook_abs}"'
 with open(settings_path, encoding="utf-8") as f:
@@ -106,16 +111,18 @@ def wire_ups(abs_path, needle):
     return 1
 advisor_added = wire_ups(advisor_abs, "model-advisor.mjs")
 skill_added = wire_ups(skill_advisor_abs, "skill-advisor.mjs")
+codex_added = wire_ups(codex_advisor_abs, "codex-advisor.mjs")
 
 with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
-print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} model-advisor + {skill_added} skill-advisor")
+print(f"  merged {added} PreToolUse matcher(s) + {advisor_added} model-advisor + {skill_added} skill-advisor + {codex_added} codex-advisor")
 PYEOF
 
 echo "✓ Harness armed:"
 echo "  - Guard (PreToolUse): blocks irreversible ops on Bash/Write/Edit/MultiEdit/NotebookEdit."
 echo "  - Model-router advisor (UserPromptSubmit): recommends /model per task."
 echo "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces relevant skills per task."
+echo "  - Auto-delegate advisor (UserPromptSubmit): detects implementation tasks & directs Claude→Codex."
 echo "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
 echo "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — see /2aio-delegate."
 echo "  Re-run this after adding skills to refresh the skill index."

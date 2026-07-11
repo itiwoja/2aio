@@ -122,6 +122,7 @@ family via `codex exec`. Same quality, far fewer Claude tokens.
 | `codex-router.mjs` / `pick-codex.mjs` | pure classifier: `classify(task) → {model, tier, reason}`. CLI prints the model id (`--json` for full result). |
 | `codex-run.sh` | safe wrapper around `codex exec`. Auto-picks the model (`--why` to preview), enforces every codex-exec safety rule: stdin closed (`< /dev/null`, no hang), 10 MB log cap (prevents runaway logs), `-o` structured jsonl, `read-only` sandbox by default (`--write` = workspace-write), `--bg` background. |
 | `/2aio-delegate` command | orchestrates the flow: Fable/Opus plans thoroughly → writes `.ai/codex_brief_*.md` → delegates impl to Codex → Claude reviews & integrates. For ≥2 parallel subtasks it invokes **agent-task-splitter** (`.coord/plan.yml` + disjoint `files_in_scope`) instead of hand-rolling briefs. |
+| `codex-advisor.mjs` (UserPromptSubmit) | **auto-delegation** — detects an implementation task from a plain prompt (`delegate-intent.mjs` + `delegate-rules.json`, JP+EN) and injects a strong directive telling the assistant to delegate the coding to Codex rather than hand-writing it. This is what makes delegation fire *without* the user typing `/2aio-delegate`. Advisory (hooks can't force the model); questions/reviews/trivial edits are excluded and stay inline. |
 
 ```bash
 codex-run.sh --why "scaffold boilerplate tests"   # -> gpt-5.6-luna  (mechanical)
