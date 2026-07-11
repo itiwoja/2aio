@@ -56,6 +56,35 @@ template.
 Set in each agent's `model:` frontmatter; `install.sh` deploys them. Matches the cost policy in
 `~/.claude/CLAUDE.md`.
 
+### Automatic model switching (`model-router/`)
+
+Beyond the *static* per-agent pins, the router picks a model **dynamically from the task**.
+Grounded constraint: **Claude Code hooks cannot switch the model** (no `model` field in hook
+output), and there is no built-in auto-routing. So auto-switching happens where it genuinely can —
+at the launch/orchestration boundary — plus an advisory nudge mid-session.
+
+| Surface | Mechanism | Automatic? |
+|---|---|---|
+| **Launcher** `2aio-run.sh` / `.ps1` | classifies the task, then `claude --model <picked> …` | ✅ real switch at launch |
+| **Orchestrators** (`/2aio-build`, batch, forge) | call `pick.mjs` to choose `--model` per phase/job | ✅ real switch per job |
+| **Advisor hook** (`model-advisor.mjs`, UserPromptSubmit) | injects `additionalContext` recommending `/model X` when a clearly cheaper/stronger tier fits | ⚠️ advisory only (hooks can't switch) |
+
+Routing (rules in `model-router/routing-rules.json`, tune freely):
+- **haiku** — mechanical/lookup/status (search, rename, format, "確認だけ")
+- **opus** — architecture / security / large multi-file / high-stakes judgment
+- **sonnet** — default (ordinary coding)
+- **budget-aware** — pass `MODEL_ROUTER_BUDGET=0..1` (remaining 5h-block fraction); below 15 % it
+  downgrades a tier to protect the subscription quota.
+
+```bash
+2aio-run "refactor the whole auth system"   # -> claude --model opus
+2aio-run "rename these files"                # -> claude --model haiku
+2aio-run --why "design the architecture"     # show pick + reason, don't launch
+node model-router/pick.mjs "quick: add a log"  # -> haiku   (for scripts/orchestrators)
+```
+Tests: `cd model-router && node --test` (9 cases). The advisor is wired by `install-harness.sh`
+and fails open (never blocks prompt submission).
+
 ## Cost / latency note
 The guard spawns `python` on every intercepted tool call (~100–200 ms). That is the price of a
 live guardrail. Scope is Bash/Write/Edit/MultiEdit/NotebookEdit (Read and MCP are not intercepted,
