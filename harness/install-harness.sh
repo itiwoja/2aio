@@ -43,6 +43,14 @@ if command -v node >/dev/null 2>&1; then
      "$CLAUDE_DIR/skill-router/"
   node "$CLAUDE_DIR/skill-router/build-index.mjs" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/skill-router/skill-index.json" || echo "  (skill index build skipped)"
   SKILL_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/skill-router/skill-advisor.mjs')).as_posix())")"
+
+  # 2d. codex-router (Claude→Codex delegation): copy module + make wrapper executable
+  mkdir -p "$CLAUDE_DIR/codex-router"
+  cp "$HARNESS_DIR/codex-router/codex-router.mjs" "$HARNESS_DIR/codex-router/pick-codex.mjs" \
+     "$HARNESS_DIR/codex-router/codex-run.sh" "$HARNESS_DIR/codex-router/routing-rules.json" \
+     "$CLAUDE_DIR/codex-router/"
+  chmod +x "$CLAUDE_DIR/codex-router/codex-run.sh" 2>/dev/null || true
+  echo "  codex-router deployed (delegate impl to Codex Terra/Luna via ~/.claude/codex-router/codex-run.sh)"
 else
   echo "  node not found — model-router + skill-router advisor hooks skipped (guard still armed)"
   ADVISOR_ABS=""
@@ -109,5 +117,6 @@ echo "  - Guard (PreToolUse): blocks irreversible ops on Bash/Write/Edit/MultiEd
 echo "  - Model-router advisor (UserPromptSubmit): recommends /model per task."
 echo "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces relevant skills per task."
 echo "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
+echo "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — see /2aio-delegate."
 echo "  Re-run this after adding skills to refresh the skill index."
 echo "  Owner bypass: prefix a command with '!'.   Disarm: bash $HARNESS_DIR/uninstall-harness.sh"

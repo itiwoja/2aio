@@ -19,6 +19,15 @@ if (-not (Test-Path "$claudeDir/safety-guard/security-rules.json")) {
 } else { Write-Host "  keep existing security-rules.json" }
 if (Test-Path "$harnessDir/bin/grant-override") { Copy-Item "$harnessDir/bin/grant-override" "$claudeDir/bin/" -Force }
 
+# codex-router (Claude -> Codex delegation): copy module so /2aio-delegate works when installed
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    New-Item -ItemType Directory -Force "$claudeDir/codex-router" | Out-Null
+    foreach ($f in @("codex-router.mjs","pick-codex.mjs","codex-run.sh","routing-rules.json")) {
+        Copy-Item "$harnessDir/codex-router/$f" "$claudeDir/codex-router/$f" -Force
+    }
+    Write-Host "  codex-router deployed (default Terra; see /2aio-delegate)"
+} else { Write-Host "  node not found - codex-router skipped" }
+
 $settings = "$claudeDir/settings.json"
 if (-not (Test-Path $settings)) { "{}" | Out-File $settings -Encoding utf8 }
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"

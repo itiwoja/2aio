@@ -1,14 +1,16 @@
 # 2AIO Live Harness
 
 Makes every Claude Code session **run on 2AIO** — not just a set of installable files, but an
-operating layer with three parts:
+operating layer with four parts:
 
 1. **Guardrails wired** — a `PreToolUse` hook intercepts every Bash/Write/Edit/MultiEdit/NotebookEdit
    call and blocks irreversible/catastrophic actions before they run.
-2. **Per-agent model routing** — each 2aio agent pins the right model tier (opus / sonnet / haiku)
-   for cost-vs-quality (see table below and each agent's frontmatter).
+2. **Per-agent + dynamic model routing** — each 2aio agent pins the right model tier (opus / sonnet /
+   haiku), and the `model-router` picks a tier dynamically from the task at the launch boundary.
 3. **Skill auto-trigger + delegation** — the 66 vendored skills auto-activate by description; the
    board/engineering agents are delegated to by role.
+4. **Codex delegation** — Claude plans, then delegates implementation to the cheaper Codex
+   (Terra/Luna) family via `codex-router/`, keeping expensive Claude tokens for judgment.
 
 ## Arm / disarm
 
@@ -107,6 +109,34 @@ Examples (live): 「このダッシュボードUIを作り直したい」→ `re
 > Like the model advisor, this **cannot invoke the skill itself** (hooks can't call tools) — it
 > injects a strong directive so the assistant reliably reaches for the right skill instead of
 > ignoring it. Re-run `install-harness.sh` after installing new skills to refresh the index.
+
+## Codex delegation (`codex-router/`)
+
+**Claude thinks, Codex writes.** Expensive Claude (Fable/Opus) tokens go to *planning, review,
+and integration*; mechanical-to-mid implementation is delegated to the cheaper Codex (Terra/Luna)
+family via `codex exec`. Same quality, far fewer Claude tokens.
+
+| Piece | Role |
+|---|---|
+| `routing-rules.json` | maps a task → cheapest fitting Codex tier. **Default Terra**; Luna for mechanical/bulk; **Sol only when explicitly hard** (expensive). JP+EN keyword rules — tune freely. |
+| `codex-router.mjs` / `pick-codex.mjs` | pure classifier: `classify(task) → {model, tier, reason}`. CLI prints the model id (`--json` for full result). |
+| `codex-run.sh` | safe wrapper around `codex exec`. Auto-picks the model (`--why` to preview), enforces every codex-exec safety rule: stdin closed (`< /dev/null`, no hang), 10 MB log cap (prevents runaway logs), `-o` structured jsonl, `read-only` sandbox by default (`--write` = workspace-write), `--bg` background. |
+| `/2aio-delegate` command | orchestrates the flow: Fable/Opus plans thoroughly → writes `.ai/codex_brief_*.md` → delegates impl to Codex → Claude reviews & integrates. For ≥2 parallel subtasks it invokes **agent-task-splitter** (`.coord/plan.yml` + disjoint `files_in_scope`) instead of hand-rolling briefs. |
+
+```bash
+codex-run.sh --why "scaffold boilerplate tests"   # -> gpt-5.6-luna  (mechanical)
+codex-run.sh --why "implement the login form"      # -> gpt-5.6-terra (default)
+codex-run.sh --why "tricky race condition fix"      # -> gpt-5.6-sol   (explicitly hard)
+codex-run.sh --write --bg -C <repo> "<planned task>"  # real delegated impl, background
+```
+
+Tests: `cd codex-router && node --test` (6 cases: default→terra, mechanical→luna, hard→sol,
+ordinary-never-sol). The global Codex default is also set to Terra in `~/.codex/config.toml`
+(`model = "gpt-5.6-terra"`), so even a bare `codex` call avoids the expensive Sol tier.
+
+**Safety:** never put strong-permission secrets (e.g. `service_role`) in a Codex brief or the
+chat — pass env-var *names* only. Codex output is always reviewed by Claude before integration;
+destructive ops are never delegated.
 
 ## Cost / latency note
 The guard spawns `python` on every intercepted tool call (~100–200 ms). That is the price of a
