@@ -17,6 +17,11 @@ test("research -> research lane", () => {
   assert.equal(pickLane("do a competitive analysis of note-taking apps").lane, "research");
 });
 
+test("comprehensive strengthen -> harden lane", () => {
+  assert.equal(pickLane("既存アプリを全面強化して").lane, "harden");
+  assert.equal(pickLane("harden this existing service").lane, "harden");
+});
+
 test("ordinary coding / questions -> no lane (null)", () => {
   assert.equal(pickLane("ログイン画面を実装して"), null);
   assert.equal(pickLane("なぜこのバグが起きる？"), null);

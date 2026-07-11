@@ -3,6 +3,16 @@
   "min_len": 8,
   "lanes": [
     {
+      "lane": "harden",
+      "entry": "/2aio-harden",
+      "keywords": [
+        "全面強化", "全面的に強化", "強化して", "堅牢化", "ハーデニング", "総点検", "全面点検",
+        "品質を上げ", "全部直して", "まるごと改善", "何もかも強化", "全面的に改善",
+        "harden", "hardening", "audit and fix", "strengthen the", "toughen up", "shore up"
+      ],
+      "directive": "This asks to comprehensively STRENGTHEN an existing system (security, quality, performance, a11y, observability, tests, UI). 2AIO has a dedicated autonomous lane that audits across dimensions, fixes CRITICAL/HIGH via Codex delegation, and loops until clean — without breaking behavior. Use the /2aio-harden command instead of ad-hoc fixes."
+    },
+    {
       "lane": "board",
       "entry": "/2aio-start-project",
       "keywords": [
