@@ -134,6 +134,19 @@ Tests: `cd codex-router && node --test` (6 cases: default→terra, mechanical→
 ordinary-never-sol). The global Codex default is also set to Terra in `~/.codex/config.toml`
 (`model = "gpt-5.6-terra"`), so even a bare `codex` call avoids the expensive Sol tier.
 
+### Audit trail — proving 2AIO + Claude→Codex were used
+
+Two append-only JSONL logs let you verify *after the fact* that the harness and the
+delegation actually fired (not just claimed to):
+
+| Log | Written by | Proves |
+|---|---|---|
+| `~/.claude/.agent-audit/actions.jsonl` | the guard (`command-guard.py`) on **every** Bash/Read/Write/Edit/MCP call | **2AIO was active** — every tool call is recorded with actor, target, allow/block, reason. Secrets are redacted. |
+| `~/.claude/logs/2aio-usage.jsonl` | `codex-run.sh` on every delegation | **Claude→Codex ran** — one `codex_delegate_start` line (written *before* codex launches, so it survives a kill) + one `codex_delegate_end` line with model, tier, sandbox, dir, task, result path, exit code. |
+
+Override the delegation log path with `AIO_USAGE_LOG`. Quick check after a run:
+`tail -n 5 ~/.claude/logs/2aio-usage.jsonl`.
+
 **Safety:** never put strong-permission secrets (e.g. `service_role`) in a Codex brief or the
 chat — pass env-var *names* only. Codex output is always reviewed by Claude before integration;
 destructive ops are never delegated.

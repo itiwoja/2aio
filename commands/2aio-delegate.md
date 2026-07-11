@@ -80,8 +80,17 @@ bash ~/.claude/codex-router/codex-run.sh --why "<task>"
 
 - `.ai/codex_brief_<slug>.md` — 計画正本
 - `.coord/plan.yml` — 並列時のみ（DAG）
-- `.ai/codex_result_<ts>.jsonl` / `.ai/codex_log_<ts>.txt` — Codex 実行記録
+- `.ai/codex_result_<ts>.jsonl` / `.ai/codex_log_<ts>.txt` — Codex 実行記録（プロジェクト内）
 - 統合済みの差分（Claude レビュー済み）
+
+## ログ（後から「本当に使われたか」を検証できる）
+
+委譲が実際に起きたことは、プロジェクト外の中央ログに追記される:
+
+- **`~/.claude/logs/2aio-usage.jsonl`** — 委譲ごとに1〜2行。`codex_delegate_start`（Codex 起動**前**に記録＝途中で kill されても委譲した証拠が残る）＋ `codex_delegate_end`（model / tier / sandbox / dir / task / result / exit）。`AIO_USAGE_LOG` で変更可。
+- **`~/.claude/.agent-audit/actions.jsonl`** — ハーネスのガードが全ツール呼び出しを記録（＝2AIO 自体が稼働していた証拠）。
+
+確認: `tail -n 5 ~/.claude/logs/2aio-usage.jsonl`。ここに `tier` が terra/luna であれば「Sol を避けて委譲できた」ことも読み取れる。
 
 ## トークン節約の考え方
 
