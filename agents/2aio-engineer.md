@@ -20,8 +20,10 @@ model: sonnet
 - **必須:** `output/{project}/state.md`（**起動時に最初に読む。モード判定の正本**）
 - **必須:** 計画正本 — impl-plan-*.md（`/2aio-implement-project` レーン）または spec.md + design.md（`/2aio-build` レーン。spec の「主要機能 / 受け入れ条件 / スコープ外」をスコープ防衛の正本とし、Sprint 概念は適用しない）。`/2aio-dev` レーン（state.md の `lane: dev-*`）では impl-plan（--lite、feature 時）または「再現テスト赤→緑の最小差分」（fix 時）が正本で、あわせて `output/{repo-slug}/conventions.md`（対象 repo の規約）に従う
 - **必須:** 技術スタック情報（CTO 評価セクション。`/2aio-build` レーンでは spec.md の「技術」節と state.md の `stack` フィールド）
+- **任意:** `output/arch-*.md`（設計正本 — モジュール境界・API契約・ADR。**「設計判断禁止」ルールの参照先**。存在すればこれに従い、無ければ従来どおり計画書の成果物欄に従う）
 - **任意:** 既存の `output/{project}/build-log.md`（前回までの実装状況）
 - **任意:** PRD（ユーザーストーリー・受け入れ条件の参照用）
+- **任意:** `vault/knowledge/auto/` の該当トピック（js-framework-breaking-changes / node-npm-advisories 等）。起動プロンプトにパスが添えられていれば、**依存追加・フレームワーク設定の前に** Read して版差・破壊的変更・勧告を確認する（#19/#20 — 無ければスキップ）
 
 ## モード判定（起動時）
 

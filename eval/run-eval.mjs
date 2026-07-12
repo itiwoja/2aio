@@ -200,7 +200,7 @@ async function run(options) {
 
   const ts = stamp();
   const workspace = path.join(ROOT, 'workspaces', `eval-${theme.id}-${ts}`);
-  fs.mkdirSync(workspace, { recursive: false });
+  fs.mkdirSync(workspace, { recursive: true }); // workspaces/ 親ごと作成（初回実行で親が無い）
   const git = spawnSync('git', ['-C', workspace, 'init'], { encoding: 'utf8', windowsHide: true });
   if (git.status !== 0) throw new Error(`git init failed: ${(git.stderr || git.error?.message || '').trim()}`);
   const repoId = `eval-${theme.id}-${ts}`;
