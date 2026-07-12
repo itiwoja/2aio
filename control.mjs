@@ -16,10 +16,13 @@ import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
 import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
 import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
 
-const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
-const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
+// #22: ROOT/上限は env で注入可能（統合テストが一時ディレクトリで実レジストリを汚染しないため）。
+// import 時の副作用（listen / setInterval / プリウォーム / reconcile）は末尾の main ガード内のみ。
+const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const ROOT = process.env.AIO_CONTROL_ROOT || HERE;
+const CFG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
 const GOV = { tokenThreshold: 0.8, maxConcurrency: 1, pollMs: 5000, ...(CFG.governor || {}) };
-const TOKEN_LIMIT = CFG.claudeMax5x?.tokenLimit || 0;
+const TOKEN_LIMIT = Number(process.env.AIO_TOKEN_LIMIT ?? (CFG.claudeMax5x?.tokenLimit || 0));
 const PORT = process.env.AIO_CONTROL_PORT || 7900;
 const CLAUDE = process.env.AIO_CLAUDE_BIN || process.env.CLAUDE_BIN || 'claude';
 // テスト/ドライラン用に worker コマンドを丸ごと差し替え可能(既定は claude -p)
@@ -144,6 +147,11 @@ function corePrompt(job, a) {
     case 'test': return `このリポジトリのテストコマンドを検出して全実行してください（package.json scripts / Makefile / pytest 等）。失敗があれば原因を特定して修正し、全テストが緑になるまで繰り返す（最大3往復。直せなければ失敗内容を報告して終了）。テスト基盤が無ければ「テスト基盤なし」と報告して終了。`;
     case 'review': return `/code-review ${a.target}`.trim();
     case 'refactor': return `/refactor-clean ${a.target || ''}`.trim();
+    // ── IDD ブリッジ (#23)。連鎖は intent→plan→mvp で必ず停止（削軸レビューは ikki の対話必須のため
+    // idd-v1 は自動投入しない — IDDガードレール「削軸スキップ禁止」）──
+    case 'idd-intent': return `/idd-intent ${a.theme || ''}`.trim();
+    case 'idd-plan': return `idd/active/ の最新の intent（直前ジョブが作成したもの）を対象に /idd-plan を実行してください。スコープは Intent から逆算し、Intent に無い機能を足さないこと。`;
+    case 'idd-mvp': return `idd/active/ の最新の plan を対象に /idd-mvp を実行してください。MVP 完了条件に答える最短経路のみ実装し、v1/v2 スコープに手を出さないこと。`;
     // pr は履歴公開アクションのため、devops Step 2.5 と同等の秘密スキャンをプロンプトに内蔵（正本性は崩さない）
     case 'pr': return `現在のブランチを PR にしてください。手順: (1) push 前に gitleaks（未導入なら git grep -iE "(api[_-]?key|secret|token|password)\\s*[:=]" $(git rev-list --all) 相当の履歴 grep で代替）で秘密情報スキャンを実行。leak>0 なら push せず [SECURITY_STOP] を出力して停止。 (2) clean なら push して gh pr create（本文に変更概要・テスト結果を記載）。 (3) PR URL を出力。`;
     default: return (a.theme || a.text || '').trim();
@@ -247,9 +255,22 @@ function startJob(job) {
 
   // #14: stream-json ワーカー(-p 併用時 --verbose 必須)。WORKER_CMD 差替え時は素の出力が来るが、
   // 下の行パーサが JSON でない行を {type:'raw'} として扱うフォールバックで吸収する。
+  //
+  // ヘッドレス権限（eval 実走で発覚した設計ギャップの修正）: 既定モードでは Write/Edit/Read が
+  // 対話承認待ち→auto-deny となり、ワーカーはファイルを1つも作れない。dangerously-skip-permissions は
+  // 2AIO ルールで禁止のため、正規の acceptEdits + allowedTools 前置きで許可する
+  // （Ring-1 guard フックは引き続き全ツール呼び出しを審査する）。config.json の worker で上書き可。
+  const WK = CFG.worker || {};
+  const PERMISSION_MODE = WK.permissionMode || 'acceptEdits';
+  const ALLOWED_TOOLS = WK.allowedTools
+    || 'Read,Write,Edit,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(mkdir:*),Bash(curl:*),Bash(vercel:*),Bash(firebase:*)';
   let cmd, args;
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
-  else { cmd = CLAUDE; args = ['-p', '--output-format', 'stream-json', '--verbose', prompt]; }
+  else {
+    cmd = CLAUDE;
+    args = ['-p', '--output-format', 'stream-json', '--verbose',
+      '--permission-mode', PERMISSION_MODE, '--allowedTools', ALLOWED_TOOLS, prompt];
+  }
 
   let child;
   try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true }); }
@@ -317,8 +338,12 @@ function startJob(job) {
         : `exit ${code}`)
       : null;
     // #15: waiting_approval に遷移済みなら exit 0 でも done に上書きしない
+    // #23: idd-mvp 完了は done でなく waiting_review（ikki の /idd-review 4軸レビュー待ちを可視化。
+    //      後続の自動投入はしない — 削軸レビューは対話必須）
     const current = loadQueue(ROOT).find((x) => x.id === job.id);
-    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval' : (code === 0 ? 'done' : 'failed');
+    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval'
+      : (code === 0 && job.kind === 'idd-mvp') ? 'waiting_review'
+      : (code === 0 ? 'done' : 'failed');
     const updated = updateJob(ROOT, job.id, {
       state: nextState, exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
@@ -406,6 +431,15 @@ const server = http.createServer(async (req, res) => {
     // review は clean checkout の headless 実行では未コミット差分が無いため、対象(PR番号/ブランチ差分)必須
     if (kind === 'review' && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'review には target（PR番号 or ブランチ差分）が必須です' }));
     if (kind === 'issue' && !issue && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'issue には Issue 番号が必須です' }));
+    // #23: kind=idd は intent→plan→mvp の3連鎖投入（mvp で必ず停止。v1 は /idd-review 後に手動）
+    if (kind === 'idd') {
+      if (!theme) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'idd には theme（Intent の種）が必須です' }));
+      const j1 = enqueue(ROOT, { repo, kind: 'idd-intent', args: { theme } });
+      const j2 = enqueue(ROOT, { repo, kind: 'idd-plan', args: {}, dependsOn: j1.id });
+      const j3 = enqueue(ROOT, { repo, kind: 'idd-mvp', args: {}, dependsOn: j2.id });
+      tick();
+      return send(res, 200, 'application/json', JSON.stringify({ ok: true, jobs: [j1, j2, j3] }));
+    }
     const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt, notBefore });
     tick();
     return send(res, 200, 'application/json', JSON.stringify({ ok: true, job }));
@@ -453,16 +487,22 @@ const server = http.createServer(async (req, res) => {
   send(res, 404, 'text/plain', 'not found');
 });
 // 書き込み(spawn)を伴うためローカル限定バインド。LAN公開は Phase 3(トークン認証)まで行わない。
-// 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
-// (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
-const rec = reconcile(ROOT, (id) => procs.has(id));
-if (rec.interrupted.length || rec.requeued.length) {
-  console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
-}
+// #22: テストから server / tick を直接使えるよう export（main ガードにより import では listen しない）
+export { server, tick };
 
-server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
-claudeUsage(); // ccusage プリウォーム
-setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
+// main ガード: 直接実行時のみ副作用を開始する（import 時はサーバ生成のみで listen しない）
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(HERE, 'control.mjs');
+if (isMain) {
+  // 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
+  // (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
+  const rec = reconcile(ROOT, (id) => procs.has(id));
+  if (rec.interrupted.length || rec.requeued.length) {
+    console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
+  }
+  server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
+  claudeUsage(); // ccusage プリウォーム
+  setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
+}
 
 const HTML = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>2AIO Control</title><style>
@@ -481,7 +521,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .badge.queued{background:rgba(93,176,255,.14);color:var(--accent)}.badge.running{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error{background:rgba(240,98,111,.16);color:var(--bad)}
-.badge.interrupted,.badge.waiting_approval{background:rgba(210,162,58,.16);color:var(--warn)}
+.badge.interrupted,.badge.waiting_approval,.badge.waiting_review{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.skipped{background:rgba(154,167,180,.16);color:var(--sub)}
 .badge.new{background:rgba(93,176,255,.14);color:var(--accent)}.badge.existing{background:rgba(63,185,80,.16);color:var(--ok)}.badge.cloning{background:rgba(210,162,58,.16);color:var(--warn)}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
@@ -514,7 +554,7 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
   <div class="card"><h2>ジョブ投入（既存repoの手動レーン）</h2>
     <div class="form">
       <select id="repo"></select>
-      <select id="kind"><option value="build">build（高速レーン）</option><option value="start">start（取締役会）</option><option value="plan">plan</option><option value="implement">implement</option><option value="analyze">analyze（解析）</option><option value="feature">feature（既存repoに機能追加）</option><option value="fix">fix（バグ修正）</option><option value="issue">issue（GitHub Issue番号から）</option><option value="test">test（テスト実行+修正）</option><option value="review">review（要target: PR番号/差分）</option><option value="refactor">refactor（死コード掃除）</option><option value="pr">pr（push+PR作成）</option></select>
+      <select id="kind"><option value="build">build（高速レーン）</option><option value="start">start（取締役会）</option><option value="plan">plan</option><option value="implement">implement</option><option value="analyze">analyze（解析）</option><option value="feature">feature（既存repoに機能追加）</option><option value="fix">fix（バグ修正）</option><option value="issue">issue（GitHub Issue番号から）</option><option value="test">test（テスト実行+修正）</option><option value="review">review（要target: PR番号/差分）</option><option value="refactor">refactor（死コード掃除）</option><option value="pr">pr（push+PR作成）</option><option value="idd">idd（intent→plan→mvp 連鎖。mvpで停止→/idd-review待ち）</option></select>
       <input id="theme" placeholder="テーマ / 機能記述 / Issue番号 / review対象（analyze・pr は不要）">
       <button id="add">＋ キューに追加</button>
     </div>

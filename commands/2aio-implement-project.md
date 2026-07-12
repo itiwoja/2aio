@@ -345,7 +345,7 @@ tags: [2aio, {project}, completion]
 - 状態ファイル: [[state]]
 
 ## スコープ外検出（[SCOPE_DEFERRED]）
-{次回 /2aio-plan-project で v2 候補化推奨}
+{次回 /2aio-plan-project で v2 候補化推奨。**IDD 連携（#23）**: IDD 管理下のテーマでは /idd-plan・/idd-review がこのセクションを「追軸デフォルト v2」の候補として読む（plan.md を直接書き換えず、必要なら idd/active/{slug}/v2-inbox.md へ追記するのは IDD 側の裁量 — Plan 改訂宣言の原則を維持）}
 
 ## レビュー指摘（v2 候補）
 {Phase 2-b2 レビューゲートの MEDIUM 以下の指摘一覧。[REVIEW_DEGRADED] があればここに明記}

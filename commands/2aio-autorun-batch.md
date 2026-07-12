@@ -268,6 +268,17 @@ tags: [2aio, batch, completion]
 - `output/_batch/batch-state-{batch_id}.md` を読む（存在しなければエラーで停止）
 - `current_theme_index` 以降のテーマから再開
 - 完了済みテーマはスキップ
+- **進行中テーマの再開判定表（#24 — board 会議・計画のやり直しによる二重消費を防ぐ）**:
+
+| batch-state の該当テーマ行 | 再開位置 |
+|---|---|
+| `prd_file` 未記録 | B-1（取締役会）から |
+| `prd_file` 有り ＋ `impl_plan_file` 無し | B-2（計画）から。PRD は再生成しない |
+| `impl_plan_file` 有り ＋ `output/{project}/state.md` **不在** | B-3 を `/2aio-implement-project --auto {impl_plan_file}` で**新規**起動 |
+| `output/{project}/state.md` **存在** | `/2aio-implement-project resume {project}` へ委譲 |
+
+（implement の resume は state.md 不在時エラー仕様のため、後2者の分離が必須。
+ステータスが `rejected` / `needs_review` / `failed` のテーマは再開せずスキップ。）
 
 ---
 
