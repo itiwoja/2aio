@@ -4,6 +4,7 @@
   "auditBackend": "claude",
   "claudeMax5x": { "label": "Max x5", "tokenLimit": 220000000, "costLimit": 0 },
   "auditRounds": 2,
+  "governor": { "tokenThreshold": 0.8, "maxConcurrency": 1, "pollMs": 5000 },
   "auditRoles": ["factuality", "hallucination", "2aio-fit", "safety"],
   "search": { "maxResults": 5, "maxCharsPerResult": 1800 },
   "paths": {
