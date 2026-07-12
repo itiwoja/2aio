@@ -10,10 +10,11 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
-import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel } from './lib/queue.mjs';
+import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips } from './lib/queue.mjs';
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
-import { buildInterview, validateInterview, briefToBuildPrompt } from './lib/intake.mjs';
+import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
+import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
@@ -44,8 +45,12 @@ function loadRepos() {
 function saveRepos(repos) { fs.writeFileSync(REPOS_FILE, JSON.stringify({ repos }, null, 2)); }
 const repoById = (id) => loadRepos().find(r => r.id === id) || null;
 function upsertRepo(rec) {
-  const repos = loadRepos().filter(r => r.id !== rec.id);
-  repos.unshift(rec); saveRepos(repos); return rec;
+  const all = loadRepos();
+  const prev = all.find(r => r.id === rec.id) || {};
+  const repos = all.filter(r => r.id !== rec.id);
+  // #11: 既存フィールドをマージ（再登録で stack 等のカスタムフィールドを消さない）
+  const merged = { ...prev, ...rec };
+  repos.unshift(merged); saveRepos(repos); return merged;
 }
 
 // HTTPS(等)URLで登録 → workspaces/ に clone → 新規/既存を判定して状態を更新(非同期)。
@@ -63,7 +68,7 @@ function registerRepo(url) {
     // #3 Phase A: 'main' ハードコードをやめ、clone 直後の HEAD から実デフォルトブランチを検出
     const head = git(dest, 'symbolic-ref', '--short', 'HEAD');
     const branch = head.code === 0 && head.out ? head.out : 'main';
-    upsertRepo({ ...repoById(id), branch, mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount });
+    upsertRepo({ ...repoById(id), branch, mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount, stack: c.stack || null });
     if (c.mode === 'new') seedIntake(id); // 新規は対話ヒアリングを用意
   };
   if (alreadyCloned) { done(); return { ok: true, repo: repoById(id), reused: true }; }
@@ -96,8 +101,10 @@ async function intakeAnswer(id, text) {
   if (!v) return { ok: false, err: 'ヒアリング応答が不正（claudeがJSONを返さなかった可能性）' };
   if (v.done) {
     rec.done = true; rec.brief = v.brief;
-    const job = enqueue(ROOT, { repo: id, kind: 'implement', prompt: briefToBuildPrompt(v.brief, repo) });
-    rec.enqueuedJob = job.id; tick();
+    // #12: plan→implement の2連投入（段間でガバナーが予算待機でき、impl-plan がチェックポイントに残る）
+    const planJob = enqueue(ROOT, { repo: id, kind: 'plan', prompt: briefToPlanPrompt(v.brief, repo) });
+    const implJob = enqueue(ROOT, { repo: id, kind: 'implement', prompt: IMPLEMENT_CHAIN_PROMPT, dependsOn: planJob.id });
+    rec.enqueuedJob = planJob.id; rec.chainJob = implJob.id; tick();
   } else {
     rec.messages.push({ role: 'assistant', content: v.question });
   }
@@ -105,16 +112,31 @@ async function intakeAnswer(id, text) {
   return { ok: true, rec };
 }
 
+// #11: repo メモリの正本は workspaces/<repo>/CLAUDE.md（cwd 直下なので claude -p が自動ロードし、
+// cwd 内書き込みなので権限問題も無い）。全 kind に「テストコマンド＋完了時のメモリ追記」を注入する。
+function memoryPreamble(repo) {
+  const parts = [];
+  const t = repo?.stack?.testCmd; const b = repo?.stack?.buildCmd;
+  if (t || b) parts.push(`このrepoのコマンド: ${[b && `ビルド=${b}`, t && `テスト=${t}`].filter(Boolean).join(' / ')}。検証にはこれを使う。`);
+  parts.push('作業完了時、今後のジョブに有用な決定・構成理解・失敗の教訓があれば CLAUDE.md（無ければ作成）に簡潔に追記する。');
+  return parts.join('\n');
+}
+
 // kind → 実行プロンプト(2AIOの入口レーンへ委譲)。prompt指定があればそれを優先。
-function buildPrompt(job) {
-  if (job.prompt) return job.prompt;
+function buildPrompt(job, repo = null) {
+  const pre = memoryPreamble(repo);
+  const wrap = (p) => (p ? `${p}\n\n---\n${pre}` : p);
+  if (job.prompt) return wrap(job.prompt);
   const a = job.args || {};
+  return wrap(corePrompt(job, a));
+}
+function corePrompt(job, a) {
   switch (job.kind) {
     case 'build': return `/2aio-build ${a.theme || ''} ${a.flags || '--auto'}`.trim();
     case 'start': return `/2aio-start-project ${a.theme || ''}`.trim();
     case 'plan': return `/2aio-plan-project ${a.prd || 'latest'}`.trim();
     case 'implement': return `/2aio-implement-project ${a.plan || 'latest'} ${a.flags || '--auto'}`.trim();
-    case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。`;
+    case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。最後に、解析結果の要点（構成理解・主要コマンド・注意点）を CLAUDE.md に反映してください（無ければ作成。次回以降のジョブが自動ロードして使う）。`;
     // ── 開発 kind (#9)。feature/fix/issue は /2aio-dev レーン(#1)へ委譲 ──
     case 'feature': return `/2aio-dev . ${a.theme || ''} ${a.flags || '--auto'}`.trim();
     case 'fix': return `/2aio-dev . --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim();
@@ -137,8 +159,62 @@ function governorState() {
   return { usage, active, running, decision };
 }
 
+// ─── #15 通知（読み取り専用・失敗しても運用を壊さない） ───
+const NOTIFY_CFG = CFG.notify || {};
+let prevBudgetDecision = null;
+const budgetSeen = new Set(); // 同一5hブロック(resetAt)内の budget_stop dedup
+
+function notifyJob(job, ndjsonPath = null) {
+  const ev = jobEvent(job);
+  if (!ev) return;
+  let tail = [];
+  if (ndjsonPath) { try { tail = fs.readFileSync(ndjsonPath, 'utf8').trim().split('\n').slice(-20); } catch { /* ログ無し */ } }
+  sendNotification(NOTIFY_CFG, ev, tail).catch(() => {});
+}
+function checkBudgetEdge(decision) {
+  const ev = budgetStopEvent(prevBudgetDecision, decision, budgetSeen);
+  prevBudgetDecision = decision;
+  if (ev) sendNotification(NOTIFY_CFG, ev).catch(() => {});
+}
+
 // ─── ワーカー: ガバナー許可がある限り queued を起動する ───
 const procs = new Map(); // jobId → child
+
+// プロセスツリーごと停止 (#10)。Windows の child.kill() は claude.cmd 配下の node が残るため taskkill /T。
+function treeKill(child) {
+  if (!child || child.pid == null) return;
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true });
+  } else {
+    try { child.kill('SIGKILL'); } catch { /* already dead */ }
+  }
+}
+
+// kind別の最大実行時間 (#10)。config.json の governor.maxRuntimeMin: { default, analyze, ... } で上書き可。
+const RUNTIME_MIN = { default: 120, analyze: 15, test: 30, review: 30, refactor: 30, ...(GOV.maxRuntimeMin || {}) };
+const maxRuntimeMs = (kind) => (RUNTIME_MIN[kind] ?? RUNTIME_MIN.default) * 60_000;
+
+// #14: 成果物リンクの一次ソースは state.md / deploy-report.md（「state.md が正本」原則）。
+// ワーカー終了後に repo の output/*/state.md 最新を読み deployed_url / pr_url を拾う。
+function collectArtifacts(repoPath) {
+  try {
+    const outDir = path.join(repoPath, 'output');
+    if (!fs.existsSync(outDir)) return null;
+    const dirs = fs.readdirSync(outDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && fs.existsSync(path.join(outDir, d.name, 'state.md')))
+      .map((d) => path.join(outDir, d.name))
+      .sort((a, b) => fs.statSync(path.join(b, 'state.md')).mtimeMs - fs.statSync(path.join(a, 'state.md')).mtimeMs);
+    if (!dirs.length) return null;
+    const state = fs.readFileSync(path.join(dirs[0], 'state.md'), 'utf8');
+    const pick = (key) => state.match(new RegExp(`^${key}:\\s*(\\S+)\\s*$`, 'm'))?.[1];
+    const deployedUrl = pick('deployed_url'), prUrl = pick('pr_url');
+    return {
+      outputDir: dirs[0],
+      deployedUrl: deployedUrl && deployedUrl !== 'null' ? deployedUrl : null,
+      prUrl: prUrl && prUrl !== 'null' ? prUrl : null,
+    };
+  } catch { return null; }
+}
 
 function startJob(job) {
   const repo = repoById(job.repo);
@@ -165,35 +241,90 @@ function startJob(job) {
     commitBefore = head.code === 0 ? head.out : null;
   }
 
-  const prompt = buildPrompt(job);
+  const prompt = buildPrompt(job, repo);
   const { active } = governorState();
   updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: prompt });
 
+  // #14: stream-json ワーカー(-p 併用時 --verbose 必須)。WORKER_CMD 差替え時は素の出力が来るが、
+  // 下の行パーサが JSON でない行を {type:'raw'} として扱うフォールバックで吸収する。
   let cmd, args;
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
-  else { cmd = CLAUDE; args = ['-p', prompt]; }
+  else { cmd = CLAUDE; args = ['-p', '--output-format', 'stream-json', '--verbose', prompt]; }
 
   let child;
   try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true }); }
   catch (e) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), exit: -1, log: [String(e.message)] }); return; }
   procs.set(job.id, child);
 
-  const push = (b) => {
-    const j = loadQueue(ROOT).find(x => x.id === job.id); if (!j) return;
-    String(b).split('\n').filter(Boolean).forEach(l => { j.log.push(l); while (j.log.length > 200) j.log.shift(); });
-    updateJob(ROOT, job.id, { log: j.log });
+  // #14: 全文ログは control/logs/<jobId>.ndjson に追記(200行キャップで主産物が消える問題の解消)。
+  // queue.json の log[] は最新20行のプレビューに縮小(チャンクごとの全体書き込み負荷も低減)。
+  ensureDir(path.join(ROOT, 'control', 'logs'));
+  const ndjsonPath = path.join(ROOT, 'control', 'logs', `${job.id}.ndjson`);
+  let lineBuf = '';           // チャンク境界で JSON 行が割れるため行バッファリング必須
+  let finalResult = null;     // stream-json の type:'result' イベント(usage/total_cost_usd/is_error)
+  const preview = [];
+  const handleLine = (line) => {
+    if (!line.trim()) return;
+    let ev = null;
+    try { ev = JSON.parse(line); } catch { /* not JSON */ }
+    if (!ev) ev = { type: 'raw', text: line };
+    fs.appendFileSync(ndjsonPath, JSON.stringify(ev) + '\n');
+    if (ev.type === 'result') finalResult = ev;
+    // プレビュー: テキストを持つイベントだけ拾う
+    const text = ev.type === 'raw' ? ev.text
+      : ev.type === 'result' ? (typeof ev.result === 'string' ? ev.result.slice(0, 200) : '[result]')
+      : ev.type === 'assistant' ? (ev.message?.content?.find?.((c) => c.type === 'text')?.text || '').slice(0, 200)
+      : null;
+    if (text) {
+      preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] });
+      // #15: 承認待ちマーカー検知 → waiting_approval 遷移＋通知（exit 0 でも done に上書きしない）。
+      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。
+      const marker = text.split('\n').map(parseApprovalMarker).find(Boolean);
+      if (marker) {
+        const j = updateJob(ROOT, job.id, { state: 'waiting_approval', waitingProject: marker.project });
+        notifyJob(j);
+      }
+    }
   };
-  child.stdout.on('data', push); child.stderr.on('data', push);
+  const onData = (b) => {
+    lineBuf += String(b);
+    const lines = lineBuf.split('\n');
+    lineBuf = lines.pop();
+    lines.forEach(handleLine);
+  };
+  const push = (text) => handleLine(typeof text === 'string' ? text : String(text));
+  child.stdout.on('data', onData); child.stderr.on('data', onData);
   child.on('error', (e) => push('[spawn error] ' + e.message));
+  // kind別タイムアウト (#10): 超過したらツリーごと停止(ハング1件で全repo停止を防ぐ)
+  const killer = setTimeout(() => {
+    push(`[timeout] ${RUNTIME_MIN[job.kind] ?? RUNTIME_MIN.default}分を超過したため停止します`);
+    treeKill(child);
+  }, maxRuntimeMs(job.kind));
   child.on('close', (code) => {
+    clearTimeout(killer);
+    if (lineBuf.trim()) handleLine(lineBuf); // 残りバッファのフラッシュ
     procs.delete(job.id);
     const { active: after } = governorState();
     const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
-    updateJob(ROOT, job.id, {
-      state: code === 0 ? 'done' : 'failed', exit: code,
+    // #14: envelope usage を一次指標に(ccusage 差分は全セッション合算で汚染されるため補助に格下げ)
+    const usage = finalResult?.usage
+      ? { input: finalResult.usage.input_tokens ?? null, output: finalResult.usage.output_tokens ?? null,
+          cacheRead: finalResult.usage.cache_read_input_tokens ?? null, cacheCreate: finalResult.usage.cache_creation_input_tokens ?? null }
+      : null;
+    const failReason = code !== 0
+      ? (finalResult?.is_error ? (finalResult.subtype || 'error') : `exit ${code}`)
+      : null;
+    // #15: waiting_approval に遷移済みなら exit 0 でも done に上書きしない
+    const current = loadQueue(ROOT).find((x) => x.id === job.id);
+    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval' : (code === 0 ? 'done' : 'failed');
+    const updated = updateJob(ROOT, job.id, {
+      state: nextState, exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
       commitAfter: head && head.code === 0 ? head.out : null,
+      usage, costUSD: finalResult?.total_cost_usd ?? null, failReason,
+      artifacts: collectArtifacts(repo.path),
     });
+    if (nextState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
     tick(); // 1つ空いたので次を検討
   });
 }
@@ -202,9 +333,11 @@ let ticking = false;
 function tick() {
   if (ticking) return; ticking = true;
   try {
+    propagateSkips(ROOT); // #12: 前段が死んだ後続を skipped に落とす(冪等)
     // 許可が出る限り queued を起動(maxConcurrencyまで)
     for (;;) {
       const { decision } = governorState();
+      checkBudgetEdge(decision); // #15: budget 停止のエッジ検出(同一ブロック1回のみ)
       if (!decision.admit) break;
       const job = nextQueued(ROOT);
       if (!job) break;
@@ -265,16 +398,36 @@ const server = http.createServer(async (req, res) => {
     const target = u.searchParams.get('target') || (['review', 'refactor', 'issue'].includes(kind) ? theme : '');
     const issue = u.searchParams.get('issue') || '';
     const flags = u.searchParams.get('flags') || '';
+    const notBefore = u.searchParams.get('notBefore') || null; // スケジュール投入 (#10)
+    if (notBefore && Number.isNaN(Date.parse(notBefore))) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'notBefore は ISO 8601 日時で指定してください' }));
     if (!repoById(repo)) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'repo未登録' }));
     // review は clean checkout の headless 実行では未コミット差分が無いため、対象(PR番号/ブランチ差分)必須
     if (kind === 'review' && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'review には target（PR番号 or ブランチ差分）が必須です' }));
     if (kind === 'issue' && !issue && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'issue には Issue 番号が必須です' }));
-    const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt });
+    const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt, notBefore });
     tick();
     return send(res, 200, 'application/json', JSON.stringify({ ok: true, job }));
   }
+  if (u.pathname === '/api/job') { // #14: ジョブ詳細(フルログ末尾つき)
+    const id = u.searchParams.get('id') || '';
+    const job = loadQueue(ROOT).find((j) => j.id === id);
+    if (!job) return send(res, 404, 'application/json', JSON.stringify({ ok: false, err: 'ジョブが見つからない' }));
+    let logTail = [];
+    const ndjsonPath = path.join(ROOT, 'control', 'logs', `${id}.ndjson`);
+    try { logTail = fs.readFileSync(ndjsonPath, 'utf8').trim().split('\n').slice(-200); } catch { /* ログ無し */ }
+    return send(res, 200, 'application/json', JSON.stringify({ ok: true, job, logTail, logPath: ndjsonPath }));
+  }
   if (u.pathname === '/api/cancel' && req.method === 'POST') {
-    const r = cancel(ROOT, u.searchParams.get('id') || '');
+    const id = u.searchParams.get('id') || '';
+    // 実行中キャンセル (#10): プロセスツリーを止めてから canceled に遷移
+    const running = procs.get(id);
+    if (running) {
+      treeKill(running); procs.delete(id);
+      updateJob(ROOT, id, { state: 'canceled', endedAt: new Date().toISOString() });
+      tick();
+      return send(res, 200, 'application/json', JSON.stringify({ ok: true, killed: true }));
+    }
+    const r = cancel(ROOT, id);
     return send(res, r.ok ? 200 : 422, 'application/json', JSON.stringify(r));
   }
   if (u.pathname === '/api/register' && req.method === 'POST') {
@@ -298,6 +451,13 @@ const server = http.createServer(async (req, res) => {
   send(res, 404, 'text/plain', 'not found');
 });
 // 書き込み(spawn)を伴うためローカル限定バインド。LAN公開は Phase 3(トークン認証)まで行わない。
+// 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
+// (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
+const rec = reconcile(ROOT, (id) => procs.has(id));
+if (rec.interrupted.length || rec.requeued.length) {
+  console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
+}
+
 server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
 claudeUsage(); // ccusage プリウォーム
 setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
@@ -319,6 +479,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .badge.queued{background:rgba(93,176,255,.14);color:var(--accent)}.badge.running{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error{background:rgba(240,98,111,.16);color:var(--bad)}
+.badge.interrupted,.badge.waiting_approval{background:rgba(210,162,58,.16);color:var(--warn)}
+.badge.skipped{background:rgba(154,167,180,.16);color:var(--sub)}
 .badge.new{background:rgba(93,176,255,.14);color:var(--accent)}.badge.existing{background:rgba(63,185,80,.16);color:var(--ok)}.badge.cloning{background:rgba(210,162,58,.16);color:var(--warn)}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
 button{cursor:pointer}button:hover{border-color:var(--accent)}button.mini{padding:5px 11px;font-size:12px}
@@ -358,6 +520,11 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
   </div>
   <div class="card"><h2>キュー / 進行状況</h2><div id="jobs"></div></div>
 </main>
+<dialog id="jobdlg"><header class="dbody" style="display:flex;align-items:center"><b id="jd-title">ジョブ詳細</b><span class="spacer"></span><button onclick="document.getElementById('jobdlg').close()">閉じる</button></header>
+  <div class="dbody"><div id="jd-meta" class="muted" style="margin-bottom:10px"></div>
+    <div class="chat mono" id="jd-log" style="max-height:52vh;font-size:12px"></div>
+    <div class="muted" style="margin-top:8px">コストはサブスクの推計値（請求額ではない）。相対比較の指標として使う。フルログ: control/logs/</div>
+  </div></dialog>
 <dialog id="intake"><header class="dbody" style="display:flex;align-items:center"><b id="ik-title">対話ヒアリング</b><span class="spacer"></span><button onclick="document.getElementById('intake').close()">閉じる</button></header>
   <div class="dbody"><div class="chat" id="ik-chat"></div>
     <div class="form"><input id="ik-input" placeholder="回答を入力…"><button id="ik-send">送信</button></div>
@@ -384,8 +551,8 @@ async function load(){
   $('#bar').style.width=(pct||0)+'%';$('#bar').style.background=col;
   $('#kpis').innerHTML=[['queued',o.stats.queued,''],['running',o.stats.running,'warn'],['done',o.stats.done,'ok'],['failed',o.stats.failed,o.stats.failed?'bad':'']]
     .map(([l,v,c])=>'<div class="card"><div class="kpi '+c+'">'+v+'<small>'+l+'</small></div></div>').join('');
-  const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.tokensBefore!=null&&j.tokensAfter!=null?('+'+nf(j.tokensAfter-j.tokensBefore)):'')+'</td><td>'+(j.state==='queued'?'<button onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
-  $('#jobs').innerHTML='<table><tr><th>状態</th><th>repo</th><th>kind</th><th>プロンプト</th><th>Δtok</th><th></th></tr>'+(jr||'<tr><td colspan=6 class="muted">キューは空です</td></tr>')+'</table>';
+  const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.usage?nf((j.usage.input||0)+(j.usage.output||0)):(j.tokensBefore!=null&&j.tokensAfter!=null?('Δ'+nf(j.tokensAfter-j.tokensBefore)):''))+'</td><td>'+(j.artifacts&&(j.artifacts.deployedUrl||j.artifacts.prUrl)?('<a href="'+esc(j.artifacts.deployedUrl||j.artifacts.prUrl)+'" target="_blank">成果物</a>'):'')+'</td><td>'+'<button class="mini" onclick="showJob(\\''+j.id+'\\')">詳細</button>'+(j.state==='queued'||j.state==='running'?' <button class="mini" onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
+  $('#jobs').innerHTML='<table><tr><th>状態</th><th>repo</th><th>kind</th><th>プロンプト</th><th>tok</th><th>成果物</th><th></th></tr>'+(jr||'<tr><td colspan=7 class="muted">キューは空です</td></tr>')+'</table>';
   const sel=$('#repo');const cur=sel.value;sel.innerHTML=o.repos.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.id)+'</option>').join('')||'<option value="">未登録</option>';if(cur)sel.value=cur;
   $('#repos').innerHTML=o.repos.length?o.repos.map(r=>{
     const st=r.state==='cloning'?'<span class="badge cloning">clone中…</span>':r.state==='error'?'<span class="badge error">エラー</span>':(r.mode?'<span class="badge '+r.mode+'">'+(r.mode==='new'?'新規':'既存')+'</span>':'');
@@ -398,6 +565,13 @@ async function load(){
   }).join(''):'<div class="muted">まだ登録がありません。上の「リポジトリ登録（HTTPS）」から追加してください。</div>';
 }
 async function cancelJob(id){await fetch('/api/cancel?id='+encodeURIComponent(id),{method:'POST'});load();}
+async function showJob(id){const r=await(await fetch('/api/job?id='+encodeURIComponent(id))).json();if(!r.ok)return;
+  const j=r.job;$('#jd-title').textContent='ジョブ詳細: '+j.id+' ('+j.kind+')';
+  const u=j.usage?('in '+nf(j.usage.input)+' / out '+nf(j.usage.output)+' / cacheR '+nf(j.usage.cacheRead)):'—';
+  $('#jd-meta').innerHTML='<b>'+esc(j.state)+'</b>'+(j.failReason?' ・ 失敗理由: '+esc(j.failReason):'')+' ・ usage: '+u+(j.costUSD!=null?' ・ 推計 $'+j.costUSD.toFixed(4):'')
+    +(j.artifacts?('<br>成果物: '+(j.artifacts.deployedUrl?'<a href="'+esc(j.artifacts.deployedUrl)+'" target="_blank">'+esc(j.artifacts.deployedUrl)+'</a> ':'')+(j.artifacts.prUrl?'<a href="'+esc(j.artifacts.prUrl)+'" target="_blank">PR</a> ':'')+esc(j.artifacts.outputDir||'')):'');
+  $('#jd-log').innerHTML=(r.logTail||[]).map(l=>{try{const e=JSON.parse(l);const t=e.type==='raw'?e.text:e.type==='result'?('[result] '+(typeof e.result==='string'?e.result:'')): e.type==='assistant'?((e.message&&e.message.content&&e.message.content.find(c=>c.type==='text')||{}).text||''):'';return t?'<div class="msg assistant">'+esc(t)+'</div>':'';}catch(_){return '<div class="msg assistant">'+esc(l)+'</div>';}}).join('')||'<span class="muted">ログなし</span>';
+  $('#jobdlg').showModal();const c=$('#jd-log');c.scrollTop=c.scrollHeight;}
 $('#add').onclick=async()=>{const repo=$('#repo').value,kind=$('#kind').value,theme=$('#theme').value;if(!repo){alert('repoが未登録です');return;}await fetch('/api/enqueue?repo='+encodeURIComponent(repo)+'&kind='+encodeURIComponent(kind)+'&theme='+encodeURIComponent(theme),{method:'POST'});$('#theme').value='';load();};
 $('#reg').onclick=async()=>{const url=$('#url').value.trim();if(!url)return;$('#reg').disabled=true;$('#reg').textContent='登録中…';const r=await(await fetch('/api/register?url='+encodeURIComponent(url),{method:'POST'})).json();$('#reg').disabled=false;$('#reg').textContent='登録して clone';if(!r.ok){alert('登録失敗: '+(r.err||''));return;}$('#url').value='';load();};
 async function analyze(id){await fetch('/api/analyze?repo='+encodeURIComponent(id),{method:'POST'});alert('解析ジョブをキューに投入しました。進行状況は下のキューで確認できます。');load();}
