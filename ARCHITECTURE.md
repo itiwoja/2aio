@@ -16,6 +16,8 @@ gitleaks + SAST scanning happens exactly once, in `2aio-devops` Step 2.5. Never 
 ### 4. Model Distribution (Cost Optimization)
 - CEO: opus (strategic judgment)
 - Research agents (7): haiku (3x cheaper, mechanical API calls)
+- Implementation trio (engineer / qa / devops): sonnet **pinned** — never session-inherit.
+  A haiku session must not run implementation/QA judgment; an opus session must not waste budget on them.
 - Others: session inherit
 
 ### 5. Canonical Output Directory: `2aio-output/`
