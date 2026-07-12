@@ -66,6 +66,12 @@ if command -v node >/dev/null 2>&1; then
   CODEX_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/codex-router/codex-advisor.mjs')).as_posix())")"
   echo "  codex-router deployed (auto-delegate advisor + delegate impl to Codex Terra/Luna)"
 
+  # 2d2. grok-router (xAI provider): consult Grok for real-time/SNS/trend research
+  mkdir -p "$CLAUDE_DIR/grok-router"
+  cp "$HARNESS_DIR/grok-router/grok-run.sh" "$CLAUDE_DIR/grok-router/"
+  chmod +x "$CLAUDE_DIR/grok-router/grok-run.sh" 2>/dev/null || true
+  echo "  grok-router deployed (set XAI_API_KEY to use; provider for real-time research)"
+
   # 2e. front-door router: routes a plain prompt to the right 2AIO pipeline (board/redesign/research)
   mkdir -p "$CLAUDE_DIR/front-door"
   cp "$HARNESS_DIR/front-door/router.mjs" "$HARNESS_DIR/front-door/2aio-advisor.mjs" \
@@ -164,4 +170,10 @@ echo "  - Front-door advisor (UserPromptSubmit): auto-routes business/redesign/r
 echo "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
 echo "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — see /2aio-delegate."
 echo "  Re-run this after adding skills to refresh the skill index."
+# cross-host: deploy the portable operating model to Codex if present
+if [ -d "$HOME/.codex" ] && [ -f "$HARNESS_DIR/../AGENTS.md" ]; then
+  cp "$HARNESS_DIR/../AGENTS.md" "$HOME/.codex/AGENTS.md"
+  echo "  - Codex adapter: ~/.codex/AGENTS.md deployed (Codex sessions inherit the 2AIO operating model)."
+fi
+
 echo "  Owner bypass: prefix a command with '!'.   Disarm: bash $HARNESS_DIR/uninstall-harness.sh"
