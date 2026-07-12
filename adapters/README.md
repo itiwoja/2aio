@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **Claude Code** | `~/.claude/CLAUDE.md` + hooks（PreToolUse/UserPromptSubmit） | ✅ 強（guard/enforcer/advisor が自動発火） | `bash harness/install-harness.sh` |
 | **Codex** | `AGENTS.md`（repo ルート & `~/.codex/AGENTS.md`）+ `~/.codex/config.toml`（approval/sandbox）+ notify hook | ⚠️ 中（常時指示＋sandbox。guard/router はスクリプトとして呼ぶ） | `cp AGENTS.md ~/.codex/AGENTS.md` |
-| **Grok / その他 CLI** | その CLI が読む instructions ファイルに `AGENTS.md` を置く。無ければ API 委譲先として使う | ⚠️ CLI 次第（hook が無ければ指示ベースの弱い強制） | `harness/grok-router/grok-run.sh`（xAI API） |
+| **その他 CLI（Grok 等）** | その CLI が読む instructions ファイルに `AGENTS.md` を置く。無ければ API 委譲先として使う | ⚠️ CLI 次第（hook が無ければ指示ベースの弱い強制） | `harness/providers/ai-run.sh --provider <name>`（OpenAI互換 API） |
 
 ## provider を跨ぐモデル自動切替
 
@@ -18,7 +18,7 @@
   基準は `AGENTS.md` の「Provider / モデル ルーティング」表と各 `routing-rules.json`。
   - 機械的→最安（Codex Luna / Claude Haiku）、通常→中位（Codex Terra / Claude Sonnet）、
     難→上位（Codex Sol / Claude Opus・必要時のみ）、最新情報/SNS→Grok。
-- **委譲コマンド:** Codex=`harness/codex-router/codex-run.sh`、Grok=`harness/grok-router/grok-run.sh`。
+- **委譲コマンド:** Codex=`harness/codex-router/codex-run.sh`、その他=`harness/providers/ai-run.sh --provider <name>`（openai/xai/deepseek/ollama…）。
   どちらも使用ログを `~/.claude/logs/2aio-usage.jsonl` に残す（誰にいつ何を投げたか監査可能）。
 
 ## 正直な限界

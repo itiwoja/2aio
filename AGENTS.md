@@ -30,7 +30,7 @@
 | 機械的・雛形・一括・整形 | 最安クラス（Codex Luna / Claude Haiku） |
 | 通常の実装（明確な仕様から） | 中位（Codex Terra / Claude Sonnet） |
 | 難しい実装・深い推論・アーキ判断 | 上位（Codex Sol / Claude Opus）※高価、必要時のみ |
-| リアルタイム/SNS/最新情報の調査 | Grok（xAI）が強い |
+| リアルタイム/SNS/最新情報の調査 | 得意な provider（例: xAI Grok）に委譲 |
 | 計画・レビュー・語感/CJK判断 | 賢いモデルが自分で持つ（委譲しない） |
 
 **既定は中位。上位は「明示的に難しい」時だけ。** 具体的なモデルIDやルールはコアの JSON で管理:
@@ -40,7 +40,8 @@
 
 - **Codex へ委譲:** `bash harness/codex-router/codex-run.sh --write -C <dir> "<task or 'implement .ai/codex_brief_*.md exactly'>"`
   - 自動でモデル選択（`--why` で確認）、stdin閉じ・10MBログ上限・構造化出力・sandbox・**brief必須（既定）**・使用ログ `~/.claude/logs/2aio-usage.jsonl`。
-- **Grok へ委譲/相談:** xAI API 経由のラッパを使う（`harness/grok-router/` を参照。無ければ API 直叩きの薄いラッパを用意）。**Grok は最新情報・SNS感情・トレンド調査に使う。**
+- **任意の OpenAI互換 AI へ委譲/相談:** `bash harness/providers/ai-run.sh --provider <name> "<prompt>"`
+  （provider は `harness/providers/providers.json` に定義＝openai / xai(Grok) / deepseek / groq / ローカル ollama…。データで追加可。鍵は env のみ）。最新情報・SNS・別視点のレビュー等に使う。
 - **並列で複数AIに割る:** タスクを disjoint に分割してから各 provider に投げる（Claude Code: `agent-task-splitter`）。
 
 ## 安全（全 host 共通・絶対）

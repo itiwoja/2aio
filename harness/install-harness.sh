@@ -66,11 +66,11 @@ if command -v node >/dev/null 2>&1; then
   CODEX_ADVISOR_ABS="$("$PYBIN" -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/codex-router/codex-advisor.mjs')).as_posix())")"
   echo "  codex-router deployed (auto-delegate advisor + delegate impl to Codex Terra/Luna)"
 
-  # 2d2. grok-router (xAI provider): consult Grok for real-time/SNS/trend research
-  mkdir -p "$CLAUDE_DIR/grok-router"
-  cp "$HARNESS_DIR/grok-router/grok-run.sh" "$CLAUDE_DIR/grok-router/"
-  chmod +x "$CLAUDE_DIR/grok-router/grok-run.sh" 2>/dev/null || true
-  echo "  grok-router deployed (set XAI_API_KEY to use; provider for real-time research)"
+  # 2d2. providers (provider-agnostic delegation/consult): any OpenAI-compatible AI
+  mkdir -p "$CLAUDE_DIR/providers"
+  cp "$HARNESS_DIR/providers/ai-run.sh" "$HARNESS_DIR/providers/providers.json" "$CLAUDE_DIR/providers/"
+  chmod +x "$CLAUDE_DIR/providers/ai-run.sh" 2>/dev/null || true
+  echo "  providers deployed (ai-run.sh: consult any OpenAI-compatible AI — openai/xai/deepseek/ollama...)"
 
   # 2e. front-door router: routes a plain prompt to the right 2AIO pipeline (board/redesign/research)
   mkdir -p "$CLAUDE_DIR/front-door"
