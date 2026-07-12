@@ -7,7 +7,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
 import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel } from './lib/queue.mjs';
@@ -25,6 +25,11 @@ const CLAUDE = process.env.AIO_CLAUDE_BIN || process.env.CLAUDE_BIN || 'claude';
 const WORKER_CMD = process.env.AIO_WORKER_CMD || '';
 
 const readJSON = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
+// 同期 git ヘルパ (#3 Phase A)。code!==0 でも throw しない — 呼び出し側が判断する。
+function git(dir, ...args) {
+  const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8', windowsHide: true, timeout: 60000 });
+  return { code: r.status ?? -1, out: (r.stdout || '').trim(), err: (r.stderr || '').trim() };
+}
 const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
 const WORKSPACES = path.join(ROOT, 'workspaces');
 const REPOS_FILE = path.join(ROOT, 'repos.json');
@@ -49,13 +54,16 @@ function registerRepo(url) {
   if (!info) return { ok: false, err: 'URL解析に失敗（https://host/owner/name 形式）' };
   const id = `${info.owner}-${info.name}`.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
   const dest = path.join(WORKSPACES, info.name);
-  const rec = { id, url, slug: info.slug, path: dest, branch: 'main', mode: null, state: 'cloning', error: null, defaultLane: 'build' };
+  const rec = { id, url, slug: info.slug, path: dest, branch: null, mode: null, state: 'cloning', error: null, defaultLane: 'build' };
   upsertRepo(rec);
   ensureDir(WORKSPACES);
   const alreadyCloned = fs.existsSync(path.join(dest, '.git'));
   const done = () => {
     const c = classifyRepo(dest);
-    upsertRepo({ ...repoById(id), mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount });
+    // #3 Phase A: 'main' ハードコードをやめ、clone 直後の HEAD から実デフォルトブランチを検出
+    const head = git(dest, 'symbolic-ref', '--short', 'HEAD');
+    const branch = head.code === 0 && head.out ? head.out : 'main';
+    upsertRepo({ ...repoById(id), branch, mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount });
     if (c.mode === 'new') seedIntake(id); // 新規は対話ヒアリングを用意
   };
   if (alreadyCloned) { done(); return { ok: true, repo: repoById(id), reused: true }; }
@@ -126,9 +134,31 @@ const procs = new Map(); // jobId → child
 function startJob(job) {
   const repo = repoById(job.repo);
   if (!repo) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: [`repo未登録: ${job.repo}`] }); return; }
+
+  // #3 Phase A: spawn 前に workspace を同期し HEAD を commitBefore として記録。
+  // dirty / 非fast-forward では自動 stash・reset --hard を絶対にせず、ジョブを failed にして
+  // UI にエラー提示（破壊的操作の自動実行禁止）。remote が無いローカル repo は同期をスキップ。
+  let commitBefore = null;
+  if (fs.existsSync(path.join(repo.path, '.git'))) {
+    const dirty = git(repo.path, 'status', '--porcelain');
+    if (dirty.code === 0 && dirty.out) {
+      updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: ['[workspace] 作業ツリーが dirty のため起動しません（前ジョブの残骸の可能性）。手動で確認してください:', ...dirty.out.split('\n').slice(0, 10)] });
+      return;
+    }
+    if (git(repo.path, 'remote').out) {
+      const pull = git(repo.path, 'pull', '--ff-only');
+      if (pull.code !== 0) {
+        updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: ['[workspace] git pull --ff-only 失敗（非fast-forward等）。自動 reset はしません:', (pull.err || pull.out).slice(0, 300)] });
+        return;
+      }
+    }
+    const head = git(repo.path, 'rev-parse', 'HEAD');
+    commitBefore = head.code === 0 ? head.out : null;
+  }
+
   const prompt = buildPrompt(job);
   const { active } = governorState();
-  updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, resolvedPrompt: prompt });
+  updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: prompt });
 
   let cmd, args;
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
@@ -149,9 +179,11 @@ function startJob(job) {
   child.on('close', (code) => {
     procs.delete(job.id);
     const { active: after } = governorState();
+    const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
     updateJob(ROOT, job.id, {
       state: code === 0 ? 'done' : 'failed', exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
+      commitAfter: head && head.code === 0 ? head.out : null,
     });
     tick(); // 1つ空いたので次を検討
   });
