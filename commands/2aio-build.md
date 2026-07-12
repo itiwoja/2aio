@@ -155,6 +155,12 @@ tags: [2aio, build, {略称}]
 - qa-report は `output/{project}/qa-report.md` 単一で可（Sprint 概念なし）。
 - Fail なら 2aio-engineer に1回だけ修正指示 → 再確認。auto は2往復目 Fail で DEGRADED 続行。
 
+#### Phase 4.5: 軽量レビューゲート（QA Pass 後・CRITICAL のみブロック）
+- QA Pass 後、メインスレッドが `code-reviewer`（TS なら `typescript-reviewer`）を Task で1回起動する。入力は変更ファイル一覧に限定（全コード読み禁止）。
+- **CRITICAL のみ** 2aio-engineer 差し戻し（1回）。HIGH 以下は qa-report に記録のみで非ブロック（本レーンの高速性を守る）。
+- `--local`（非公開プロトタイプ）ではこのゲートをスキップ可。
+- security-reviewer は起動しない（機械スキャンは devops Step 2.5 / --local 時は Phase 5-pre が担当）。
+
 ### Phase 5: 公開（2aio-devops）/ または ローカル
 
 #### Phase 5-pre: 公開前セキュリティゲート ★必須（外部公開時）

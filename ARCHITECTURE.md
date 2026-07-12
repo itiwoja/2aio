@@ -13,6 +13,16 @@ Deployment approval is recorded in `state.md` by the orchestrator BEFORE devops 
 ### 3. Security Gate is devops Step 2.5 (Single Source of Truth)
 gitleaks + SAST scanning happens exactly once, in `2aio-devops` Step 2.5. Never bypassed, even in auto mode.
 
+### 3.5 Review Gate Role Separation (no duplicate launches)
+| Role | Owner | Scope |
+|---|---|---|
+| Acceptance-criteria verification | `2aio-qa` | Does the code meet the plan's acceptance criteria? Never general code quality. |
+| Code quality review | ECC `code-reviewer` (TS: `typescript-reviewer`) | Phase 2-b2 gate, **after QA Pass only**. Input limited to build-log.md's changed-file list. CRITICAL/HIGH → engineer (review_round, max 1 round-trip); MEDIUM and below → completion-report v2 candidates. |
+| Security logic/design review | ECC `security-reviewer` | Conditional: only sprints touching auth/authz/user-input. Its CRITICAL goes through engineer 差し戻し — a separate lane from SECURITY_STOP. |
+| Mechanical secret/SAST scan | `2aio-devops` Step 2.5 | The **single source of truth** gate (principle 3). security-reviewer never dilutes or replaces it. |
+
+ECC agents are referenced read-only — never modified (principle: idd-guardrails).
+
 ### 4. Model Distribution (Cost Optimization)
 - CEO: opus (strategic judgment)
 - Research agents (7): haiku (3x cheaper, mechanical API calls)
