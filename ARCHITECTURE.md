@@ -24,6 +24,22 @@ All 2AIO outputs go to `C:\Users\1kkim\projects\2aio-output\` or equivalent.
 ### 6. Table Schema is 2aio-planner.md (Single Source of Truth)
 The WBS table format in `2aio-planner.md` is canonical. All other files must match.
 
+### 7. Commander Plans, Cheap Models Implement (Live Harness)
+The strong model (Claude) is the **commander** — it plans, reviews, integrates, and judges. Bulk
+typing (implementation) is delegated to cheaper models/AIs (Codex Terra/Luna, or any OpenAI-compatible
+provider). This split is not just advised: a PreToolUse **enforcer** blocks Claude from hand-writing
+substantial *new* code files, while always allowing edits, planning, and review — so the commander
+role stays intact. The delegation flow is always **plan → write `.ai/codex_brief_*.md` → delegate →
+review against acceptance criteria → integrate**; `codex-run.sh` refuses to delegate without a brief,
+so planning is guaranteed. Model/provider selection (mechanical→cheapest, ordinary→mid, hard→top only
+when explicitly hard) and the full mechanism live in [`harness/README.md`](./harness/README.md); the
+host-agnostic operating manual is [`AGENTS.md`](./AGENTS.md).
+
+### 8. Secrets: env-var names only, never in chat or briefs
+Strong-permission tokens (e.g. `service_role`) are never pasted into chat, logs, or Codex briefs —
+only env-var *names* are passed. Delegated output is always reviewed by Claude before integration;
+destructive/outward-facing ops are never auto-delegated.
+
 ---
 
 ## Usage Lanes
@@ -57,6 +73,25 @@ The WBS table format in `2aio-planner.md` is canonical. All other files must mat
 /2aio-autorun-batch テーマ1 テーマ2 テーマ3
 ```
 → Unattended: board → plan → implement → deploy
+
+### Delegate (司令塔 → Codex 実装)
+```bash
+/2aio-delegate "<実装タスク>"
+```
+→ Claude plans + writes a brief → Codex implements → Claude reviews & integrates (see Principle 7)
+
+### Harden (既存システムの自律強化)
+```bash
+/2aio-harden [--dimensions=security,a11y,...]
+```
+→ Audit → parallel multi-dimension review → fix CRITICAL/HIGH via Codex (test-green verified) →
+re-audit, loop until clean
+
+### Redesign (既存 UI の作り直し)
+```bash
+/2aio-redesign
+```
+→ Audit & improve an existing UI in place with the design-quality skills
 
 ---
 

@@ -200,6 +200,45 @@ All four are advisory (hooks can't call tools or force the model) and fail open.
 always-in-context "operate on 2AIO" rule, add a standing instruction to `~/.claude/CLAUDE.md` — that
 file is guard-protected, so only the owner can edit it via `!`.
 
+## Provider-agnostic delegation (`providers/`)
+
+Codex is the default implementer, but delegation is **not tied to any one vendor**. `ai-run.sh`
+consults **any OpenAI-compatible `/chat/completions` endpoint** — the provider is just a row in
+`providers.json` (url / default model / `key_env`). Use it for real-time/SNS lookups, a second-
+opinion review from a different model, or to run implementation on a non-Codex backend.
+
+| Piece | Role |
+|---|---|
+| `providers.json` | registry: `openai` / `xai` (Grok) / `deepseek` / `groq` / local `ollama` — add more with data only. Each row names its **key env var**, never the key itself. |
+| `ai-run.sh` | `--provider <name> [--model <id>] "<prompt>"`; also reads stdin. Key from **env only** (never argv/chat/logs) — missing required key → refuse (exit 3); unknown provider → exit 2; local `ollama` needs no key. Same `~/.claude/logs/2aio-usage.jsonl` audit line as Codex. |
+
+```bash
+ai-run.sh --provider openai   "この設計をレビューして"
+ai-run.sh --provider xai --model grok-4-latest "X上の直近の評判を要約して"
+echo "long context" | ai-run.sh --provider deepseek "上記を分析"   # stdin piped in
+```
+
+Model/provider selection follows the routing table in [`../AGENTS.md`](../AGENTS.md): mechanical→
+cheapest, ordinary→mid, hard→top (only when explicitly hard), realtime/SNS→a provider good at it.
+
+## Cross-host operating model (`../AGENTS.md`, `../adapters/`)
+
+The harness core (guard / routers / `codex-run.sh` / `ai-run.sh` / rules) is **host-agnostic** —
+plain scripts + data. What differs per host is *who reads and auto-enforces them*. The canonical,
+host-independent operating manual is [`../AGENTS.md`](../AGENTS.md) (commander plans → cheap model
+implements, provider+model routing, shared safety rules). **Codex reads `AGENTS.md` natively**, so
+`install-harness.sh` also deploys it to `~/.codex/AGENTS.md`.
+
+| host | how it reads the model | enforcement | install |
+|---|---|---|---|
+| **Claude Code** | `CLAUDE.md` + PreToolUse/UserPromptSubmit hooks | ✅ strong (guard/enforcer/advisors auto-fire) | `install-harness.sh` |
+| **Codex** | `AGENTS.md` (repo & `~/.codex/`) + config sandbox/approval | ⚠️ medium (standing instructions + sandbox) | `cp AGENTS.md ~/.codex/AGENTS.md` |
+| **other OpenAI-compatible CLIs** | put `AGENTS.md` in its instructions file, or use it as a delegation target | ⚠️ CLI-dependent (instructions-based) | `ai-run.sh --provider <name>` |
+
+Honest limit: fully-automatic enforcement on **every** action only holds on a host with hooks
+(Claude Code). The core is shared everywhere; the *automaticity* scales with the host's features.
+See [`../adapters/README.md`](../adapters/README.md).
+
 ## Cost / latency note
 The guard spawns `python` on every intercepted tool call (~100–200 ms). That is the price of a
 live guardrail. Each UserPromptSubmit advisor spawns `node` once per prompt; all four fail open. Scope is Bash/Write/Edit/MultiEdit/NotebookEdit (Read and MCP are not intercepted,

@@ -6,7 +6,9 @@
 
 ```
 2AIO
-├─ agents/ commands/      … 取締役会 17 体 + ワークフロー 5 コマンド（native）
+├─ agents/ commands/      … エージェント 25 体 + ワークフロー 8 コマンド（native）
+├─ harness/               … ライブハーネス（guard / model・skill ルーティング / Codex委譲 / enforcer / front-door / providers）
+├─ AGENTS.md adapters/    … クロスhost 操作モデル（Claude / Codex / 任意の OpenAI 互換 AI 共通）
 ├─ skills/                … 66 スキル（SDLC / Apple / 設計 / オーケストレーション / リサーチ）
 ├─ security/              … 4 リング（guardrails → sandbox → scanners → skill-integrity）
 ├─ memory/                … 永続メモリ層（agentcairn ほか、Obsidian 互換）
@@ -15,6 +17,31 @@
 ├─ run.mjs lib/           … 2AIOForge 自己強化ループ（収集→合成→監査→適用）
 └─ control.mjs            … 制御プレーン（複数 repo × サブスク枠ガバナー）
 ```
+
+---
+
+## ⚙️ ライブハーネス（最重要 — Claude 司令塔 → Codex 実装）
+
+2AIO は「入れるだけのファイル群」ではなく、**毎セッションを 2AIO の作法で走らせる稼働レイヤー**を持ちます。
+中核思想は **賢いモデル（Claude）が司令塔＝計画・レビュー・統合・判断を持ち、大量のタイピング（実装）は
+安いモデル/AI（Codex Terra/Luna ほか）に委譲する**こと。トークンを節約しつつ品質は賢いモデルが担保します。
+
+```bash
+bash harness/install-harness.sh    # 武装: guard + 4 advisor + enforcer を settings.json に非破壊マージ
+```
+
+| 部品 | 役割 |
+|---|---|
+| **guard**（Ring-1 PreToolUse） | 不可逆・漏洩アクションを実行前に遮断。全ツール呼び出しを監査ログ化 |
+| **model / skill ルーティング** | タスクからモデル階層を動的選択（launch 時に実切替）＋ JP↔EN でスキルを確実に発火 |
+| **Codex 委譲**（`codex-router/`） | `codex-run.sh` が安全に `codex exec` を実行。**brief 必須**（計画を保証）＋使用ログ |
+| **enforcer**（`enforce/`） | Claude が大量の新規実装ファイルを直書きするのを**ハード遮断**し委譲を強制。司令塔役は温存（Edit/計画/レビューは常時許可） |
+| **front-door**（`front-door/`） | 素のプロンプトから適切な 2AIO パイプライン（harden / board / redesign / research）へ誘導 |
+| **providers**（`providers/`） | `ai-run.sh --provider <name>` で任意の OpenAI 互換 AI（openai / xai / deepseek / groq / ローカル ollama…）へ委譲。鍵は env のみ |
+
+- **委譲の起動:** `/2aio-delegate "<実装タスク>"`（計画→brief→Codex→レビュー統合）。UI タスクは自動でデザイン品質 directive を付与。
+- **クロスhost:** 操作モデルの正本は [`AGENTS.md`](./AGENTS.md)（Codex はネイティブに読む）。host 別導入は [`adapters/README.md`](./adapters/README.md)。
+- 詳細と正直な限界（全操作の自動強制は hook を持つ Claude Code のみ完全）は [`harness/README.md`](./harness/README.md)。
 
 ---
 
@@ -35,11 +62,15 @@ bash install.sh        # macOS / Linux
 /2aio-plan-project {prd-file}                          # 実装計画（WBS）
 /2aio-implement-project {impl-plan-file}               # 実装 → QA → デプロイ
 /2aio-build {テーマ} --auto                            # 超高速レーン（PRD 不要）
+/2aio-delegate "<実装タスク>"                          # 計画 → Codex 委譲 → レビュー統合
+/2aio-harden [--dimensions=...]                        # 既存システムを全次元で自律強化（loop-until-clean）
 /2aio-autorun-batch {テーマ1} {テーマ2} ...            # バッチ実行
 ```
 
-### 役員エージェント（17 体）
-CEO(opus) / CMO / CTO / CSO / CFO / Planner / Engineer / QA / DevOps / Researcher + 6 検索専門（Web・ニュース・SNS・コミュニティ・Wikipedia・Gemini）。詳細は [ARCHITECTURE.md](./ARCHITECTURE.md)。
+### エージェント（25 体）
+**取締役会 + 実装 17 体:** CEO(opus) / CMO / CTO / CSO / CFO / Planner / PRD / Engineer / QA / DevOps / Researcher + 6 検索専門（Web・ニュース・SNS・コミュニティ・Wikipedia・Gemini）。
+**追加 8 体（description に「PROACTIVELY 使う」を持ち自動起動）:** frontend-engineer（UI 実装リード）/ design-reviewer / swift-reviewer / ios-debugger / observability / migration-runner / release-manager / project-auditor。
+詳細は [ARCHITECTURE.md](./ARCHITECTURE.md) と [harness/README.md](./harness/README.md)。
 
 ---
 
