@@ -148,9 +148,12 @@ git push origin {直前のgh-pagesコミットhash}:gh-pages --force-with-lease
 1. 秘密情報スキャン（git 履歴込み）: `"C:/Users/1kkim/projects/tools/gitleaks/gitleaks.exe" detect --no-banner --redact`
    - gitleaks 未導入時のフォールバック: `git grep -iE "(api[_-]?key|secret|token|password)\s*[:=]" $(git rev-list --all)` 相当の履歴 grep で代替し、deploy-report.md に「フォールバック: grep（gitleaks 未導入）」と明記。Vercel / Firebase（リポジトリ非公開のホスティング）は working tree のみのスキャンで可。GitHub Pages（git push で履歴公開）は履歴込み必須で、gitleaks 未導入なら `[TOOL_MISSING]` で停止
 2. SAST: `node C:/Users/1kkim/projects/scripts/security-scan.mjs {project}`
-3. CSP / クリックジャッキング対策の確認（外部公開時）
+3. npm audit（条件付き）: `package-lock.json` が存在する npm プロジェクトのみ `npm audit --audit-level=critical` を実行。critical 検出はブロック条件に含める。audit 実行自体の失敗も auto では下記 fail-closed 規則に従う
+4. CSP / クリックジャッキング対策の確認（外部公開時）
 
-ブロック条件: gitleaks leak>0 / SAST CRITICAL>0 は `[SECURITY_STOP]` を state.md と deploy-report.md に記録してモード問わず停止。デプロイしない。本ゲートが正本（オーケストレーター側での重複実行はしない。devops を経ない /2aio-build --local のみ例外）。
+ブロック条件: gitleaks leak>0 / SAST CRITICAL>0 / npm audit critical>0 は `[SECURITY_STOP]` を state.md と deploy-report.md に記録してモード問わず停止。デプロイしない。本ゲートが正本（オーケストレーター側での重複実行はしない。devops を経ない /2aio-build --local のみ例外）。
+
+**fail-closed 規則（無言故障の禁止）**: スキャナの**実行自体の失敗**（非0 exit かつ結果 JSON/出力なし）は「leak 有無不明」であり clean 扱いにしない。`[TOOL_MISSING]` を state.md と deploy-report.md に記録して**モード問わず停止**する（未導入時のフォールバック規定とは別 — フォールバックは代替手段があるときのみ）。
 
 ### Step 3: デプロイ承認記録の確認
 
