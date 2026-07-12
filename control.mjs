@@ -255,9 +255,22 @@ function startJob(job) {
 
   // #14: stream-json ワーカー(-p 併用時 --verbose 必須)。WORKER_CMD 差替え時は素の出力が来るが、
   // 下の行パーサが JSON でない行を {type:'raw'} として扱うフォールバックで吸収する。
+  //
+  // ヘッドレス権限（eval 実走で発覚した設計ギャップの修正）: 既定モードでは Write/Edit/Read が
+  // 対話承認待ち→auto-deny となり、ワーカーはファイルを1つも作れない。dangerously-skip-permissions は
+  // 2AIO ルールで禁止のため、正規の acceptEdits + allowedTools 前置きで許可する
+  // （Ring-1 guard フックは引き続き全ツール呼び出しを審査する）。config.json の worker で上書き可。
+  const WK = CFG.worker || {};
+  const PERMISSION_MODE = WK.permissionMode || 'acceptEdits';
+  const ALLOWED_TOOLS = WK.allowedTools
+    || 'Read,Write,Edit,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(mkdir:*),Bash(curl:*),Bash(vercel:*),Bash(firebase:*)';
   let cmd, args;
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
-  else { cmd = CLAUDE; args = ['-p', '--output-format', 'stream-json', '--verbose', prompt]; }
+  else {
+    cmd = CLAUDE;
+    args = ['-p', '--output-format', 'stream-json', '--verbose',
+      '--permission-mode', PERMISSION_MODE, '--allowedTools', ALLOWED_TOOLS, prompt];
+  }
 
   let child;
   try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true }); }
