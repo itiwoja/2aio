@@ -110,9 +110,34 @@ function targetPath(topic) {
   throw new Error('unknown target type');
 }
 
+// #20(B) 決定的差分ゲート: STAMP ヘッダ・空白を除いた正規化本文で比較する。
+// LLM の has_new_info 自己申告に依存せず、監査コール前に無変更を確実に検出する。
+export function normalizeBody(s) {
+  return String(s || '')
+    .replace(/<!--\s*2AIOForge[^>]*-->\s*/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
+// #19(1) Key Points: 監査済み updated_markdown の冒頭箇条書き(最大3行)から抽出する
+// （synthesize の key_points 配列は未監査テキストのため INDEX には載せない）。
+export function extractKeyPoints(markdown, max = 3) {
+  const lines = String(markdown || '').split('\n');
+  const bullets = [];
+  for (const l of lines) {
+    const m = l.match(/^\s*[-*]\s+(.{4,})$/);
+    if (m) bullets.push(m[1].trim());
+    if (bullets.length >= max) break;
+  }
+  return bullets;
+}
+
 function vaultContent(topic, draft) {
   const header = `<!-- 2AIOForge 自動生成 ${STAMP} / backend:${searchBackend()} / model:${CFG.model} -->\n# ${topic.id}（自動収集ナレッジ）\n\n> 2AIOForgeが収集→合成→監査PASSした最新知見。低リスクvaultのため自動適用。出典は本文末。\n\n`;
-  return header + (draft.updated_markdown || '');
+  const kp = extractKeyPoints(draft.updated_markdown);
+  const kpBlock = kp.length ? `## Key Points\n${kp.map(k => '- ' + k).join('\n')}\n\n` : '';
+  return header + kpBlock + (draft.updated_markdown || '');
 }
 
 function proposeChange(topic, draft, audit, why) {
@@ -167,6 +192,12 @@ async function runTopic(topic) {
   let draft = await synthesize(topic, docs, current);
   if (!draft?.updated_markdown) return { topic: topic.id, status: 'synth-failed' };
 
+  // #20(B) 差分ゲート: 正規化本文が現行と同一なら監査コール(数万tok)も履歴チャーンも発生させない
+  if (current && normalizeBody(current).includes(normalizeBody(draft.updated_markdown))) {
+    log('  ⏭ 無変更(差分ゲート): 監査・適用をスキップ');
+    return { topic: topic.id, status: 'unchanged', sources: docs.length };
+  }
+
   let a = await audit(topic, draft, docs);
   let round = 0;
   while (!a.pass && round < CFG.auditRounds) {
@@ -195,12 +226,39 @@ async function runTopic(topic) {
   return { topic: topic.id, status: 'applied', round, applied: rec.targetPath, historyId: rec.id, sources: docs.length, audit: a };
 }
 
+// #19(2) INDEX 再生成: knowledge/auto/*.md を毎回フルスキャンして再構築(冪等)。
+// 各ファイルの「## Key Points」節(無ければ本文冒頭の箇条書き)を3行ずつ、2000字以内に集約。
+// 書き込みは applyWithHistory 経由(rollback 一貫性)・自動生成マーカー付き。
+function regenerateIndex() {
+  const autoDir = path.join(CFG.paths.vault, 'knowledge', 'auto');
+  if (!fs.existsSync(autoDir)) return null;
+  const files = fs.readdirSync(autoDir).filter(f => f.endsWith('.md') && f !== 'INDEX.md');
+  if (!files.length) return null;
+  let body = `<!-- 2AIOForge 自動生成 ${STAMP} — knowledge/auto の索引。手で編集しない -->\n# knowledge/auto INDEX（自動生成ダイジェスト）\n\n> 各トピックの Key Points 3行＋ファイルパス。本文は必要時に各ファイルを Read する（索引→都度取得の規約に従う）。\n\n`;
+  for (const f of files) {
+    const p = path.join(autoDir, f);
+    const kp = extractKeyPoints(read(p).replace(/^[\s\S]*?## Key Points\n/, ''), 3);
+    body += `## ${f.replace(/\.md$/, '')}\n${kp.map(k => '- ' + k).join('\n') || '- (要点抽出なし)'}\n- path: ${p}\n\n`;
+    if (body.length > 2000) { body = body.slice(0, 2000) + '\n(2000字上限で切り詰め)'; break; }
+  }
+  const rec = applyWithHistory(ROOT, path.join(autoDir, 'INDEX.md'), body, { topic: '_index', targetType: 'vault', reason: 'INDEX自動再生成', auditPass: true, auditIssues: [], sources: 0 });
+  // vault ルートの手動 INDEX.md に「単一の知識の地図」を維持するためのリンク1行(無い場合のみ追記)
+  const rootIndex = path.join(CFG.paths.vault, 'INDEX.md');
+  const link = '- [knowledge/auto INDEX（2AIOForge 自動生成）](knowledge/auto/INDEX.md)';
+  const cur = read(rootIndex);
+  if (cur && !cur.includes('knowledge/auto/INDEX.md')) {
+    applyWithHistory(ROOT, rootIndex, cur.trimEnd() + '\n' + link + '\n', { topic: '_index', targetType: 'vault', reason: 'auto INDEX へのリンク追記', auditPass: true, auditIssues: [], sources: 0 });
+  }
+  return rec;
+}
+
 (async () => {
   log(`start ${STAMP} / 検索:${searchBackend()} / model:${CFG.model}`);
   if (!await ollamaReady(CFG.model)) { log('❌ Ollama未起動 or モデル無し:', CFG.model); process.exit(2); }
   const topics = CFG.topics.filter(t => !onlyTopic || t.id === onlyTopic);
   const results = [];
   for (const t of topics) { try { results.push(await runTopic(t)); } catch (e) { log('topic err', t.id, e.message); results.push({ topic: t.id, status: 'error', error: e.message }); } }
+  try { const idx = regenerateIndex(); if (idx) log('  📇 INDEX 再生成:', idx.targetPath); } catch (e) { log('index err', e.message); }
   ensureDir(CFG.paths.runs);
   const runPath = path.join(CFG.paths.runs, `${STAMP}.json`);
   fs.writeFileSync(runPath, JSON.stringify({ stamp: STAMP, backend: searchBackend(), model: CFG.model, results }, null, 2));

@@ -2,7 +2,7 @@
   "model": "qwen2.5:14b",
   "ollamaUrl": "http://localhost:11434",
   "auditBackend": "claude",
-  "claudeMax5x": { "label": "Max x5", "tokenLimit": 220000000, "costLimit": 0 },
+  "claudeMax5x": { "label": "Max x5", "tokenLimit": 88000000, "costLimit": 0 },
   "auditRounds": 2,
   "governor": { "tokenThreshold": 0.8, "maxConcurrency": 1, "pollMs": 5000 },
   "notify": { "toast": true, "webhookUrl": "", "events": ["done", "failed", "budget_stop", "approval_waiting"], "includeLogTail": false },
@@ -16,11 +16,32 @@
   },
   "topics": [
     {
-      "id": "web-design-trends",
-      "queries": ["UI design trends 2026", "Material Design 3 updates 2026", "Apple Human Interface Guidelines updates 2026"],
-      "target": { "type": "vault", "file": "knowledge/auto/web-design-trends.md" },
+      "id": "claude-code-changelog",
+      "queries": ["Claude Code changelog latest features", "Claude Code CLI new release notes", "Anthropic Claude Code update"],
+      "target": { "type": "vault", "file": "knowledge/auto/claude-code-changelog.md" },
       "risk": "low",
-      "note": "デザイン最新動向を vault に蓄積（低リスク=自動適用）"
+      "note": "Claude Code の新機能・変更点（2AIO ハーネス自体の改善材料。低リスク=自動適用）"
+    },
+    {
+      "id": "js-framework-breaking-changes",
+      "queries": ["Next.js latest breaking changes migration guide", "Vite major version migration", "React breaking changes upgrade guide"],
+      "target": { "type": "vault", "file": "knowledge/auto/js-framework-breaking-changes.md" },
+      "risk": "low",
+      "note": "フレームワーク版差・破壊的変更（engineer/qa/devops が毎回踏む最大の失敗要因）"
+    },
+    {
+      "id": "node-npm-advisories",
+      "queries": ["npm supply chain attack advisory recent", "Node.js security release", "npm malicious package alert"],
+      "target": { "type": "vault", "file": "knowledge/auto/node-npm-advisories.md" },
+      "risk": "low",
+      "note": "npm サプライチェーン・Node セキュリティ勧告（--ignore-scripts ゲートの背景知識）"
+    },
+    {
+      "id": "deploy-platform-changes",
+      "queries": ["Vercel platform changes pricing limits", "GitHub Pages deployment changes", "Firebase Hosting update"],
+      "target": { "type": "vault", "file": "knowledge/auto/deploy-platform-changes.md" },
+      "risk": "low",
+      "note": "デプロイ先プラットフォームの仕様変更（devops の直接デプロイに直結）"
     },
     {
       "id": "web-security",

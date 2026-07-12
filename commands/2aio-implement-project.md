@@ -152,6 +152,7 @@ tags: [2aio, {project}, planning]
 
 ### Phase 1: 計画読み込み
 
+0. **vault 知識の関連付け（#19・1回だけ）**: `vault/knowledge/auto/INDEX.md` が存在すれば読み、スタックに関連するトピック（js-framework-breaking-changes 等）の Key Points 3行＋パスを控える。Phase 2-a の engineer 起動プロンプトに添えるのは**関連トピックのパスのみ**（Sprint 毎の全 Task への無条件注入はしない — トークン予算保護）。INDEX が無ければスキップ
 1. impl-plan-*.md を読む
 2. 以下を state.md に反映:
    - CEO 承認ステータス確認（rejected なら **モード問わず停止**）

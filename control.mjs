@@ -312,7 +312,9 @@ function startJob(job) {
           cacheRead: finalResult.usage.cache_read_input_tokens ?? null, cacheCreate: finalResult.usage.cache_creation_input_tokens ?? null }
       : null;
     const failReason = code !== 0
-      ? (finalResult?.is_error ? (finalResult.subtype || 'error') : `exit ${code}`)
+      ? (finalResult?.is_error
+        ? String(typeof finalResult.result === 'string' && finalResult.result ? finalResult.result : (finalResult.subtype || 'error')).slice(0, 160)
+        : `exit ${code}`)
       : null;
     // #15: waiting_approval に遷移済みなら exit 0 でも done に上書きしない
     const current = loadQueue(ROOT).find((x) => x.id === job.id);
