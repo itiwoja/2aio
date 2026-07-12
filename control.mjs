@@ -10,10 +10,10 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
-import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel } from './lib/queue.mjs';
+import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips } from './lib/queue.mjs';
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
-import { buildInterview, validateInterview, briefToBuildPrompt } from './lib/intake.mjs';
+import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
@@ -96,8 +96,10 @@ async function intakeAnswer(id, text) {
   if (!v) return { ok: false, err: 'ヒアリング応答が不正（claudeがJSONを返さなかった可能性）' };
   if (v.done) {
     rec.done = true; rec.brief = v.brief;
-    const job = enqueue(ROOT, { repo: id, kind: 'implement', prompt: briefToBuildPrompt(v.brief, repo) });
-    rec.enqueuedJob = job.id; tick();
+    // #12: plan→implement の2連投入（段間でガバナーが予算待機でき、impl-plan がチェックポイントに残る）
+    const planJob = enqueue(ROOT, { repo: id, kind: 'plan', prompt: briefToPlanPrompt(v.brief, repo) });
+    const implJob = enqueue(ROOT, { repo: id, kind: 'implement', prompt: IMPLEMENT_CHAIN_PROMPT, dependsOn: planJob.id });
+    rec.enqueuedJob = planJob.id; rec.chainJob = implJob.id; tick();
   } else {
     rec.messages.push({ role: 'assistant', content: v.question });
   }
@@ -139,6 +141,20 @@ function governorState() {
 
 // ─── ワーカー: ガバナー許可がある限り queued を起動する ───
 const procs = new Map(); // jobId → child
+
+// プロセスツリーごと停止 (#10)。Windows の child.kill() は claude.cmd 配下の node が残るため taskkill /T。
+function treeKill(child) {
+  if (!child || child.pid == null) return;
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true });
+  } else {
+    try { child.kill('SIGKILL'); } catch { /* already dead */ }
+  }
+}
+
+// kind別の最大実行時間 (#10)。config.json の governor.maxRuntimeMin: { default, analyze, ... } で上書き可。
+const RUNTIME_MIN = { default: 120, analyze: 15, test: 30, review: 30, refactor: 30, ...(GOV.maxRuntimeMin || {}) };
+const maxRuntimeMs = (kind) => (RUNTIME_MIN[kind] ?? RUNTIME_MIN.default) * 60_000;
 
 function startJob(job) {
   const repo = repoById(job.repo);
@@ -185,7 +201,13 @@ function startJob(job) {
   };
   child.stdout.on('data', push); child.stderr.on('data', push);
   child.on('error', (e) => push('[spawn error] ' + e.message));
+  // kind別タイムアウト (#10): 超過したらツリーごと停止(ハング1件で全repo停止を防ぐ)
+  const killer = setTimeout(() => {
+    push(`[timeout] ${RUNTIME_MIN[job.kind] ?? RUNTIME_MIN.default}分を超過したため停止します`);
+    treeKill(child);
+  }, maxRuntimeMs(job.kind));
   child.on('close', (code) => {
+    clearTimeout(killer);
     procs.delete(job.id);
     const { active: after } = governorState();
     const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
@@ -202,6 +224,7 @@ let ticking = false;
 function tick() {
   if (ticking) return; ticking = true;
   try {
+    propagateSkips(ROOT); // #12: 前段が死んだ後続を skipped に落とす(冪等)
     // 許可が出る限り queued を起動(maxConcurrencyまで)
     for (;;) {
       const { decision } = governorState();
@@ -265,16 +288,27 @@ const server = http.createServer(async (req, res) => {
     const target = u.searchParams.get('target') || (['review', 'refactor', 'issue'].includes(kind) ? theme : '');
     const issue = u.searchParams.get('issue') || '';
     const flags = u.searchParams.get('flags') || '';
+    const notBefore = u.searchParams.get('notBefore') || null; // スケジュール投入 (#10)
+    if (notBefore && Number.isNaN(Date.parse(notBefore))) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'notBefore は ISO 8601 日時で指定してください' }));
     if (!repoById(repo)) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'repo未登録' }));
     // review は clean checkout の headless 実行では未コミット差分が無いため、対象(PR番号/ブランチ差分)必須
     if (kind === 'review' && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'review には target（PR番号 or ブランチ差分）が必須です' }));
     if (kind === 'issue' && !issue && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'issue には Issue 番号が必須です' }));
-    const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt });
+    const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt, notBefore });
     tick();
     return send(res, 200, 'application/json', JSON.stringify({ ok: true, job }));
   }
   if (u.pathname === '/api/cancel' && req.method === 'POST') {
-    const r = cancel(ROOT, u.searchParams.get('id') || '');
+    const id = u.searchParams.get('id') || '';
+    // 実行中キャンセル (#10): プロセスツリーを止めてから canceled に遷移
+    const running = procs.get(id);
+    if (running) {
+      treeKill(running); procs.delete(id);
+      updateJob(ROOT, id, { state: 'canceled', endedAt: new Date().toISOString() });
+      tick();
+      return send(res, 200, 'application/json', JSON.stringify({ ok: true, killed: true }));
+    }
+    const r = cancel(ROOT, id);
     return send(res, r.ok ? 200 : 422, 'application/json', JSON.stringify(r));
   }
   if (u.pathname === '/api/register' && req.method === 'POST') {
@@ -298,6 +332,13 @@ const server = http.createServer(async (req, res) => {
   send(res, 404, 'text/plain', 'not found');
 });
 // 書き込み(spawn)を伴うためローカル限定バインド。LAN公開は Phase 3(トークン認証)まで行わない。
+// 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
+// (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
+const rec = reconcile(ROOT, (id) => procs.has(id));
+if (rec.interrupted.length || rec.requeued.length) {
+  console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
+}
+
 server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
 claudeUsage(); // ccusage プリウォーム
 setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
@@ -319,6 +360,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .badge.queued{background:rgba(93,176,255,.14);color:var(--accent)}.badge.running{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error{background:rgba(240,98,111,.16);color:var(--bad)}
+.badge.interrupted{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.new{background:rgba(93,176,255,.14);color:var(--accent)}.badge.existing{background:rgba(63,185,80,.16);color:var(--ok)}.badge.cloning{background:rgba(210,162,58,.16);color:var(--warn)}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
 button{cursor:pointer}button:hover{border-color:var(--accent)}button.mini{padding:5px 11px;font-size:12px}
@@ -384,7 +426,7 @@ async function load(){
   $('#bar').style.width=(pct||0)+'%';$('#bar').style.background=col;
   $('#kpis').innerHTML=[['queued',o.stats.queued,''],['running',o.stats.running,'warn'],['done',o.stats.done,'ok'],['failed',o.stats.failed,o.stats.failed?'bad':'']]
     .map(([l,v,c])=>'<div class="card"><div class="kpi '+c+'">'+v+'<small>'+l+'</small></div></div>').join('');
-  const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.tokensBefore!=null&&j.tokensAfter!=null?('+'+nf(j.tokensAfter-j.tokensBefore)):'')+'</td><td>'+(j.state==='queued'?'<button onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
+  const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.tokensBefore!=null&&j.tokensAfter!=null?('+'+nf(j.tokensAfter-j.tokensBefore)):'')+'</td><td>'+(j.state==='queued'||j.state==='running'?'<button onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
   $('#jobs').innerHTML='<table><tr><th>状態</th><th>repo</th><th>kind</th><th>プロンプト</th><th>Δtok</th><th></th></tr>'+(jr||'<tr><td colspan=6 class="muted">キューは空です</td></tr>')+'</table>';
   const sel=$('#repo');const cur=sel.value;sel.innerHTML=o.repos.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.id)+'</option>').join('')||'<option value="">未登録</option>';if(cur)sel.value=cur;
   $('#repos').innerHTML=o.repos.length?o.repos.map(r=>{
