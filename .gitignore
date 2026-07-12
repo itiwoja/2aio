@@ -2,13 +2,23 @@ node_modules/
 .ai/
 .env
 .env.local
+*.key
+*.pem
+
+# 実行時ログ・提案下書き (ランタイム生成物・非ソース)
+history/
+runs/
+proposals/
+usage.jsonl
+
+# 2AIO 出力 (ランタイム生成物)
 output/
 2aio-output/
 _archive/
 _review/
 security/scanners/_reports/
-workspaces/
-proposals/
-runs/
-history/
+
+# 制御プレーン: ジョブキュー実体・ローカルrepo登録簿・clone作業ツリー
+control/
 repos.json
+workspaces/
