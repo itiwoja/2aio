@@ -185,6 +185,7 @@ tags: [2aio, build, {略称}]
 
 ### Phase 6: 完了
 `output/{project}/state.md` を `phase: completed` 更新、`deployed_url` 記録。簡潔に「完成／URL／受け入れ条件の達成状況」を報告。
+- **失敗パターン記録（#13）**: build-log / qa-report にタグ付き失敗があれば、/2aio-implement-project Phase 5 と同スキーマで `output/_memory/failures.jsonl` に追記（メインスレッド責務・JSONL追記）。
 
 ## モデル指針（コスト最適化）
 - サブエージェントのモデルは各 agent frontmatter が正本（実装3体 engineer/qa/devops は sonnet 固定＝セッション継承しない。未指定 agent のみセッション継承。2aio-r-* は haiku 固定だが本レーンでは使わない）。

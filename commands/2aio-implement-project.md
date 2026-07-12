@@ -367,6 +367,12 @@ state.md 最終更新:
 
 本コマンド（メインスレッド）が completion-report.md の要約 1 行（テーマ・完了ステータス・URL・degraded 項目数）を `output/_memory/index.md` に追記する（ファイルが無ければ作成。auto モードでも実施）。
 
+**失敗パターンの構造化記録（#13・メインスレッド責務）:**
+1. build-log.md / qa-report-sprint*.md のタグ付き失敗（`[FAIL_FORWARD]` `[ESCALATION]` `[SCOPE_DEFERRED]` `[SKIPPED_DEP]` `[REVIEW_DEGRADED]` 等）を、1件1行の JSONL として `output/_memory/failures.jsonl` に**追記**する（usage.jsonl と同じ追記規約。全文上書き禁止と両立）:
+   `{"date":"{ISO}","project":"{project}","task":"T-XXX","tag":"FAIL_FORWARD","category":"{build|type|dep|logic|env|scope|other}","resolution":"{修正済み|未解決|v2退避}"}`
+2. 設計判断・スタックのハマりどころを `output/_memory/{project}-learnings.md` に構造化保存（採用スタック・効いた判断・落とし穴・次回への注意の4節）。
+3. /2aio-build 高速レーンの build-log / qa-report も同スキーマの記録対象（build レーンでは Phase 6 完了時に同じ手順を実施）。
+
 ---
 
 ## エラー処理
