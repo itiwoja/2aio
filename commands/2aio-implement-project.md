@@ -264,9 +264,15 @@ qa-report-sprint{n}.md の修正指示を入力に再起動。完了後 2aio-qa 
   - 次 Sprint へ進む前に state.md の `qa_round: 0` / `review_round: 0` / `build_fix_used: 0` へ Edit でリセットし、タイムラインに記録する
   - state.md を `phase: implementing` に戻す
 
-### Phase 3: 2aio-devops によるデプロイ
+### Phase 3: 終端（2aio-devops）— `--finish=deploy|pr|commit`（既定 deploy・後方互換）
 
-state.md の `phase: deploying` に遷移。
+state.md の `phase: deploying` に遷移。起動引数 `--finish=` で終端を選択（state.md に `finish` フィールドとして記録）:
+
+| finish | 動作 |
+|---|---|
+| `deploy`（既定） | 従来どおり本番デプロイ（以下の記述） |
+| `pr` | 2aio-devops を platform=pr で起動: Step 2.5 → push → `gh pr create`（qa-report 要約添付）→ `pr_url` 記録。承認は deploy と同じ state.md 承認機構を「PR 作成承認」として流用 |
+| `commit` | devops を起動せずローカルコミット（Phase 2 の実コミット）までで完了。push しないためセキュリティゲート不要。push コマンドを完了報告に提示するのみ |
 
 interactive モード、または `mode: auto` かつ `auto_approve` が true 以外の場合、2aio-devops 起動前に本コマンド（メインスレッド）がデプロイ計画（プラットフォーム・コマンド・想定URL）をユーザーに提示して明示的承認を取得し、state.md に `deploy_approved: true` と `deploy_approved_at: {ISO 8601}` を Edit で記録してから 2aio-devops を起動する。未承認なら起動しない。
 

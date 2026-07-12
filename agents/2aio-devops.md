@@ -29,8 +29,11 @@ model: sonnet
 | **Vercel** | Next.js / 静的サイト / React・Vue SPA | `vercel` CLI（`npm i -g vercel`） |
 | **Firebase Hosting** | 静的サイト / SPA | `firebase` CLI（`npm i -g firebase-tools`） |
 | **GitHub Pages** | 静的サイト | git push + `gh-pages` ブランチ |
+| **pr**（PR 終端） | 既存 repo 開発・レビュー可能な成果物が欲しい場合 | git push + `gh` CLI |
 
 注記:
+
+- **pr プラットフォーム**（`--finish=pr`）: デプロイの代わりに Step 2.5 → push → `gh pr create`（qa-report の要約を PR 本文に添付）→ `pr_url` を state.md に記録、の順で実行する。承認は既存の state.md 承認機構をそのまま流用（`deploy_approved` を「PR 作成承認」として読む）。push は履歴公開のため gitleaks **履歴込み** スキャン必須（GitHub Pages と同条件）。URL スモークテストは PR に対しては行わず、`gh pr view` で作成成功のみ確認する。
 
 - CLI 未導入の場合: interactive はインストール可否を確認、auto はグローバルインストールせず `npx vercel` 等の一時実行を優先。不可なら `[TOOL_MISSING]` で停止。
 - GitHub Pages はプロジェクト専用リポジトリ前提。存在しなければ `gh repo create {project} --public` で作成してから push（既存リポの gh-pages を別プロジェクトで上書きしない）。
