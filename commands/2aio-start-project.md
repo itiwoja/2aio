@@ -30,6 +30,14 @@ argument-hint: <テーマ|--lite>
 
 ## 実行手順（通常モード = フル取締役会）
 
+### Phase 0: テーマ略称の確定と board-state 初期化（#24）
+
+1. **テーマ略称を冒頭で確定する**（従来 Phase 6 で行っていた生成を前倒し。ルールは同じ: `output/board-meeting-*.md` を一覧し、ファイル冒頭の「**テーマ:**」行との意味的一致があればその略称を再利用、無ければ英小文字ケバブ20文字以内で新規生成。Phase 6 では確定済み略称をそのまま使う）
+2. `output/{project}/board-state.md` を初期化（**implement の state.md とは別ファイル** — phase enum・デプロイ承認フィールドの混線を避ける）: frontmatter は `project / phase: board-1 / created_at / updated_at` のみ
+3. **各 Phase 完了時**、中間成果を `output/{project}/board-work/` に逐次保存し board-state の `phase` を進める:
+   `ceo-brief.md`（Phase 1）→ `cmo|cto|cso-report.md`（Phase 2）→ `cfo-report.md`（Phase 3）→ `ceo-final.md`（Phase 4）
+4. **resume**: 引数 `resume {project}` で board-state.md の `phase` から完了済み Phase をスキップして再開（最大10体・最長レーンの中断=全損を防ぐ）。--lite にはこの機構を適用しない（3起動のみで再実行コストが resume のオーバーヘッドと同等）
+
 ### Phase 1: CEO ブリーフ生成
 オーケストレーター（本体セッション）が `2aio-ceo.md` の [Phase 1 — ブリーフ生成時] フォーマットに従い直接ブリーフを生成する（エージェント起動不要。opus 起動は Phase 4 の1回に温存）。
 
