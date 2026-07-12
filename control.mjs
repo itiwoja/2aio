@@ -268,8 +268,10 @@ function startJob(job) {
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
   else {
     cmd = CLAUDE;
-    args = ['-p', '--output-format', 'stream-json', '--verbose',
-      '--permission-mode', PERMISSION_MODE, '--allowedTools', ALLOWED_TOOLS, prompt];
+    // 引数順に注意: --allowedTools は可変長のため、後ろに置くとプロンプト位置引数まで
+    // 飲み込んで「Input must be provided」エラーになる（eval 実走で発覚）。プロンプトを先頭に置く。
+    args = ['-p', prompt, '--output-format', 'stream-json', '--verbose',
+      '--permission-mode', PERMISSION_MODE, '--allowedTools', ALLOWED_TOOLS];
   }
 
   let child;
