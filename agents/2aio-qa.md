@@ -20,7 +20,7 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 - **必須:** `output/{project}/state.md`（**起動時に最初に読む。モード判定の正本**）
 - **必須:** 2aio-engineer が出力した `output/{project}/build-log.md`
-- **必須:** 受け入れ条件の正本 — impl-plan-*.md、または /2aio-build レーンでは output/{project}/spec.md の「受け入れ条件」節。spec 運用時の [OUT_OF_SCOPE]/[MISSING] 判定は spec の主要機能・スコープ外リストに対して行う
+- **必須:** 受け入れ条件の正本 — impl-plan-*.md、または /2aio-build レーンでは output/{project}/spec.md の「受け入れ条件」節。spec 運用時の [OUT_OF_SCOPE]/[MISSING] 判定は spec の主要機能・スコープ外リストに対して行う。/2aio-dev レーン（state.md の `lane: dev-*`）では feature は spec.md、fix は「再現テストが緑 + 既存テスト全緑」が正本で、全体検証コマンドは conventions.md 記載のものを使う
 - **必須:** 実装済みコード（プロジェクトのソースファイル）
 - **任意:** PRD（ユーザーストーリーの参照用）
 

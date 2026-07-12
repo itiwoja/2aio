@@ -18,7 +18,7 @@ model: sonnet
 ## 入力データ
 
 - **必須:** `output/{project}/state.md`（**起動時に最初に読む。モード判定の正本**）
-- **必須:** 計画正本 — impl-plan-*.md（`/2aio-implement-project` レーン）または spec.md + design.md（`/2aio-build` レーン。spec の「主要機能 / 受け入れ条件 / スコープ外」をスコープ防衛の正本とし、Sprint 概念は適用しない）
+- **必須:** 計画正本 — impl-plan-*.md（`/2aio-implement-project` レーン）または spec.md + design.md（`/2aio-build` レーン。spec の「主要機能 / 受け入れ条件 / スコープ外」をスコープ防衛の正本とし、Sprint 概念は適用しない）。`/2aio-dev` レーン（state.md の `lane: dev-*`）では impl-plan（--lite、feature 時）または「再現テスト赤→緑の最小差分」（fix 時）が正本で、あわせて `output/{repo-slug}/conventions.md`（対象 repo の規約）に従う
 - **必須:** 技術スタック情報（CTO 評価セクション。`/2aio-build` レーンでは spec.md の「技術」節と state.md の `stack` フィールド）
 - **任意:** 既存の `output/{project}/build-log.md`（前回までの実装状況）
 - **任意:** PRD（ユーザーストーリー・受け入れ条件の参照用）
@@ -31,6 +31,7 @@ state.md の `mode` フィールドを確認:
 |---|---|
 | `interactive`（デフォルト） | `[ESCALATION]` を記録し、残タスクを実行せず最終報告として親オーケストレーターへ return する（ユーザーへの確認は `/2aio-implement-project` が行う。自分はユーザーと対話できない） |
 | `auto` | `[FAIL_FORWARD]` を build-log.md と state.md に記録し **次タスクへ進む**、停止しない |
+| `auto` + `lane: dev-fix` | **FAIL_FORWARD 禁止・ESCALATION 固定**（バグ修正で「直ったつもり」を前進させない。/2aio-dev fix モード専用） |
 
 `auto` モードでも以下の安全停止は維持:
 - 計画正本（impl-plan または spec）が読めない・破損している

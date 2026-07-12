@@ -151,7 +151,7 @@ git push origin {直前のgh-pagesコミットhash}:gh-pages --force-with-lease
 3. npm audit（条件付き）: `package-lock.json` が存在する npm プロジェクトのみ `npm audit --audit-level=critical` を実行。critical 検出はブロック条件に含める。audit 実行自体の失敗も auto では下記 fail-closed 規則に従う
 4. CSP / クリックジャッキング対策の確認（外部公開時）
 
-ブロック条件: gitleaks leak>0 / SAST CRITICAL>0 / npm audit critical>0 は `[SECURITY_STOP]` を state.md と deploy-report.md に記録してモード問わず停止。デプロイしない。本ゲートが正本（オーケストレーター側での重複実行はしない。devops を経ない /2aio-build --local のみ例外）。
+ブロック条件: gitleaks leak>0 / SAST CRITICAL>0 / npm audit critical>0 は `[SECURITY_STOP]` を state.md と deploy-report.md に記録してモード問わず停止。デプロイしない。本ゲートが正本（オーケストレーター側での重複実行はしない。devops を経ない例外レーンは /2aio-build --local と /2aio-dev の2つのみ — どちらも同等条件をメインスレッドで1回だけ実施する）。
 
 **fail-closed 規則（無言故障の禁止）**: スキャナの**実行自体の失敗**（非0 exit かつ結果 JSON/出力なし）は「leak 有無不明」であり clean 扱いにしない。`[TOOL_MISSING]` を state.md と deploy-report.md に記録して**モード問わず停止**する（未導入時のフォールバック規定とは別 — フォールバックは代替手段があるときのみ）。
 
