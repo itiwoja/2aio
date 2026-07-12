@@ -144,6 +144,11 @@ function corePrompt(job, a) {
     case 'test': return `このリポジトリのテストコマンドを検出して全実行してください（package.json scripts / Makefile / pytest 等）。失敗があれば原因を特定して修正し、全テストが緑になるまで繰り返す（最大3往復。直せなければ失敗内容を報告して終了）。テスト基盤が無ければ「テスト基盤なし」と報告して終了。`;
     case 'review': return `/code-review ${a.target}`.trim();
     case 'refactor': return `/refactor-clean ${a.target || ''}`.trim();
+    // ── IDD ブリッジ (#23)。連鎖は intent→plan→mvp で必ず停止（削軸レビューは ikki の対話必須のため
+    // idd-v1 は自動投入しない — IDDガードレール「削軸スキップ禁止」）──
+    case 'idd-intent': return `/idd-intent ${a.theme || ''}`.trim();
+    case 'idd-plan': return `idd/active/ の最新の intent（直前ジョブが作成したもの）を対象に /idd-plan を実行してください。スコープは Intent から逆算し、Intent に無い機能を足さないこと。`;
+    case 'idd-mvp': return `idd/active/ の最新の plan を対象に /idd-mvp を実行してください。MVP 完了条件に答える最短経路のみ実装し、v1/v2 スコープに手を出さないこと。`;
     // pr は履歴公開アクションのため、devops Step 2.5 と同等の秘密スキャンをプロンプトに内蔵（正本性は崩さない）
     case 'pr': return `現在のブランチを PR にしてください。手順: (1) push 前に gitleaks（未導入なら git grep -iE "(api[_-]?key|secret|token|password)\\s*[:=]" $(git rev-list --all) 相当の履歴 grep で代替）で秘密情報スキャンを実行。leak>0 なら push せず [SECURITY_STOP] を出力して停止。 (2) clean なら push して gh pr create（本文に変更概要・テスト結果を記載）。 (3) PR URL を出力。`;
     default: return (a.theme || a.text || '').trim();
@@ -317,8 +322,12 @@ function startJob(job) {
         : `exit ${code}`)
       : null;
     // #15: waiting_approval に遷移済みなら exit 0 でも done に上書きしない
+    // #23: idd-mvp 完了は done でなく waiting_review（ikki の /idd-review 4軸レビュー待ちを可視化。
+    //      後続の自動投入はしない — 削軸レビューは対話必須）
     const current = loadQueue(ROOT).find((x) => x.id === job.id);
-    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval' : (code === 0 ? 'done' : 'failed');
+    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval'
+      : (code === 0 && job.kind === 'idd-mvp') ? 'waiting_review'
+      : (code === 0 ? 'done' : 'failed');
     const updated = updateJob(ROOT, job.id, {
       state: nextState, exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
@@ -406,6 +415,15 @@ const server = http.createServer(async (req, res) => {
     // review は clean checkout の headless 実行では未コミット差分が無いため、対象(PR番号/ブランチ差分)必須
     if (kind === 'review' && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'review には target（PR番号 or ブランチ差分）が必須です' }));
     if (kind === 'issue' && !issue && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'issue には Issue 番号が必須です' }));
+    // #23: kind=idd は intent→plan→mvp の3連鎖投入（mvp で必ず停止。v1 は /idd-review 後に手動）
+    if (kind === 'idd') {
+      if (!theme) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'idd には theme（Intent の種）が必須です' }));
+      const j1 = enqueue(ROOT, { repo, kind: 'idd-intent', args: { theme } });
+      const j2 = enqueue(ROOT, { repo, kind: 'idd-plan', args: {}, dependsOn: j1.id });
+      const j3 = enqueue(ROOT, { repo, kind: 'idd-mvp', args: {}, dependsOn: j2.id });
+      tick();
+      return send(res, 200, 'application/json', JSON.stringify({ ok: true, jobs: [j1, j2, j3] }));
+    }
     const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt, notBefore });
     tick();
     return send(res, 200, 'application/json', JSON.stringify({ ok: true, job }));
@@ -481,7 +499,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .badge.queued{background:rgba(93,176,255,.14);color:var(--accent)}.badge.running{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error{background:rgba(240,98,111,.16);color:var(--bad)}
-.badge.interrupted,.badge.waiting_approval{background:rgba(210,162,58,.16);color:var(--warn)}
+.badge.interrupted,.badge.waiting_approval,.badge.waiting_review{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.skipped{background:rgba(154,167,180,.16);color:var(--sub)}
 .badge.new{background:rgba(93,176,255,.14);color:var(--accent)}.badge.existing{background:rgba(63,185,80,.16);color:var(--ok)}.badge.cloning{background:rgba(210,162,58,.16);color:var(--warn)}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
@@ -514,7 +532,7 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
   <div class="card"><h2>ジョブ投入（既存repoの手動レーン）</h2>
     <div class="form">
       <select id="repo"></select>
-      <select id="kind"><option value="build">build（高速レーン）</option><option value="start">start（取締役会）</option><option value="plan">plan</option><option value="implement">implement</option><option value="analyze">analyze（解析）</option><option value="feature">feature（既存repoに機能追加）</option><option value="fix">fix（バグ修正）</option><option value="issue">issue（GitHub Issue番号から）</option><option value="test">test（テスト実行+修正）</option><option value="review">review（要target: PR番号/差分）</option><option value="refactor">refactor（死コード掃除）</option><option value="pr">pr（push+PR作成）</option></select>
+      <select id="kind"><option value="build">build（高速レーン）</option><option value="start">start（取締役会）</option><option value="plan">plan</option><option value="implement">implement</option><option value="analyze">analyze（解析）</option><option value="feature">feature（既存repoに機能追加）</option><option value="fix">fix（バグ修正）</option><option value="issue">issue（GitHub Issue番号から）</option><option value="test">test（テスト実行+修正）</option><option value="review">review（要target: PR番号/差分）</option><option value="refactor">refactor（死コード掃除）</option><option value="pr">pr（push+PR作成）</option><option value="idd">idd（intent→plan→mvp 連鎖。mvpで停止→/idd-review待ち）</option></select>
       <input id="theme" placeholder="テーマ / 機能記述 / Issue番号 / review対象（analyze・pr は不要）">
       <button id="add">＋ キューに追加</button>
     </div>

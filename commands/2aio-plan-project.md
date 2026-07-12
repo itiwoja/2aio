@@ -1,6 +1,6 @@
 ---
 description: PRD を入力に 2AIO 実装計画会議(CEO方針→CTO+planner並列→CFO→CEO承認)を開き impl-plan を生成する。--lite で簡易WBS
-argument-hint: <PRDパス|latest> [--lite]
+argument-hint: <PRDパス|latest> [--lite] [--handoff=idd]
 ---
 
 以下の PRD について2AIO（AGENT ALL IN ONE）実装計画会議を開いてください。
@@ -82,6 +82,16 @@ CFO は以下を試算します:
 - ステータス: `approved` / `conditional` / `rejected`
 - conditional の場合は条件を明記
 - rejected の場合は再計画が必要な箇所と理由を明記
+
+### Phase 4.5: IDD ハンドオフ（`--handoff=idd` 指定時のみ・#23）
+
+`output/idd-handoff-{略称}-{日付}.md` に **IDD 入力ダイジェスト** を出力する:
+- Intent の種（PRD の目的・完了条件を Q1/Q2 形式に要約）
+- MVP / v1 / v2 スコープの逆算案（impl-plan の Sprint 分割から写像）
+- 出典パス（PRD・impl-plan）
+
+**idd/active/{slug}/ の intent.md・plan.md は直接生成しない** — Linear SoT 起票と Phase 0/1 の ikki 承認は
+IDD 側に残す（IDD ガードレール準拠）。ユーザーは `/idd-intent {このダイジェストのパス}` で IDD を開始する。
 
 ### Phase 5: 実装計画書の出力
 全フェーズの結果を Markdown 形式の実装計画書として整形し、以下に保存してください:
