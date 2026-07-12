@@ -163,7 +163,7 @@ git push origin {直前のgh-pagesコミットhash}:gh-pages --force-with-lease
 
 ### Step 3: デプロイ承認記録の確認
 
-state.md の承認記録を確認する（取得はオーケストレーター）。無ければ「動作原則 1」に従い「承認待ち」で return する。
+state.md の承認記録を確認する（取得はオーケストレーター）。無ければ「動作原則 1」に従い「承認待ち」で return する。その際、標準出力に機械可読マーカー **`[APPROVAL_WAITING] {project}`** を1行含める（ヘッドレス実行では exit 0 の正常 return と「承認待ち」を control plane が区別できないため — #15）。
 
 ### Step 4: デプロイ実行
 

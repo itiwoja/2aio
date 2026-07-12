@@ -14,6 +14,7 @@ import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconc
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
 import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
+import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
@@ -158,6 +159,24 @@ function governorState() {
   return { usage, active, running, decision };
 }
 
+// ─── #15 通知（読み取り専用・失敗しても運用を壊さない） ───
+const NOTIFY_CFG = CFG.notify || {};
+let prevBudgetDecision = null;
+const budgetSeen = new Set(); // 同一5hブロック(resetAt)内の budget_stop dedup
+
+function notifyJob(job, ndjsonPath = null) {
+  const ev = jobEvent(job);
+  if (!ev) return;
+  let tail = [];
+  if (ndjsonPath) { try { tail = fs.readFileSync(ndjsonPath, 'utf8').trim().split('\n').slice(-20); } catch { /* ログ無し */ } }
+  sendNotification(NOTIFY_CFG, ev, tail).catch(() => {});
+}
+function checkBudgetEdge(decision) {
+  const ev = budgetStopEvent(prevBudgetDecision, decision, budgetSeen);
+  prevBudgetDecision = decision;
+  if (ev) sendNotification(NOTIFY_CFG, ev).catch(() => {});
+}
+
 // ─── ワーカー: ガバナー許可がある限り queued を起動する ───
 const procs = new Map(); // jobId → child
 
@@ -256,7 +275,16 @@ function startJob(job) {
       : ev.type === 'result' ? (typeof ev.result === 'string' ? ev.result.slice(0, 200) : '[result]')
       : ev.type === 'assistant' ? (ev.message?.content?.find?.((c) => c.type === 'text')?.text || '').slice(0, 200)
       : null;
-    if (text) { preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] }); }
+    if (text) {
+      preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] });
+      // #15: 承認待ちマーカー検知 → waiting_approval 遷移＋通知（exit 0 でも done に上書きしない）。
+      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。
+      const marker = text.split('\n').map(parseApprovalMarker).find(Boolean);
+      if (marker) {
+        const j = updateJob(ROOT, job.id, { state: 'waiting_approval', waitingProject: marker.project });
+        notifyJob(j);
+      }
+    }
   };
   const onData = (b) => {
     lineBuf += String(b);
@@ -286,13 +314,17 @@ function startJob(job) {
     const failReason = code !== 0
       ? (finalResult?.is_error ? (finalResult.subtype || 'error') : `exit ${code}`)
       : null;
-    updateJob(ROOT, job.id, {
-      state: code === 0 ? 'done' : 'failed', exit: code,
+    // #15: waiting_approval に遷移済みなら exit 0 でも done に上書きしない
+    const current = loadQueue(ROOT).find((x) => x.id === job.id);
+    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval' : (code === 0 ? 'done' : 'failed');
+    const updated = updateJob(ROOT, job.id, {
+      state: nextState, exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
       commitAfter: head && head.code === 0 ? head.out : null,
       usage, costUSD: finalResult?.total_cost_usd ?? null, failReason,
       artifacts: collectArtifacts(repo.path),
     });
+    if (nextState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
     tick(); // 1つ空いたので次を検討
   });
 }
@@ -305,6 +337,7 @@ function tick() {
     // 許可が出る限り queued を起動(maxConcurrencyまで)
     for (;;) {
       const { decision } = governorState();
+      checkBudgetEdge(decision); // #15: budget 停止のエッジ検出(同一ブロック1回のみ)
       if (!decision.admit) break;
       const job = nextQueued(ROOT);
       if (!job) break;
@@ -446,7 +479,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .badge.queued{background:rgba(93,176,255,.14);color:var(--accent)}.badge.running{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error{background:rgba(240,98,111,.16);color:var(--bad)}
-.badge.interrupted{background:rgba(210,162,58,.16);color:var(--warn)}
+.badge.interrupted,.badge.waiting_approval{background:rgba(210,162,58,.16);color:var(--warn)}
+.badge.skipped{background:rgba(154,167,180,.16);color:var(--sub)}
 .badge.new{background:rgba(93,176,255,.14);color:var(--accent)}.badge.existing{background:rgba(63,185,80,.16);color:var(--ok)}.badge.cloning{background:rgba(210,162,58,.16);color:var(--warn)}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
 button{cursor:pointer}button:hover{border-color:var(--accent)}button.mini{padding:5px 11px;font-size:12px}
