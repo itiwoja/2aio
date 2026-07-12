@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { parseRepoUrl, classifyRepo } from '../lib/repo.mjs';
+import { parseRepoUrl, classifyRepo, detectStack } from '../lib/repo.mjs';
 
 test('parseRepoUrl: https / .git付き / 末尾スラッシュ / SSH を解析', () => {
   assert.deepEqual(parseRepoUrl('https://github.com/itiwoja/2aio'), { host: 'github.com', owner: 'itiwoja', name: '2aio', slug: 'itiwoja/2aio' });
@@ -24,6 +24,28 @@ function mk(files) {
   }
   return d;
 }
+
+// ── #11 スタック検出 ──
+
+test('detectStack: package.json scripts からテスト/ビルド/lintコマンドを検出', () => {
+  const d = mk({ 'package.json': JSON.stringify({ scripts: { test: 'node --test', build: 'vite build', lint: 'eslint .' } }) });
+  assert.deepEqual(detectStack(d), { language: 'javascript', testCmd: 'npm test', buildCmd: 'npm run build', lintCmd: 'npm run lint' });
+});
+
+test('detectStack: npm 既定の "no test specified" は testCmd=null', () => {
+  const d = mk({ 'package.json': JSON.stringify({ scripts: { test: 'echo "Error: no test specified" && exit 1' } }) });
+  assert.equal(detectStack(d).testCmd, null);
+});
+
+test('detectStack: go.mod → go / 検出材料なし → null', () => {
+  assert.equal(detectStack(mk({ 'go.mod': 'module x' })).language, 'go');
+  assert.equal(detectStack(mk({ 'README.md': '# x' })), null);
+});
+
+test('classifyRepo: stack フィールドを含む', () => {
+  const d = mk({ 'package.json': JSON.stringify({ scripts: { test: 'node --test' } }), 'src/i.js': 'x' });
+  assert.equal(classifyRepo(d).stack.language, 'javascript');
+});
 
 test('classifyRepo: 空 or READMEのみ → new', () => {
   assert.equal(classifyRepo(mk({})).mode, 'new');

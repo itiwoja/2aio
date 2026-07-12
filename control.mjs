@@ -44,8 +44,12 @@ function loadRepos() {
 function saveRepos(repos) { fs.writeFileSync(REPOS_FILE, JSON.stringify({ repos }, null, 2)); }
 const repoById = (id) => loadRepos().find(r => r.id === id) || null;
 function upsertRepo(rec) {
-  const repos = loadRepos().filter(r => r.id !== rec.id);
-  repos.unshift(rec); saveRepos(repos); return rec;
+  const all = loadRepos();
+  const prev = all.find(r => r.id === rec.id) || {};
+  const repos = all.filter(r => r.id !== rec.id);
+  // #11: 既存フィールドをマージ（再登録で stack 等のカスタムフィールドを消さない）
+  const merged = { ...prev, ...rec };
+  repos.unshift(merged); saveRepos(repos); return merged;
 }
 
 // HTTPS(等)URLで登録 → workspaces/ に clone → 新規/既存を判定して状態を更新(非同期)。
@@ -63,7 +67,7 @@ function registerRepo(url) {
     // #3 Phase A: 'main' ハードコードをやめ、clone 直後の HEAD から実デフォルトブランチを検出
     const head = git(dest, 'symbolic-ref', '--short', 'HEAD');
     const branch = head.code === 0 && head.out ? head.out : 'main';
-    upsertRepo({ ...repoById(id), branch, mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount });
+    upsertRepo({ ...repoById(id), branch, mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount, stack: c.stack || null });
     if (c.mode === 'new') seedIntake(id); // 新規は対話ヒアリングを用意
   };
   if (alreadyCloned) { done(); return { ok: true, repo: repoById(id), reused: true }; }
@@ -107,16 +111,31 @@ async function intakeAnswer(id, text) {
   return { ok: true, rec };
 }
 
+// #11: repo メモリの正本は workspaces/<repo>/CLAUDE.md（cwd 直下なので claude -p が自動ロードし、
+// cwd 内書き込みなので権限問題も無い）。全 kind に「テストコマンド＋完了時のメモリ追記」を注入する。
+function memoryPreamble(repo) {
+  const parts = [];
+  const t = repo?.stack?.testCmd; const b = repo?.stack?.buildCmd;
+  if (t || b) parts.push(`このrepoのコマンド: ${[b && `ビルド=${b}`, t && `テスト=${t}`].filter(Boolean).join(' / ')}。検証にはこれを使う。`);
+  parts.push('作業完了時、今後のジョブに有用な決定・構成理解・失敗の教訓があれば CLAUDE.md（無ければ作成）に簡潔に追記する。');
+  return parts.join('\n');
+}
+
 // kind → 実行プロンプト(2AIOの入口レーンへ委譲)。prompt指定があればそれを優先。
-function buildPrompt(job) {
-  if (job.prompt) return job.prompt;
+function buildPrompt(job, repo = null) {
+  const pre = memoryPreamble(repo);
+  const wrap = (p) => (p ? `${p}\n\n---\n${pre}` : p);
+  if (job.prompt) return wrap(job.prompt);
   const a = job.args || {};
+  return wrap(corePrompt(job, a));
+}
+function corePrompt(job, a) {
   switch (job.kind) {
     case 'build': return `/2aio-build ${a.theme || ''} ${a.flags || '--auto'}`.trim();
     case 'start': return `/2aio-start-project ${a.theme || ''}`.trim();
     case 'plan': return `/2aio-plan-project ${a.prd || 'latest'}`.trim();
     case 'implement': return `/2aio-implement-project ${a.plan || 'latest'} ${a.flags || '--auto'}`.trim();
-    case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。`;
+    case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。最後に、解析結果の要点（構成理解・主要コマンド・注意点）を CLAUDE.md に反映してください（無ければ作成。次回以降のジョブが自動ロードして使う）。`;
     // ── 開発 kind (#9)。feature/fix/issue は /2aio-dev レーン(#1)へ委譲 ──
     case 'feature': return `/2aio-dev . ${a.theme || ''} ${a.flags || '--auto'}`.trim();
     case 'fix': return `/2aio-dev . --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim();
@@ -203,7 +222,7 @@ function startJob(job) {
     commitBefore = head.code === 0 ? head.out : null;
   }
 
-  const prompt = buildPrompt(job);
+  const prompt = buildPrompt(job, repo);
   const { active } = governorState();
   updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: prompt });
 
