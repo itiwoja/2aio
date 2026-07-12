@@ -7,7 +7,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
 import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel } from './lib/queue.mjs';
@@ -25,6 +25,11 @@ const CLAUDE = process.env.AIO_CLAUDE_BIN || process.env.CLAUDE_BIN || 'claude';
 const WORKER_CMD = process.env.AIO_WORKER_CMD || '';
 
 const readJSON = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
+// 同期 git ヘルパ (#3 Phase A)。code!==0 でも throw しない — 呼び出し側が判断する。
+function git(dir, ...args) {
+  const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8', windowsHide: true, timeout: 60000 });
+  return { code: r.status ?? -1, out: (r.stdout || '').trim(), err: (r.stderr || '').trim() };
+}
 const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
 const WORKSPACES = path.join(ROOT, 'workspaces');
 const REPOS_FILE = path.join(ROOT, 'repos.json');
@@ -49,13 +54,16 @@ function registerRepo(url) {
   if (!info) return { ok: false, err: 'URL解析に失敗（https://host/owner/name 形式）' };
   const id = `${info.owner}-${info.name}`.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
   const dest = path.join(WORKSPACES, info.name);
-  const rec = { id, url, slug: info.slug, path: dest, branch: 'main', mode: null, state: 'cloning', error: null, defaultLane: 'build' };
+  const rec = { id, url, slug: info.slug, path: dest, branch: null, mode: null, state: 'cloning', error: null, defaultLane: 'build' };
   upsertRepo(rec);
   ensureDir(WORKSPACES);
   const alreadyCloned = fs.existsSync(path.join(dest, '.git'));
   const done = () => {
     const c = classifyRepo(dest);
-    upsertRepo({ ...repoById(id), mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount });
+    // #3 Phase A: 'main' ハードコードをやめ、clone 直後の HEAD から実デフォルトブランチを検出
+    const head = git(dest, 'symbolic-ref', '--short', 'HEAD');
+    const branch = head.code === 0 && head.out ? head.out : 'main';
+    upsertRepo({ ...repoById(id), branch, mode: c.mode, state: 'ready', fileCount: c.fileCount, codeCount: c.codeCount });
     if (c.mode === 'new') seedIntake(id); // 新規は対話ヒアリングを用意
   };
   if (alreadyCloned) { done(); return { ok: true, repo: repoById(id), reused: true }; }
@@ -107,6 +115,15 @@ function buildPrompt(job) {
     case 'plan': return `/2aio-plan-project ${a.prd || 'latest'}`.trim();
     case 'implement': return `/2aio-implement-project ${a.plan || 'latest'} ${a.flags || '--auto'}`.trim();
     case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。`;
+    // ── 開発 kind (#9)。feature/fix/issue は /2aio-dev レーン(#1)へ委譲 ──
+    case 'feature': return `/2aio-dev . ${a.theme || ''} ${a.flags || '--auto'}`.trim();
+    case 'fix': return `/2aio-dev . --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim();
+    case 'issue': return `gh issue view ${a.issue || a.target || a.theme} をコメント込みで読み、内容を1行に要約したうえで、バグ報告なら「/2aio-dev . --fix "{要約}" --auto」、機能要望なら「/2aio-dev . "{要約}" --auto」を実行してください。`;
+    case 'test': return `このリポジトリのテストコマンドを検出して全実行してください（package.json scripts / Makefile / pytest 等）。失敗があれば原因を特定して修正し、全テストが緑になるまで繰り返す（最大3往復。直せなければ失敗内容を報告して終了）。テスト基盤が無ければ「テスト基盤なし」と報告して終了。`;
+    case 'review': return `/code-review ${a.target}`.trim();
+    case 'refactor': return `/refactor-clean ${a.target || ''}`.trim();
+    // pr は履歴公開アクションのため、devops Step 2.5 と同等の秘密スキャンをプロンプトに内蔵（正本性は崩さない）
+    case 'pr': return `現在のブランチを PR にしてください。手順: (1) push 前に gitleaks（未導入なら git grep -iE "(api[_-]?key|secret|token|password)\\s*[:=]" $(git rev-list --all) 相当の履歴 grep で代替）で秘密情報スキャンを実行。leak>0 なら push せず [SECURITY_STOP] を出力して停止。 (2) clean なら push して gh pr create（本文に変更概要・テスト結果を記載）。 (3) PR URL を出力。`;
     default: return (a.theme || a.text || '').trim();
   }
 }
@@ -126,9 +143,31 @@ const procs = new Map(); // jobId → child
 function startJob(job) {
   const repo = repoById(job.repo);
   if (!repo) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: [`repo未登録: ${job.repo}`] }); return; }
+
+  // #3 Phase A: spawn 前に workspace を同期し HEAD を commitBefore として記録。
+  // dirty / 非fast-forward では自動 stash・reset --hard を絶対にせず、ジョブを failed にして
+  // UI にエラー提示（破壊的操作の自動実行禁止）。remote が無いローカル repo は同期をスキップ。
+  let commitBefore = null;
+  if (fs.existsSync(path.join(repo.path, '.git'))) {
+    const dirty = git(repo.path, 'status', '--porcelain');
+    if (dirty.code === 0 && dirty.out) {
+      updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: ['[workspace] 作業ツリーが dirty のため起動しません（前ジョブの残骸の可能性）。手動で確認してください:', ...dirty.out.split('\n').slice(0, 10)] });
+      return;
+    }
+    if (git(repo.path, 'remote').out) {
+      const pull = git(repo.path, 'pull', '--ff-only');
+      if (pull.code !== 0) {
+        updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: ['[workspace] git pull --ff-only 失敗（非fast-forward等）。自動 reset はしません:', (pull.err || pull.out).slice(0, 300)] });
+        return;
+      }
+    }
+    const head = git(repo.path, 'rev-parse', 'HEAD');
+    commitBefore = head.code === 0 ? head.out : null;
+  }
+
   const prompt = buildPrompt(job);
   const { active } = governorState();
-  updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, resolvedPrompt: prompt });
+  updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: prompt });
 
   let cmd, args;
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
@@ -149,9 +188,11 @@ function startJob(job) {
   child.on('close', (code) => {
     procs.delete(job.id);
     const { active: after } = governorState();
+    const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
     updateJob(ROOT, job.id, {
       state: code === 0 ? 'done' : 'failed', exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
+      commitAfter: head && head.code === 0 ? head.out : null,
     });
     tick(); // 1つ空いたので次を検討
   });
@@ -220,8 +261,15 @@ const server = http.createServer(async (req, res) => {
     const kind = u.searchParams.get('kind') || 'build';
     const theme = u.searchParams.get('theme') || '';
     const prompt = u.searchParams.get('prompt') || '';
+    // #9: 開発 kind 用の args 拡張（target=review/refactor 対象、issue=Issue番号、flags=レーンフラグ）
+    const target = u.searchParams.get('target') || (['review', 'refactor', 'issue'].includes(kind) ? theme : '');
+    const issue = u.searchParams.get('issue') || '';
+    const flags = u.searchParams.get('flags') || '';
     if (!repoById(repo)) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'repo未登録' }));
-    const job = enqueue(ROOT, { repo, kind, args: { theme }, prompt });
+    // review は clean checkout の headless 実行では未コミット差分が無いため、対象(PR番号/ブランチ差分)必須
+    if (kind === 'review' && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'review には target（PR番号 or ブランチ差分）が必須です' }));
+    if (kind === 'issue' && !issue && !target) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'issue には Issue 番号が必須です' }));
+    const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt });
     tick();
     return send(res, 200, 'application/json', JSON.stringify({ ok: true, job }));
   }
@@ -302,8 +350,8 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
   <div class="card"><h2>ジョブ投入（既存repoの手動レーン）</h2>
     <div class="form">
       <select id="repo"></select>
-      <select id="kind"><option value="build">build（高速レーン）</option><option value="start">start（取締役会）</option><option value="plan">plan</option><option value="implement">implement</option><option value="analyze">analyze（解析）</option></select>
-      <input id="theme" placeholder="テーマ / 作るもの（analyzeは不要）">
+      <select id="kind"><option value="build">build（高速レーン）</option><option value="start">start（取締役会）</option><option value="plan">plan</option><option value="implement">implement</option><option value="analyze">analyze（解析）</option><option value="feature">feature（既存repoに機能追加）</option><option value="fix">fix（バグ修正）</option><option value="issue">issue（GitHub Issue番号から）</option><option value="test">test（テスト実行+修正）</option><option value="review">review（要target: PR番号/差分）</option><option value="refactor">refactor（死コード掃除）</option><option value="pr">pr（push+PR作成）</option></select>
+      <input id="theme" placeholder="テーマ / 機能記述 / Issue番号 / review対象（analyze・pr は不要）">
       <button id="add">＋ キューに追加</button>
     </div>
     <div class="muted" style="margin-top:8px">投入後、ガバナーが枠を見て自動起動します（枠が薄い間はqueuedのまま待機→reset後に自動消化）。</div>
