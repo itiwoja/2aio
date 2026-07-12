@@ -1,4 +1,5 @@
 node_modules/
+.ai/
 .env
 .env.local
 output/
