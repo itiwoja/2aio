@@ -10,7 +10,7 @@
   "allow_name_substrings": [".test.", ".spec.", ".stories.", "conftest", ".d.ts"],
   "allow_path_substrings": [
     "scratchpad", "/.claude/", "/.ai/", "/.coord/", "node_modules",
-    "/.git/", "/dist/", "/build/", "dev/skills/ccc"
+    "/.git/", "/dist/", "/build/", "dev/skills/2aio"
   ],
   "disable_flag": "~/.claude/.2aio-enforce-off"
 }

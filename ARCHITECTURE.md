@@ -62,4 +62,4 @@ The WBS table format in `2aio-planner.md` is canonical. All other files must mat
 
 ## For Complete Documentation
 
-See GitHub: https://github.com/itiwoja/ccc
+See GitHub: https://github.com/itiwoja/2aio

@@ -2,7 +2,6 @@ node_modules/
 .env
 .env.local
 output/
-ccc-output/
 2aio-output/
 _archive/
 _review/
