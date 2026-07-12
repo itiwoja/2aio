@@ -156,6 +156,28 @@ function treeKill(child) {
 const RUNTIME_MIN = { default: 120, analyze: 15, test: 30, review: 30, refactor: 30, ...(GOV.maxRuntimeMin || {}) };
 const maxRuntimeMs = (kind) => (RUNTIME_MIN[kind] ?? RUNTIME_MIN.default) * 60_000;
 
+// #14: 成果物リンクの一次ソースは state.md / deploy-report.md（「state.md が正本」原則）。
+// ワーカー終了後に repo の output/*/state.md 最新を読み deployed_url / pr_url を拾う。
+function collectArtifacts(repoPath) {
+  try {
+    const outDir = path.join(repoPath, 'output');
+    if (!fs.existsSync(outDir)) return null;
+    const dirs = fs.readdirSync(outDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && fs.existsSync(path.join(outDir, d.name, 'state.md')))
+      .map((d) => path.join(outDir, d.name))
+      .sort((a, b) => fs.statSync(path.join(b, 'state.md')).mtimeMs - fs.statSync(path.join(a, 'state.md')).mtimeMs);
+    if (!dirs.length) return null;
+    const state = fs.readFileSync(path.join(dirs[0], 'state.md'), 'utf8');
+    const pick = (key) => state.match(new RegExp(`^${key}:\\s*(\\S+)\\s*$`, 'm'))?.[1];
+    const deployedUrl = pick('deployed_url'), prUrl = pick('pr_url');
+    return {
+      outputDir: dirs[0],
+      deployedUrl: deployedUrl && deployedUrl !== 'null' ? deployedUrl : null,
+      prUrl: prUrl && prUrl !== 'null' ? prUrl : null,
+    };
+  } catch { return null; }
+}
+
 function startJob(job) {
   const repo = repoById(job.repo);
   if (!repo) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: [`repo未登録: ${job.repo}`] }); return; }
@@ -185,21 +207,46 @@ function startJob(job) {
   const { active } = governorState();
   updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: prompt });
 
+  // #14: stream-json ワーカー(-p 併用時 --verbose 必須)。WORKER_CMD 差替え時は素の出力が来るが、
+  // 下の行パーサが JSON でない行を {type:'raw'} として扱うフォールバックで吸収する。
   let cmd, args;
   if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
-  else { cmd = CLAUDE; args = ['-p', prompt]; }
+  else { cmd = CLAUDE; args = ['-p', '--output-format', 'stream-json', '--verbose', prompt]; }
 
   let child;
   try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true }); }
   catch (e) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), exit: -1, log: [String(e.message)] }); return; }
   procs.set(job.id, child);
 
-  const push = (b) => {
-    const j = loadQueue(ROOT).find(x => x.id === job.id); if (!j) return;
-    String(b).split('\n').filter(Boolean).forEach(l => { j.log.push(l); while (j.log.length > 200) j.log.shift(); });
-    updateJob(ROOT, job.id, { log: j.log });
+  // #14: 全文ログは control/logs/<jobId>.ndjson に追記(200行キャップで主産物が消える問題の解消)。
+  // queue.json の log[] は最新20行のプレビューに縮小(チャンクごとの全体書き込み負荷も低減)。
+  ensureDir(path.join(ROOT, 'control', 'logs'));
+  const ndjsonPath = path.join(ROOT, 'control', 'logs', `${job.id}.ndjson`);
+  let lineBuf = '';           // チャンク境界で JSON 行が割れるため行バッファリング必須
+  let finalResult = null;     // stream-json の type:'result' イベント(usage/total_cost_usd/is_error)
+  const preview = [];
+  const handleLine = (line) => {
+    if (!line.trim()) return;
+    let ev = null;
+    try { ev = JSON.parse(line); } catch { /* not JSON */ }
+    if (!ev) ev = { type: 'raw', text: line };
+    fs.appendFileSync(ndjsonPath, JSON.stringify(ev) + '\n');
+    if (ev.type === 'result') finalResult = ev;
+    // プレビュー: テキストを持つイベントだけ拾う
+    const text = ev.type === 'raw' ? ev.text
+      : ev.type === 'result' ? (typeof ev.result === 'string' ? ev.result.slice(0, 200) : '[result]')
+      : ev.type === 'assistant' ? (ev.message?.content?.find?.((c) => c.type === 'text')?.text || '').slice(0, 200)
+      : null;
+    if (text) { preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] }); }
   };
-  child.stdout.on('data', push); child.stderr.on('data', push);
+  const onData = (b) => {
+    lineBuf += String(b);
+    const lines = lineBuf.split('\n');
+    lineBuf = lines.pop();
+    lines.forEach(handleLine);
+  };
+  const push = (text) => handleLine(typeof text === 'string' ? text : String(text));
+  child.stdout.on('data', onData); child.stderr.on('data', onData);
   child.on('error', (e) => push('[spawn error] ' + e.message));
   // kind別タイムアウト (#10): 超過したらツリーごと停止(ハング1件で全repo停止を防ぐ)
   const killer = setTimeout(() => {
@@ -208,13 +255,24 @@ function startJob(job) {
   }, maxRuntimeMs(job.kind));
   child.on('close', (code) => {
     clearTimeout(killer);
+    if (lineBuf.trim()) handleLine(lineBuf); // 残りバッファのフラッシュ
     procs.delete(job.id);
     const { active: after } = governorState();
     const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
+    // #14: envelope usage を一次指標に(ccusage 差分は全セッション合算で汚染されるため補助に格下げ)
+    const usage = finalResult?.usage
+      ? { input: finalResult.usage.input_tokens ?? null, output: finalResult.usage.output_tokens ?? null,
+          cacheRead: finalResult.usage.cache_read_input_tokens ?? null, cacheCreate: finalResult.usage.cache_creation_input_tokens ?? null }
+      : null;
+    const failReason = code !== 0
+      ? (finalResult?.is_error ? (finalResult.subtype || 'error') : `exit ${code}`)
+      : null;
     updateJob(ROOT, job.id, {
       state: code === 0 ? 'done' : 'failed', exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
       commitAfter: head && head.code === 0 ? head.out : null,
+      usage, costUSD: finalResult?.total_cost_usd ?? null, failReason,
+      artifacts: collectArtifacts(repo.path),
     });
     tick(); // 1つ空いたので次を検討
   });
@@ -297,6 +355,15 @@ const server = http.createServer(async (req, res) => {
     const job = enqueue(ROOT, { repo, kind, args: { theme, target, issue, flags }, prompt, notBefore });
     tick();
     return send(res, 200, 'application/json', JSON.stringify({ ok: true, job }));
+  }
+  if (u.pathname === '/api/job') { // #14: ジョブ詳細(フルログ末尾つき)
+    const id = u.searchParams.get('id') || '';
+    const job = loadQueue(ROOT).find((j) => j.id === id);
+    if (!job) return send(res, 404, 'application/json', JSON.stringify({ ok: false, err: 'ジョブが見つからない' }));
+    let logTail = [];
+    const ndjsonPath = path.join(ROOT, 'control', 'logs', `${id}.ndjson`);
+    try { logTail = fs.readFileSync(ndjsonPath, 'utf8').trim().split('\n').slice(-200); } catch { /* ログ無し */ }
+    return send(res, 200, 'application/json', JSON.stringify({ ok: true, job, logTail, logPath: ndjsonPath }));
   }
   if (u.pathname === '/api/cancel' && req.method === 'POST') {
     const id = u.searchParams.get('id') || '';
@@ -400,6 +467,11 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
   </div>
   <div class="card"><h2>キュー / 進行状況</h2><div id="jobs"></div></div>
 </main>
+<dialog id="jobdlg"><header class="dbody" style="display:flex;align-items:center"><b id="jd-title">ジョブ詳細</b><span class="spacer"></span><button onclick="document.getElementById('jobdlg').close()">閉じる</button></header>
+  <div class="dbody"><div id="jd-meta" class="muted" style="margin-bottom:10px"></div>
+    <div class="chat mono" id="jd-log" style="max-height:52vh;font-size:12px"></div>
+    <div class="muted" style="margin-top:8px">コストはサブスクの推計値（請求額ではない）。相対比較の指標として使う。フルログ: control/logs/</div>
+  </div></dialog>
 <dialog id="intake"><header class="dbody" style="display:flex;align-items:center"><b id="ik-title">対話ヒアリング</b><span class="spacer"></span><button onclick="document.getElementById('intake').close()">閉じる</button></header>
   <div class="dbody"><div class="chat" id="ik-chat"></div>
     <div class="form"><input id="ik-input" placeholder="回答を入力…"><button id="ik-send">送信</button></div>
@@ -426,8 +498,8 @@ async function load(){
   $('#bar').style.width=(pct||0)+'%';$('#bar').style.background=col;
   $('#kpis').innerHTML=[['queued',o.stats.queued,''],['running',o.stats.running,'warn'],['done',o.stats.done,'ok'],['failed',o.stats.failed,o.stats.failed?'bad':'']]
     .map(([l,v,c])=>'<div class="card"><div class="kpi '+c+'">'+v+'<small>'+l+'</small></div></div>').join('');
-  const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.tokensBefore!=null&&j.tokensAfter!=null?('+'+nf(j.tokensAfter-j.tokensBefore)):'')+'</td><td>'+(j.state==='queued'||j.state==='running'?'<button onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
-  $('#jobs').innerHTML='<table><tr><th>状態</th><th>repo</th><th>kind</th><th>プロンプト</th><th>Δtok</th><th></th></tr>'+(jr||'<tr><td colspan=6 class="muted">キューは空です</td></tr>')+'</table>';
+  const jr=o.jobs.map(j=>'<tr><td><span class="badge '+j.state+'">'+j.state+'</span></td><td class="mono">'+esc(j.repo)+'</td><td>'+esc(j.kind)+'</td><td class="mono" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(j.resolvedPrompt||j.prompt||(j.args&&j.args.theme)||'')+'</td><td class="mono">'+(j.usage?nf((j.usage.input||0)+(j.usage.output||0)):(j.tokensBefore!=null&&j.tokensAfter!=null?('Δ'+nf(j.tokensAfter-j.tokensBefore)):''))+'</td><td>'+(j.artifacts&&(j.artifacts.deployedUrl||j.artifacts.prUrl)?('<a href="'+esc(j.artifacts.deployedUrl||j.artifacts.prUrl)+'" target="_blank">成果物</a>'):'')+'</td><td>'+'<button class="mini" onclick="showJob(\\''+j.id+'\\')">詳細</button>'+(j.state==='queued'||j.state==='running'?' <button class="mini" onclick="cancelJob(\\''+j.id+'\\')">取消</button>':'')+'</td></tr>').join('');
+  $('#jobs').innerHTML='<table><tr><th>状態</th><th>repo</th><th>kind</th><th>プロンプト</th><th>tok</th><th>成果物</th><th></th></tr>'+(jr||'<tr><td colspan=7 class="muted">キューは空です</td></tr>')+'</table>';
   const sel=$('#repo');const cur=sel.value;sel.innerHTML=o.repos.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.id)+'</option>').join('')||'<option value="">未登録</option>';if(cur)sel.value=cur;
   $('#repos').innerHTML=o.repos.length?o.repos.map(r=>{
     const st=r.state==='cloning'?'<span class="badge cloning">clone中…</span>':r.state==='error'?'<span class="badge error">エラー</span>':(r.mode?'<span class="badge '+r.mode+'">'+(r.mode==='new'?'新規':'既存')+'</span>':'');
@@ -440,6 +512,13 @@ async function load(){
   }).join(''):'<div class="muted">まだ登録がありません。上の「リポジトリ登録（HTTPS）」から追加してください。</div>';
 }
 async function cancelJob(id){await fetch('/api/cancel?id='+encodeURIComponent(id),{method:'POST'});load();}
+async function showJob(id){const r=await(await fetch('/api/job?id='+encodeURIComponent(id))).json();if(!r.ok)return;
+  const j=r.job;$('#jd-title').textContent='ジョブ詳細: '+j.id+' ('+j.kind+')';
+  const u=j.usage?('in '+nf(j.usage.input)+' / out '+nf(j.usage.output)+' / cacheR '+nf(j.usage.cacheRead)):'—';
+  $('#jd-meta').innerHTML='<b>'+esc(j.state)+'</b>'+(j.failReason?' ・ 失敗理由: '+esc(j.failReason):'')+' ・ usage: '+u+(j.costUSD!=null?' ・ 推計 $'+j.costUSD.toFixed(4):'')
+    +(j.artifacts?('<br>成果物: '+(j.artifacts.deployedUrl?'<a href="'+esc(j.artifacts.deployedUrl)+'" target="_blank">'+esc(j.artifacts.deployedUrl)+'</a> ':'')+(j.artifacts.prUrl?'<a href="'+esc(j.artifacts.prUrl)+'" target="_blank">PR</a> ':'')+esc(j.artifacts.outputDir||'')):'');
+  $('#jd-log').innerHTML=(r.logTail||[]).map(l=>{try{const e=JSON.parse(l);const t=e.type==='raw'?e.text:e.type==='result'?('[result] '+(typeof e.result==='string'?e.result:'')): e.type==='assistant'?((e.message&&e.message.content&&e.message.content.find(c=>c.type==='text')||{}).text||''):'';return t?'<div class="msg assistant">'+esc(t)+'</div>':'';}catch(_){return '<div class="msg assistant">'+esc(l)+'</div>';}}).join('')||'<span class="muted">ログなし</span>';
+  $('#jobdlg').showModal();const c=$('#jd-log');c.scrollTop=c.scrollHeight;}
 $('#add').onclick=async()=>{const repo=$('#repo').value,kind=$('#kind').value,theme=$('#theme').value;if(!repo){alert('repoが未登録です');return;}await fetch('/api/enqueue?repo='+encodeURIComponent(repo)+'&kind='+encodeURIComponent(kind)+'&theme='+encodeURIComponent(theme),{method:'POST'});$('#theme').value='';load();};
 $('#reg').onclick=async()=>{const url=$('#url').value.trim();if(!url)return;$('#reg').disabled=true;$('#reg').textContent='登録中…';const r=await(await fetch('/api/register?url='+encodeURIComponent(url),{method:'POST'})).json();$('#reg').disabled=false;$('#reg').textContent='登録して clone';if(!r.ok){alert('登録失敗: '+(r.err||''));return;}$('#url').value='';load();};
 async function analyze(id){await fetch('/api/analyze?repo='+encodeURIComponent(id),{method:'POST'});alert('解析ジョブをキューに投入しました。進行状況は下のキューで確認できます。');load();}
