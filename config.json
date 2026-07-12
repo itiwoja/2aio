@@ -4,7 +4,7 @@
   "auditBackend": "claude",
   "claudeMax5x": { "label": "Max x5", "tokenLimit": 220000000, "costLimit": 0 },
   "auditRounds": 2,
-  "auditRoles": ["factuality", "hallucination", "ccc-fit", "safety"],
+  "auditRoles": ["factuality", "hallucination", "2aio-fit", "safety"],
   "search": { "maxResults": 5, "maxCharsPerResult": 1800 },
   "paths": {
     "vault": "C:/Users/1kkim/projects/vault",

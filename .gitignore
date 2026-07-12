@@ -2,5 +2,12 @@ node_modules/
 .env
 .env.local
 output/
-ccc-output/
+2aio-output/
 _archive/
+_review/
+security/scanners/_reports/
+workspaces/
+proposals/
+runs/
+history/
+repos.json

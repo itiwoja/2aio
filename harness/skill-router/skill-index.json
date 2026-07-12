@@ -1,0 +1,9056 @@
+{
+  "generatedFrom": "C:/Users/1kkim/.claude/skills",
+  "count": 95,
+  "skills": [
+    {
+      "name": "agent-acceptance-gate",
+      "description": "Use when a multi-agent round needs a pre-merge gate, pre-commit check, verification before push, or a PASS/FAIL decision after reconciliation.",
+      "keywords": [
+        {
+          "term": "acceptance",
+          "w": 1.5
+        },
+        {
+          "term": "gate",
+          "w": 2
+        },
+        {
+          "term": "multi",
+          "w": 2
+        },
+        {
+          "term": "round",
+          "w": 2
+        },
+        {
+          "term": "merge",
+          "w": 2
+        },
+        {
+          "term": "commit",
+          "w": 2
+        },
+        {
+          "term": "check",
+          "w": 2
+        },
+        {
+          "term": "verification",
+          "w": 2
+        },
+        {
+          "term": "push",
+          "w": 2
+        },
+        {
+          "term": "pass",
+          "w": 2
+        },
+        {
+          "term": "fail",
+          "w": 2
+        },
+        {
+          "term": "decision",
+          "w": 2
+        },
+        {
+          "term": "reconciliation",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "name": "agent-context-budget",
+      "description": "Use when multi-agent work risks context overflow, memory growth, noisy logs, oversized handoffs, cross-session continuation, or parallel Codex and Gemini execution.",
+      "keywords": [
+        {
+          "term": "context",
+          "w": 2
+        },
+        {
+          "term": "budget",
+          "w": 1.5
+        },
+        {
+          "term": "multi",
+          "w": 2
+        },
+        {
+          "term": "risks",
+          "w": 2
+        },
+        {
+          "term": "overflow",
+          "w": 2
+        },
+        {
+          "term": "memory",
+          "w": 2
+        },
+        {
+          "term": "growth",
+          "w": 2
+        },
+        {
+          "term": "noisy",
+          "w": 2
+        },
+        {
+          "term": "logs",
+          "w": 2
+        },
+        {
+          "term": "oversized",
+          "w": 2
+        },
+        {
+          "term": "handoffs",
+          "w": 2
+        },
+        {
+          "term": "cross",
+          "w": 2
+        },
+        {
+          "term": "session",
+          "w": 2
+        },
+        {
+          "term": "continuation",
+          "w": 2
+        },
+        {
+          "term": "parallel",
+          "w": 2
+        },
+        {
+          "term": "codex",
+          "w": 2
+        },
+        {
+          "term": "gemini",
+          "w": 2
+        },
+        {
+          "term": "execution",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "name": "agent-debate",
+      "description": "Use when a consequential decision needs adversarial review, opposing agent arguments, a second opinion via debate, or explicit trade-off analysis before implementation.",
+      "keywords": [
+        {
+          "term": "debate",
+          "w": 2
+        },
+        {
+          "term": "consequential",
+          "w": 2
+        },
+        {
+          "term": "decision",
+          "w": 2
+        },
+        {
+          "term": "adversarial",
+          "w": 2
+        },
+        {
+          "term": "opposing",
+          "w": 2
+        },
+        {
+          "term": "arguments",
+          "w": 2
+        },
+        {
+          "term": "second",
+          "w": 2
+        },
+        {
+          "term": "opinion",
+          "w": 2
+        },
+        {
+          "term": "explicit",
+          "w": 2
+        },
+        {
+          "term": "trade",
+          "w": 2
+        },
+        {
+          "term": "analysis",
+          "w": 2
+        },
+        {
+          "term": "implementation",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "name": "agent-introspection-debugging",
+      "description": "Structured self-debugging workflow for AI agent failures using capture, diagnosis, contained recovery, and introspection reports.",
+      "keywords": [
+        {
+          "term": "introspection",
+          "w": 1.5
+        },
+        {
+          "term": "debugging",
+          "w": 1.5
+        },
+        {
+          "term": "structured",
+          "w": 1
+        },
+        {
+          "term": "self",
+          "w": 1
+        },
+        {
+          "term": "workflow",
+          "w": 1
+        },
+        {
+          "term": "failures",
+          "w": 1
+        },
+        {
+          "term": "capture",
+          "w": 1
+        },
+        {
+          "term": "diagnosis",
+          "w": 1
+        },
+        {
+          "term": "contained",
+          "w": 1
+        },
+        {
+          "term": "recovery",
+          "w": 1
+        },
+        {
+          "term": "reports",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "agent-output-reconciler",
+      "description": "Use when multiple agents have completed a round and the user asks to reconcile outputs, compare Codex and Gemini, synthesize run results, identify conflicts, or decide what should be retried.",
+      "keywords": [
+        {
+          "term": "output",
+          "w": 1.5
+        },
+        {
+          "term": "reconciler",
+          "w": 1.5
+        },
+        {
+          "term": "multiple",
+          "w": 2
+        },
+        {
+          "term": "have",
+          "w": 2
+        },
+        {
+          "term": "completed",
+          "w": 2
+        },
+        {
+          "term": "round",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "reconcile",
+          "w": 2
+        },
+        {
+          "term": "outputs",
+          "w": 2
+        },
+        {
+          "term": "compare",
+          "w": 2
+        },
+        {
+          "term": "codex",
+          "w": 2
+        },
+        {
+          "term": "gemini",
+          "w": 2
+        },
+        {
+          "term": "synthesize",
+          "w": 2
+        },
+        {
+          "term": "results",
+          "w": 2
+        },
+        {
+          "term": "identify",
+          "w": 2
+        },
+        {
+          "term": "conflicts",
+          "w": 2
+        },
+        {
+          "term": "decide",
+          "w": 2
+        },
+        {
+          "term": "should",
+          "w": 2
+        },
+        {
+          "term": "retried",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "name": "agent-plan-act-reflect",
+      "description": "Use when a task needs single-agent self-correction across multiple iterations — write plan, execute, critique own output, revise plan, re-execute, until convergence or budget exhausted. Different from `agent-debate` (which is 2 agents argui",
+      "keywords": [
+        {
+          "term": "plan",
+          "w": 2
+        },
+        {
+          "term": "act",
+          "w": 1.5
+        },
+        {
+          "term": "reflect",
+          "w": 1.5
+        },
+        {
+          "term": "single",
+          "w": 2
+        },
+        {
+          "term": "self",
+          "w": 2
+        },
+        {
+          "term": "correction",
+          "w": 2
+        },
+        {
+          "term": "multiple",
+          "w": 2
+        },
+        {
+          "term": "iterations",
+          "w": 2
+        },
+        {
+          "term": "execute",
+          "w": 2
+        },
+        {
+          "term": "critique",
+          "w": 2
+        },
+        {
+          "term": "output",
+          "w": 2
+        },
+        {
+          "term": "revise",
+          "w": 2
+        },
+        {
+          "term": "until",
+          "w": 2
+        },
+        {
+          "term": "convergence",
+          "w": 2
+        },
+        {
+          "term": "budget",
+          "w": 2
+        },
+        {
+          "term": "exhausted",
+          "w": 2
+        },
+        {
+          "term": "different",
+          "w": 1
+        },
+        {
+          "term": "debate",
+          "w": 1
+        },
+        {
+          "term": "arguing",
+          "w": 1
+        },
+        {
+          "term": "looping",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "agent-shared-memory",
+      "description": "Use when the user asks to update shared memory, initialize multi-agent memory, summarize decisions so far, identify open questions, or prepare a fresh session primer.",
+      "keywords": [
+        {
+          "term": "shared",
+          "w": 2
+        },
+        {
+          "term": "memory",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "update",
+          "w": 2
+        },
+        {
+          "term": "initialize",
+          "w": 2
+        },
+        {
+          "term": "multi",
+          "w": 2
+        },
+        {
+          "term": "summarize",
+          "w": 2
+        },
+        {
+          "term": "decisions",
+          "w": 2
+        },
+        {
+          "term": "identify",
+          "w": 2
+        },
+        {
+          "term": "open",
+          "w": 2
+        },
+        {
+          "term": "questions",
+          "w": 2
+        },
+        {
+          "term": "prepare",
+          "w": 2
+        },
+        {
+          "term": "fresh",
+          "w": 2
+        },
+        {
+          "term": "session",
+          "w": 2
+        },
+        {
+          "term": "primer",
+          "w": 2
+        }
+      ]
+    },
+    {
+      "name": "agent-sort",
+      "description": "Build an evidence-backed ECC install plan for a specific repo by sorting skills, commands, rules, hooks, and extras into DAILY vs LIBRARY buckets using parallel repo-aware review passes. Use when ECC should be trimmed to what a project actu",
+      "keywords": [
+        {
+          "term": "sort",
+          "w": 1.5
+        },
+        {
+          "term": "should",
+          "w": 2
+        },
+        {
+          "term": "trimmed",
+          "w": 2
+        },
+        {
+          "term": "actually",
+          "w": 2
+        },
+        {
+          "term": "instead",
+          "w": 2
+        },
+        {
+          "term": "loading",
+          "w": 2
+        },
+        {
+          "term": "full",
+          "w": 2
+        },
+        {
+          "term": "bundle",
+          "w": 2
+        },
+        {
+          "term": "evidence",
+          "w": 1
+        },
+        {
+          "term": "backed",
+          "w": 1
+        },
+        {
+          "term": "install",
+          "w": 1
+        },
+        {
+          "term": "plan",
+          "w": 1
+        },
+        {
+          "term": "specific",
+          "w": 1
+        },
+        {
+          "term": "repo",
+          "w": 1
+        },
+        {
+          "term": "sorting",
+          "w": 1
+        },
+        {
+          "term": "commands",
+          "w": 1
+        },
+        {
+          "term": "rules",
+          "w": 1
+        },
+        {
+          "term": "hooks",
+          "w": 1
+        },
+        {
+          "term": "extras",
+          "w": 1
+        },
+        {
+          "term": "daily",
+          "w": 1
+        },
+        {
+          "term": "library",
+          "w": 1
+        },
+        {
+          "term": "buckets",
+          "w": 1
+        },
+        {
+          "term": "parallel",
+          "w": 1
+        },
+        {
+          "term": "aware",
+          "w": 1
+        },
+        {
+          "term": "passes",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "agent-task-splitter",
+      "description": "Use when the user asks to split a goal across Claude, Codex, or Gemini (gemini requests are rerouted - lane deprecated); plan a multi-agent run; break work into parallel agent tasks; or decompose a large task that needs bounded context hand",
+      "keywords": [
+        {
+          "term": "splitter",
+          "w": 1.5
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "split",
+          "w": 2
+        },
+        {
+          "term": "goal",
+          "w": 2
+        },
+        {
+          "term": "codex",
+          "w": 2
+        },
+        {
+          "term": "gemini",
+          "w": 2
+        },
+        {
+          "term": "requests",
+          "w": 2
+        },
+        {
+          "term": "rerouted",
+          "w": 2
+        },
+        {
+          "term": "lane",
+          "w": 2
+        },
+        {
+          "term": "deprecated",
+          "w": 2
+        },
+        {
+          "term": "plan",
+          "w": 2
+        },
+        {
+          "term": "multi",
+          "w": 2
+        },
+        {
+          "term": "break",
+          "w": 2
+        },
+        {
+          "term": "parallel",
+          "w": 2
+        },
+        {
+          "term": "decompose",
+          "w": 2
+        },
+        {
+          "term": "large",
+          "w": 2
+        },
+        {
+          "term": "bounded",
+          "w": 2
+        },
+        {
+          "term": "context",
+          "w": 2
+        },
+        {
+          "term": "handoffs",
+          "w": 2
+        },
+        {
+          "term": "generic",
+          "w": 1
+        },
+        {
+          "term": "coord",
+          "w": 1
+        },
+        {
+          "term": "plus",
+          "w": 1
+        },
+        {
+          "term": "research",
+          "w": 1
+        },
+        {
+          "term": "domain",
+          "w": 1
+        },
+        {
+          "term": "routing",
+          "w": 1
+        },
+        {
+          "term": "touches",
+          "w": 1
+        },
+        {
+          "term": "paper",
+          "w": 1
+        },
+        {
+          "term": "zotero",
+          "w": 1
+        },
+        {
+          "term": "obsidian",
+          "w": 1
+        },
+        {
+          "term": "notebooklm",
+          "w": 1
+        },
+        {
+          "term": "ingest",
+          "w": 1
+        },
+        {
+          "term": "pipelines",
+          "w": 1
+        },
+        {
+          "term": "those",
+          "w": 1
+        },
+        {
+          "term": "instead",
+          "w": 1
+        },
+        {
+          "term": "different",
+          "w": 1
+        },
+        {
+          "term": "artifact",
+          "w": 1
+        },
+        {
+          "term": "aware",
+          "w": 1
+        },
+        {
+          "term": "reconciliation",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ai-regression-testing",
+      "description": "Regression testing strategies for AI-assisted development. Sandbox-mode API testing without database dependencies, automated bug-check workflows, and patterns to catch AI blind spots where the same model writes and reviews code.",
+      "keywords": [
+        {
+          "term": "regression",
+          "w": 1.5
+        },
+        {
+          "term": "testing",
+          "w": 1.5
+        },
+        {
+          "term": "strategies",
+          "w": 1
+        },
+        {
+          "term": "assisted",
+          "w": 1
+        },
+        {
+          "term": "development",
+          "w": 1
+        },
+        {
+          "term": "sandbox",
+          "w": 1
+        },
+        {
+          "term": "mode",
+          "w": 1
+        },
+        {
+          "term": "without",
+          "w": 1
+        },
+        {
+          "term": "database",
+          "w": 1
+        },
+        {
+          "term": "dependencies",
+          "w": 1
+        },
+        {
+          "term": "automated",
+          "w": 1
+        },
+        {
+          "term": "check",
+          "w": 1
+        },
+        {
+          "term": "workflows",
+          "w": 1
+        },
+        {
+          "term": "patterns",
+          "w": 1
+        },
+        {
+          "term": "catch",
+          "w": 1
+        },
+        {
+          "term": "blind",
+          "w": 1
+        },
+        {
+          "term": "spots",
+          "w": 1
+        },
+        {
+          "term": "same",
+          "w": 1
+        },
+        {
+          "term": "model",
+          "w": 1
+        },
+        {
+          "term": "reviews",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "anti-ai-design",
+      "description": "フロントエンド実装の前に「脱・生成AI感」のデザイン方針とデザイントークンを決めるスキル。2AIOの /2aio-build や通常のUI実装で、ジェネリックなAIっぽい見た目を避け、意図のある個性的なデザインを作るために使う。references/ に12路線（エディトリアル/ニューブルータリズム/スイス/ラグジュアリー/Y2K/リソ/和風モダン/水彩/大人可愛い/コラージュ/テック系ミニマル/オーガニック）の具体レシピカード（実測色値・Google Fonts書体名・禁じ",
+      "keywords": [
+        {
+          "term": "anti",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "フロントエンド実装の前に",
+          "w": 1
+        },
+        {
+          "term": "生成ai感",
+          "w": 1
+        },
+        {
+          "term": "のデザイン方針とデザイントークンを決めるスキル",
+          "w": 1
+        },
+        {
+          "term": "2aioの",
+          "w": 1
+        },
+        {
+          "term": "2aio",
+          "w": 1
+        },
+        {
+          "term": "や通常のui実装で",
+          "w": 1
+        },
+        {
+          "term": "ジェネリックなaiっぽい見た目を避け",
+          "w": 1
+        },
+        {
+          "term": "意図のある個性的なデザインを作るために使う",
+          "w": 1
+        },
+        {
+          "term": "references",
+          "w": 1
+        },
+        {
+          "term": "に12路線",
+          "w": 1
+        },
+        {
+          "term": "エディトリアル",
+          "w": 1
+        },
+        {
+          "term": "ニューブルータリズム",
+          "w": 1
+        },
+        {
+          "term": "ラグジュアリー",
+          "w": 1
+        },
+        {
+          "term": "和風モダン",
+          "w": 1
+        },
+        {
+          "term": "大人可愛い",
+          "w": 1
+        },
+        {
+          "term": "コラージュ",
+          "w": 1
+        },
+        {
+          "term": "テック系ミニマル",
+          "w": 1
+        },
+        {
+          "term": "オーガニック",
+          "w": 1
+        },
+        {
+          "term": "の具体レシピカード",
+          "w": 1
+        },
+        {
+          "term": "実測色値",
+          "w": 1
+        },
+        {
+          "term": "google",
+          "w": 1
+        },
+        {
+          "term": "fonts書体名",
+          "w": 1
+        },
+        {
+          "term": "layout",
+          "w": 1
+        },
+        {
+          "term": "composition",
+          "w": 1
+        },
+        {
+          "term": "modern",
+          "w": 1
+        },
+        {
+          "term": "実装技術",
+          "w": 1
+        },
+        {
+          "term": "と3点セットで使う",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "api-and-interface-design",
+      "description": "Guides stable API and interface design. Use when designing APIs, module boundaries, or any public interface. Use when creating REST or GraphQL endpoints, defining type contracts between modules, or establishing boundaries between frontend a",
+      "keywords": [
+        {
+          "term": "api",
+          "w": 1.5
+        },
+        {
+          "term": "interface",
+          "w": 2
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "designing",
+          "w": 2
+        },
+        {
+          "term": "apis",
+          "w": 2
+        },
+        {
+          "term": "module",
+          "w": 2
+        },
+        {
+          "term": "boundaries",
+          "w": 2
+        },
+        {
+          "term": "public",
+          "w": 2
+        },
+        {
+          "term": "rest",
+          "w": 2
+        },
+        {
+          "term": "graphql",
+          "w": 2
+        },
+        {
+          "term": "endpoints",
+          "w": 2
+        },
+        {
+          "term": "defining",
+          "w": 2
+        },
+        {
+          "term": "type",
+          "w": 2
+        },
+        {
+          "term": "contracts",
+          "w": 2
+        },
+        {
+          "term": "between",
+          "w": 2
+        },
+        {
+          "term": "modules",
+          "w": 2
+        },
+        {
+          "term": "establishing",
+          "w": 2
+        },
+        {
+          "term": "frontend",
+          "w": 2
+        },
+        {
+          "term": "backend",
+          "w": 2
+        },
+        {
+          "term": "guides",
+          "w": 1
+        },
+        {
+          "term": "stable",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "app-store-changelog",
+      "description": "Create user-facing App Store release notes by collecting and summarizing all user-impacting changes since the last git tag (or a specified ref). Use when asked to generate a comprehensive release changelog, App Store \"What's New\" text, or r",
+      "keywords": [
+        {
+          "term": "app",
+          "w": 1.5
+        },
+        {
+          "term": "store",
+          "w": 2
+        },
+        {
+          "term": "changelog",
+          "w": 2
+        },
+        {
+          "term": "asked",
+          "w": 2
+        },
+        {
+          "term": "generate",
+          "w": 2
+        },
+        {
+          "term": "comprehensive",
+          "w": 2
+        },
+        {
+          "term": "release",
+          "w": 2
+        },
+        {
+          "term": "text",
+          "w": 2
+        },
+        {
+          "term": "notes",
+          "w": 2
+        },
+        {
+          "term": "history",
+          "w": 2
+        },
+        {
+          "term": "tags",
+          "w": 2
+        },
+        {
+          "term": "facing",
+          "w": 1
+        },
+        {
+          "term": "collecting",
+          "w": 1
+        },
+        {
+          "term": "summarizing",
+          "w": 1
+        },
+        {
+          "term": "impacting",
+          "w": 1
+        },
+        {
+          "term": "since",
+          "w": 1
+        },
+        {
+          "term": "last",
+          "w": 1
+        },
+        {
+          "term": "specified",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "apple-hig",
+      "description": "Apple Human Interface Guidelines (HIG) の UI/UX リファレンス。設計原則・SF書体とDynamic Type・セマンティックカラー/ダークモード・マテリアル(blur)・SF Symbols・44ptタップ標的・主要コンポーネント。iOS/Apple風の上品で明快なUIを作るときに使う。Web実装への翻訳指針つき。",
+      "keywords": [
+        {
+          "term": "apple",
+          "w": 1.5
+        },
+        {
+          "term": "hig",
+          "w": 1.5
+        },
+        {
+          "term": "human",
+          "w": 1
+        },
+        {
+          "term": "interface",
+          "w": 1
+        },
+        {
+          "term": "guidelines",
+          "w": 1
+        },
+        {
+          "term": "リファレンス",
+          "w": 1
+        },
+        {
+          "term": "設計原則",
+          "w": 1
+        },
+        {
+          "term": "sf書体とdynamic",
+          "w": 1
+        },
+        {
+          "term": "type",
+          "w": 1
+        },
+        {
+          "term": "セマンティックカラー",
+          "w": 1
+        },
+        {
+          "term": "ダークモード",
+          "w": 1
+        },
+        {
+          "term": "マテリアル",
+          "w": 1
+        },
+        {
+          "term": "blur",
+          "w": 1
+        },
+        {
+          "term": "symbols",
+          "w": 1
+        },
+        {
+          "term": "44ptタップ標的",
+          "w": 1
+        },
+        {
+          "term": "主要コンポーネント",
+          "w": 1
+        },
+        {
+          "term": "apple風の上品で明快なuiを作るときに使う",
+          "w": 1
+        },
+        {
+          "term": "web実装への翻訳指針つき",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "brandkit",
+      "description": "Premium brand-kit image generation skill for creating high-end brand-guidelines boards, logo systems, identity decks, and visual-world presentations. Trained for minimalist, cinematic, editorial, dark-tech, luxury, cultural, security, gamin",
+      "keywords": [
+        {
+          "term": "brandkit",
+          "w": 1.5
+        },
+        {
+          "term": "premium",
+          "w": 1
+        },
+        {
+          "term": "brand",
+          "w": 1
+        },
+        {
+          "term": "image",
+          "w": 1
+        },
+        {
+          "term": "generation",
+          "w": 1
+        },
+        {
+          "term": "high",
+          "w": 1
+        },
+        {
+          "term": "guidelines",
+          "w": 1
+        },
+        {
+          "term": "boards",
+          "w": 1
+        },
+        {
+          "term": "logo",
+          "w": 1
+        },
+        {
+          "term": "systems",
+          "w": 1
+        },
+        {
+          "term": "identity",
+          "w": 1
+        },
+        {
+          "term": "decks",
+          "w": 1
+        },
+        {
+          "term": "visual",
+          "w": 1
+        },
+        {
+          "term": "world",
+          "w": 1
+        },
+        {
+          "term": "presentations",
+          "w": 1
+        },
+        {
+          "term": "trained",
+          "w": 1
+        },
+        {
+          "term": "minimalist",
+          "w": 1
+        },
+        {
+          "term": "cinematic",
+          "w": 1
+        },
+        {
+          "term": "editorial",
+          "w": 1
+        },
+        {
+          "term": "dark",
+          "w": 1
+        },
+        {
+          "term": "tech",
+          "w": 1
+        },
+        {
+          "term": "luxury",
+          "w": 1
+        },
+        {
+          "term": "cultural",
+          "w": 1
+        },
+        {
+          "term": "security",
+          "w": 1
+        },
+        {
+          "term": "gaming",
+          "w": 1
+        },
+        {
+          "term": "developer",
+          "w": 1
+        },
+        {
+          "term": "tool",
+          "w": 1
+        },
+        {
+          "term": "consumer",
+          "w": 1
+        },
+        {
+          "term": "optimized",
+          "w": 1
+        },
+        {
+          "term": "intentional",
+          "w": 1
+        },
+        {
+          "term": "concepting",
+          "w": 1
+        },
+        {
+          "term": "refined",
+          "w": 1
+        },
+        {
+          "term": "composition",
+          "w": 1
+        },
+        {
+          "term": "sparse",
+          "w": 1
+        },
+        {
+          "term": "typography",
+          "w": 1
+        },
+        {
+          "term": "strong",
+          "w": 1
+        },
+        {
+          "term": "symbolic",
+          "w": 1
+        },
+        {
+          "term": "meaning",
+          "w": 1
+        },
+        {
+          "term": "mockups",
+          "w": 1
+        },
+        {
+          "term": "directed",
+          "w": 1
+        },
+        {
+          "term": "imagery",
+          "w": 1
+        },
+        {
+          "term": "flexible",
+          "w": 1
+        },
+        {
+          "term": "grid",
+          "w": 1
+        },
+        {
+          "term": "layouts",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "browser-testing-with-devtools",
+      "description": "Tests in real browsers via Chrome DevTools MCP. Use when building or debugging anything that runs in a browser. Use when you need to inspect the DOM, capture console errors, analyze network requests, profile performance, or verify visual ou",
+      "keywords": [
+        {
+          "term": "browser",
+          "w": 2
+        },
+        {
+          "term": "testing",
+          "w": 1.5
+        },
+        {
+          "term": "devtools",
+          "w": 1.5
+        },
+        {
+          "term": "building",
+          "w": 2
+        },
+        {
+          "term": "debugging",
+          "w": 2
+        },
+        {
+          "term": "anything",
+          "w": 2
+        },
+        {
+          "term": "runs",
+          "w": 2
+        },
+        {
+          "term": "inspect",
+          "w": 2
+        },
+        {
+          "term": "capture",
+          "w": 2
+        },
+        {
+          "term": "console",
+          "w": 2
+        },
+        {
+          "term": "errors",
+          "w": 2
+        },
+        {
+          "term": "analyze",
+          "w": 2
+        },
+        {
+          "term": "network",
+          "w": 2
+        },
+        {
+          "term": "requests",
+          "w": 2
+        },
+        {
+          "term": "profile",
+          "w": 2
+        },
+        {
+          "term": "performance",
+          "w": 2
+        },
+        {
+          "term": "verify",
+          "w": 2
+        },
+        {
+          "term": "visual",
+          "w": 2
+        },
+        {
+          "term": "output",
+          "w": 2
+        },
+        {
+          "term": "real",
+          "w": 2
+        },
+        {
+          "term": "runtime",
+          "w": 2
+        },
+        {
+          "term": "data",
+          "w": 2
+        },
+        {
+          "term": "tests",
+          "w": 1
+        },
+        {
+          "term": "browsers",
+          "w": 1
+        },
+        {
+          "term": "chrome",
+          "w": 1
+        },
+        {
+          "term": "requires",
+          "w": 1
+        },
+        {
+          "term": "server",
+          "w": 1
+        },
+        {
+          "term": "configured",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "bug-hunt-swarm",
+      "description": "Parallel read-only multi-agent root-cause investigation for bugs, regressions, crashes, flaky behavior, or unexplained failures. Use when the user asks to investigate a bug, find the root cause, trace a regression, understand why something ",
+      "keywords": [
+        {
+          "term": "bug",
+          "w": 1.5
+        },
+        {
+          "term": "hunt",
+          "w": 1.5
+        },
+        {
+          "term": "swarm",
+          "w": 1.5
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "investigate",
+          "w": 2
+        },
+        {
+          "term": "find",
+          "w": 2
+        },
+        {
+          "term": "root",
+          "w": 2
+        },
+        {
+          "term": "cause",
+          "w": 2
+        },
+        {
+          "term": "trace",
+          "w": 2
+        },
+        {
+          "term": "regression",
+          "w": 2
+        },
+        {
+          "term": "understand",
+          "w": 2
+        },
+        {
+          "term": "something",
+          "w": 2
+        },
+        {
+          "term": "broke",
+          "w": 2
+        },
+        {
+          "term": "wants",
+          "w": 2
+        },
+        {
+          "term": "ranked",
+          "w": 2
+        },
+        {
+          "term": "diagnosis",
+          "w": 2
+        },
+        {
+          "term": "fastest",
+          "w": 2
+        },
+        {
+          "term": "proof",
+          "w": 2
+        },
+        {
+          "term": "path",
+          "w": 2
+        },
+        {
+          "term": "without",
+          "w": 2
+        },
+        {
+          "term": "edits",
+          "w": 2
+        },
+        {
+          "term": "parallel",
+          "w": 1
+        },
+        {
+          "term": "only",
+          "w": 1
+        },
+        {
+          "term": "multi",
+          "w": 1
+        },
+        {
+          "term": "investigation",
+          "w": 1
+        },
+        {
+          "term": "bugs",
+          "w": 1
+        },
+        {
+          "term": "regressions",
+          "w": 1
+        },
+        {
+          "term": "crashes",
+          "w": 1
+        },
+        {
+          "term": "flaky",
+          "w": 1
+        },
+        {
+          "term": "behavior",
+          "w": 1
+        },
+        {
+          "term": "unexplained",
+          "w": 1
+        },
+        {
+          "term": "failures",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ci-cd-and-automation",
+      "description": "Automates CI/CD pipeline setup. Use when setting up or modifying build and deployment pipelines. Use when you need to automate quality gates, configure test runners in CI, or establish deployment strategies.",
+      "keywords": [
+        {
+          "term": "automation",
+          "w": 1.5
+        },
+        {
+          "term": "setting",
+          "w": 2
+        },
+        {
+          "term": "modifying",
+          "w": 2
+        },
+        {
+          "term": "deployment",
+          "w": 2
+        },
+        {
+          "term": "pipelines",
+          "w": 2
+        },
+        {
+          "term": "automate",
+          "w": 2
+        },
+        {
+          "term": "quality",
+          "w": 2
+        },
+        {
+          "term": "gates",
+          "w": 2
+        },
+        {
+          "term": "configure",
+          "w": 2
+        },
+        {
+          "term": "test",
+          "w": 2
+        },
+        {
+          "term": "runners",
+          "w": 2
+        },
+        {
+          "term": "establish",
+          "w": 2
+        },
+        {
+          "term": "strategies",
+          "w": 2
+        },
+        {
+          "term": "automates",
+          "w": 1
+        },
+        {
+          "term": "pipeline",
+          "w": 1
+        },
+        {
+          "term": "setup",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "code-review-and-quality",
+      "description": "Conducts multi-axis code review. Use before merging any change. Use when reviewing code written by yourself, another agent, or a human. Use when you need to assess code quality across multiple dimensions before it enters the main branch.",
+      "keywords": [
+        {
+          "term": "quality",
+          "w": 2
+        },
+        {
+          "term": "written",
+          "w": 2
+        },
+        {
+          "term": "yourself",
+          "w": 2
+        },
+        {
+          "term": "another",
+          "w": 2
+        },
+        {
+          "term": "human",
+          "w": 2
+        },
+        {
+          "term": "assess",
+          "w": 2
+        },
+        {
+          "term": "multiple",
+          "w": 2
+        },
+        {
+          "term": "dimensions",
+          "w": 2
+        },
+        {
+          "term": "enters",
+          "w": 2
+        },
+        {
+          "term": "main",
+          "w": 2
+        },
+        {
+          "term": "branch",
+          "w": 2
+        },
+        {
+          "term": "conducts",
+          "w": 1
+        },
+        {
+          "term": "multi",
+          "w": 1
+        },
+        {
+          "term": "axis",
+          "w": 1
+        },
+        {
+          "term": "merging",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "code-simplification",
+      "description": "Simplifies code for clarity. Use when refactoring code for clarity without changing behavior. Use when code works but is harder to read, maintain, or extend than it should be. Use when reviewing code that has accumulated unnecessary complex",
+      "keywords": [
+        {
+          "term": "simplification",
+          "w": 1.5
+        },
+        {
+          "term": "refactoring",
+          "w": 2
+        },
+        {
+          "term": "clarity",
+          "w": 2
+        },
+        {
+          "term": "without",
+          "w": 2
+        },
+        {
+          "term": "behavior",
+          "w": 2
+        },
+        {
+          "term": "works",
+          "w": 2
+        },
+        {
+          "term": "harder",
+          "w": 2
+        },
+        {
+          "term": "maintain",
+          "w": 2
+        },
+        {
+          "term": "extend",
+          "w": 2
+        },
+        {
+          "term": "should",
+          "w": 2
+        },
+        {
+          "term": "accumulated",
+          "w": 2
+        },
+        {
+          "term": "unnecessary",
+          "w": 2
+        },
+        {
+          "term": "complexity",
+          "w": 2
+        },
+        {
+          "term": "simplifies",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "code-tour",
+      "description": "Create CodeTour `.tour` files — persona-targeted, step-by-step walkthroughs with real file and line anchors. Use for onboarding tours, architecture walkthroughs, PR tours, RCA tours, and structured \"explain how this works\" requests.",
+      "keywords": [
+        {
+          "term": "tour",
+          "w": 1.5
+        },
+        {
+          "term": "onboarding",
+          "w": 2
+        },
+        {
+          "term": "tours",
+          "w": 2
+        },
+        {
+          "term": "architecture",
+          "w": 2
+        },
+        {
+          "term": "walkthroughs",
+          "w": 2
+        },
+        {
+          "term": "structured",
+          "w": 2
+        },
+        {
+          "term": "explain",
+          "w": 2
+        },
+        {
+          "term": "works",
+          "w": 2
+        },
+        {
+          "term": "requests",
+          "w": 2
+        },
+        {
+          "term": "codetour",
+          "w": 1
+        },
+        {
+          "term": "persona",
+          "w": 1
+        },
+        {
+          "term": "targeted",
+          "w": 1
+        },
+        {
+          "term": "step",
+          "w": 1
+        },
+        {
+          "term": "real",
+          "w": 1
+        },
+        {
+          "term": "line",
+          "w": 1
+        },
+        {
+          "term": "anchors",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "configure-ecc",
+      "description": "Interactive installer for Everything Claude Code — guides users through selecting and installing skills and rules to user-level or project-level directories, verifies paths, and optionally optimizes installed files.",
+      "keywords": [
+        {
+          "term": "configure",
+          "w": 1.5
+        },
+        {
+          "term": "ecc",
+          "w": 1.5
+        },
+        {
+          "term": "interactive",
+          "w": 1
+        },
+        {
+          "term": "installer",
+          "w": 1
+        },
+        {
+          "term": "everything",
+          "w": 1
+        },
+        {
+          "term": "guides",
+          "w": 1
+        },
+        {
+          "term": "through",
+          "w": 1
+        },
+        {
+          "term": "selecting",
+          "w": 1
+        },
+        {
+          "term": "installing",
+          "w": 1
+        },
+        {
+          "term": "rules",
+          "w": 1
+        },
+        {
+          "term": "level",
+          "w": 1
+        },
+        {
+          "term": "directories",
+          "w": 1
+        },
+        {
+          "term": "verifies",
+          "w": 1
+        },
+        {
+          "term": "paths",
+          "w": 1
+        },
+        {
+          "term": "optionally",
+          "w": 1
+        },
+        {
+          "term": "optimizes",
+          "w": 1
+        },
+        {
+          "term": "installed",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "context-engineering",
+      "description": "Optimizes agent context setup. Use when starting a new session, when agent output quality degrades, when switching between tasks, or when you need to configure rules files and context for a project.",
+      "keywords": [
+        {
+          "term": "context",
+          "w": 2
+        },
+        {
+          "term": "engineering",
+          "w": 1.5
+        },
+        {
+          "term": "starting",
+          "w": 2
+        },
+        {
+          "term": "session",
+          "w": 2
+        },
+        {
+          "term": "output",
+          "w": 2
+        },
+        {
+          "term": "quality",
+          "w": 2
+        },
+        {
+          "term": "degrades",
+          "w": 2
+        },
+        {
+          "term": "switching",
+          "w": 2
+        },
+        {
+          "term": "between",
+          "w": 2
+        },
+        {
+          "term": "configure",
+          "w": 2
+        },
+        {
+          "term": "rules",
+          "w": 2
+        },
+        {
+          "term": "optimizes",
+          "w": 1
+        },
+        {
+          "term": "setup",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "continuous-learning",
+      "description": "Automatically extract reusable patterns from Claude Code sessions and save them as learned skills for future use.",
+      "keywords": [
+        {
+          "term": "continuous",
+          "w": 1.5
+        },
+        {
+          "term": "learning",
+          "w": 1.5
+        },
+        {
+          "term": "automatically",
+          "w": 1
+        },
+        {
+          "term": "extract",
+          "w": 1
+        },
+        {
+          "term": "reusable",
+          "w": 1
+        },
+        {
+          "term": "patterns",
+          "w": 1
+        },
+        {
+          "term": "sessions",
+          "w": 1
+        },
+        {
+          "term": "save",
+          "w": 1
+        },
+        {
+          "term": "learned",
+          "w": 1
+        },
+        {
+          "term": "future",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "continuous-learning-v2",
+      "description": "Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents. v2.1 adds project-scoped instincts to prevent cross-project contamination.",
+      "keywords": [
+        {
+          "term": "continuous",
+          "w": 1.5
+        },
+        {
+          "term": "learning",
+          "w": 1.5
+        },
+        {
+          "term": "instinct",
+          "w": 1
+        },
+        {
+          "term": "system",
+          "w": 1
+        },
+        {
+          "term": "observes",
+          "w": 1
+        },
+        {
+          "term": "sessions",
+          "w": 1
+        },
+        {
+          "term": "hooks",
+          "w": 1
+        },
+        {
+          "term": "creates",
+          "w": 1
+        },
+        {
+          "term": "atomic",
+          "w": 1
+        },
+        {
+          "term": "instincts",
+          "w": 1
+        },
+        {
+          "term": "confidence",
+          "w": 1
+        },
+        {
+          "term": "scoring",
+          "w": 1
+        },
+        {
+          "term": "evolves",
+          "w": 1
+        },
+        {
+          "term": "commands",
+          "w": 1
+        },
+        {
+          "term": "adds",
+          "w": 1
+        },
+        {
+          "term": "scoped",
+          "w": 1
+        },
+        {
+          "term": "prevent",
+          "w": 1
+        },
+        {
+          "term": "cross",
+          "w": 1
+        },
+        {
+          "term": "contamination",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "council",
+      "description": "Convene a four-voice council for ambiguous decisions, tradeoffs, and go/no-go calls. Use when multiple valid paths exist and you need structured disagreement before choosing.",
+      "keywords": [
+        {
+          "term": "council",
+          "w": 1.5
+        },
+        {
+          "term": "multiple",
+          "w": 2
+        },
+        {
+          "term": "valid",
+          "w": 2
+        },
+        {
+          "term": "paths",
+          "w": 2
+        },
+        {
+          "term": "exist",
+          "w": 2
+        },
+        {
+          "term": "structured",
+          "w": 2
+        },
+        {
+          "term": "disagreement",
+          "w": 2
+        },
+        {
+          "term": "choosing",
+          "w": 2
+        },
+        {
+          "term": "convene",
+          "w": 1
+        },
+        {
+          "term": "four",
+          "w": 1
+        },
+        {
+          "term": "voice",
+          "w": 1
+        },
+        {
+          "term": "ambiguous",
+          "w": 1
+        },
+        {
+          "term": "decisions",
+          "w": 1
+        },
+        {
+          "term": "tradeoffs",
+          "w": 1
+        },
+        {
+          "term": "calls",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "debugging-and-error-recovery",
+      "description": "Guides systematic root-cause debugging. Use when tests fail, builds break, behavior doesn't match expectations, or you encounter any unexpected error. Use when you need a systematic approach to finding and fixing the root cause rather than ",
+      "keywords": [
+        {
+          "term": "debugging",
+          "w": 1.5
+        },
+        {
+          "term": "error",
+          "w": 2
+        },
+        {
+          "term": "recovery",
+          "w": 1.5
+        },
+        {
+          "term": "tests",
+          "w": 2
+        },
+        {
+          "term": "fail",
+          "w": 2
+        },
+        {
+          "term": "builds",
+          "w": 2
+        },
+        {
+          "term": "break",
+          "w": 2
+        },
+        {
+          "term": "behavior",
+          "w": 2
+        },
+        {
+          "term": "doesn",
+          "w": 2
+        },
+        {
+          "term": "match",
+          "w": 2
+        },
+        {
+          "term": "expectations",
+          "w": 2
+        },
+        {
+          "term": "encounter",
+          "w": 2
+        },
+        {
+          "term": "unexpected",
+          "w": 2
+        },
+        {
+          "term": "systematic",
+          "w": 2
+        },
+        {
+          "term": "approach",
+          "w": 2
+        },
+        {
+          "term": "finding",
+          "w": 2
+        },
+        {
+          "term": "fixing",
+          "w": 2
+        },
+        {
+          "term": "root",
+          "w": 2
+        },
+        {
+          "term": "cause",
+          "w": 2
+        },
+        {
+          "term": "rather",
+          "w": 2
+        },
+        {
+          "term": "guessing",
+          "w": 2
+        },
+        {
+          "term": "guides",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "deprecation-and-migration",
+      "description": "Manages deprecation and migration. Use when removing old systems, APIs, or features. Use when migrating users from one implementation to another. Use when deciding whether to maintain or sunset existing code.",
+      "keywords": [
+        {
+          "term": "deprecation",
+          "w": 1.5
+        },
+        {
+          "term": "migration",
+          "w": 1.5
+        },
+        {
+          "term": "removing",
+          "w": 2
+        },
+        {
+          "term": "systems",
+          "w": 2
+        },
+        {
+          "term": "apis",
+          "w": 2
+        },
+        {
+          "term": "features",
+          "w": 2
+        },
+        {
+          "term": "migrating",
+          "w": 2
+        },
+        {
+          "term": "implementation",
+          "w": 2
+        },
+        {
+          "term": "another",
+          "w": 2
+        },
+        {
+          "term": "deciding",
+          "w": 2
+        },
+        {
+          "term": "whether",
+          "w": 2
+        },
+        {
+          "term": "maintain",
+          "w": 2
+        },
+        {
+          "term": "sunset",
+          "w": 2
+        },
+        {
+          "term": "existing",
+          "w": 2
+        },
+        {
+          "term": "manages",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "design-taste-frontend",
+      "description": "Anti-slop frontend skill for landing pages, portfolios, and redesigns. The agent reads the brief, infers the right design direction, and ships interfaces that do not look templated. Real design systems when applicable, audit-first on redesi",
+      "keywords": [
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "taste",
+          "w": 1.5
+        },
+        {
+          "term": "frontend",
+          "w": 1.5
+        },
+        {
+          "term": "anti",
+          "w": 1
+        },
+        {
+          "term": "slop",
+          "w": 1
+        },
+        {
+          "term": "landing",
+          "w": 1
+        },
+        {
+          "term": "pages",
+          "w": 1
+        },
+        {
+          "term": "portfolios",
+          "w": 1
+        },
+        {
+          "term": "redesigns",
+          "w": 1
+        },
+        {
+          "term": "reads",
+          "w": 1
+        },
+        {
+          "term": "brief",
+          "w": 1
+        },
+        {
+          "term": "infers",
+          "w": 1
+        },
+        {
+          "term": "right",
+          "w": 1
+        },
+        {
+          "term": "direction",
+          "w": 1
+        },
+        {
+          "term": "ships",
+          "w": 1
+        },
+        {
+          "term": "interfaces",
+          "w": 1
+        },
+        {
+          "term": "look",
+          "w": 1
+        },
+        {
+          "term": "templated",
+          "w": 1
+        },
+        {
+          "term": "real",
+          "w": 1
+        },
+        {
+          "term": "systems",
+          "w": 1
+        },
+        {
+          "term": "applicable",
+          "w": 1
+        },
+        {
+          "term": "audit",
+          "w": 1
+        },
+        {
+          "term": "first",
+          "w": 1
+        },
+        {
+          "term": "strict",
+          "w": 1
+        },
+        {
+          "term": "flight",
+          "w": 1
+        },
+        {
+          "term": "check",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "digital-agency-design-system",
+      "description": "日本のデジタル庁デザインシステム(DADS β版)の UI/UX リファレンス。日本語・公共/行政サービス向けで、アクセシビリティ最優先。プリミティブ→セマンティックのカラートークン、Noto Sans JP のタイポ、余白/角丸/エレベーション、提供リソース(Figma/HTML-CSS/React-Tailwind/トークン)。日本語の万人向け・堅実でアクセシブルなUIを作るときに使う。",
+      "keywords": [
+        {
+          "term": "digital",
+          "w": 1.5
+        },
+        {
+          "term": "agency",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "system",
+          "w": 1.5
+        },
+        {
+          "term": "日本のデジタル庁デザインシステム",
+          "w": 1
+        },
+        {
+          "term": "dads",
+          "w": 1
+        },
+        {
+          "term": "リファレンス",
+          "w": 1
+        },
+        {
+          "term": "行政サービス向けで",
+          "w": 1
+        },
+        {
+          "term": "アクセシビリティ最優先",
+          "w": 1
+        },
+        {
+          "term": "プリミティブ",
+          "w": 1
+        },
+        {
+          "term": "セマンティックのカラートークン",
+          "w": 1
+        },
+        {
+          "term": "noto",
+          "w": 1
+        },
+        {
+          "term": "sans",
+          "w": 1
+        },
+        {
+          "term": "のタイポ",
+          "w": 1
+        },
+        {
+          "term": "エレベーション",
+          "w": 1
+        },
+        {
+          "term": "提供リソース",
+          "w": 1
+        },
+        {
+          "term": "figma",
+          "w": 1
+        },
+        {
+          "term": "html",
+          "w": 1
+        },
+        {
+          "term": "react",
+          "w": 1
+        },
+        {
+          "term": "tailwind",
+          "w": 1
+        },
+        {
+          "term": "トークン",
+          "w": 1
+        },
+        {
+          "term": "日本語の万人向け",
+          "w": 1
+        },
+        {
+          "term": "堅実でアクセシブルなuiを作るときに使う",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "documentation-and-adrs",
+      "description": "Records decisions and documentation. Use when making architectural decisions, changing public APIs, shipping features, or when you need to record context that future engineers and agents will need to understand the codebase.",
+      "keywords": [
+        {
+          "term": "documentation",
+          "w": 1.5
+        },
+        {
+          "term": "adrs",
+          "w": 1.5
+        },
+        {
+          "term": "architectural",
+          "w": 2
+        },
+        {
+          "term": "decisions",
+          "w": 2
+        },
+        {
+          "term": "public",
+          "w": 2
+        },
+        {
+          "term": "apis",
+          "w": 2
+        },
+        {
+          "term": "shipping",
+          "w": 2
+        },
+        {
+          "term": "features",
+          "w": 2
+        },
+        {
+          "term": "record",
+          "w": 2
+        },
+        {
+          "term": "context",
+          "w": 2
+        },
+        {
+          "term": "future",
+          "w": 2
+        },
+        {
+          "term": "engineers",
+          "w": 2
+        },
+        {
+          "term": "will",
+          "w": 2
+        },
+        {
+          "term": "understand",
+          "w": 2
+        },
+        {
+          "term": "codebase",
+          "w": 2
+        },
+        {
+          "term": "records",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "doubt-driven-development",
+      "description": "Subjects every non-trivial decision to a fresh-context adversarial review before it stands. Use when correctness matters more than speed, when working in unfamiliar code, when stakes are high (production, security-sensitive logic, irreversi",
+      "keywords": [
+        {
+          "term": "doubt",
+          "w": 1.5
+        },
+        {
+          "term": "driven",
+          "w": 1.5
+        },
+        {
+          "term": "development",
+          "w": 1.5
+        },
+        {
+          "term": "correctness",
+          "w": 2
+        },
+        {
+          "term": "matters",
+          "w": 2
+        },
+        {
+          "term": "speed",
+          "w": 2
+        },
+        {
+          "term": "unfamiliar",
+          "w": 2
+        },
+        {
+          "term": "stakes",
+          "w": 2
+        },
+        {
+          "term": "high",
+          "w": 2
+        },
+        {
+          "term": "production",
+          "w": 2
+        },
+        {
+          "term": "security",
+          "w": 2
+        },
+        {
+          "term": "sensitive",
+          "w": 2
+        },
+        {
+          "term": "logic",
+          "w": 2
+        },
+        {
+          "term": "irreversible",
+          "w": 2
+        },
+        {
+          "term": "operations",
+          "w": 2
+        },
+        {
+          "term": "time",
+          "w": 2
+        },
+        {
+          "term": "confident",
+          "w": 2
+        },
+        {
+          "term": "output",
+          "w": 2
+        },
+        {
+          "term": "would",
+          "w": 2
+        },
+        {
+          "term": "cheaper",
+          "w": 2
+        },
+        {
+          "term": "verify",
+          "w": 2
+        },
+        {
+          "term": "debug",
+          "w": 2
+        },
+        {
+          "term": "later",
+          "w": 2
+        },
+        {
+          "term": "subjects",
+          "w": 1
+        },
+        {
+          "term": "every",
+          "w": 1
+        },
+        {
+          "term": "trivial",
+          "w": 1
+        },
+        {
+          "term": "decision",
+          "w": 1
+        },
+        {
+          "term": "fresh",
+          "w": 1
+        },
+        {
+          "term": "context",
+          "w": 1
+        },
+        {
+          "term": "adversarial",
+          "w": 1
+        },
+        {
+          "term": "stands",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "e2e-testing",
+      "description": "Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies.",
+      "keywords": [
+        {
+          "term": "e2e",
+          "w": 1.5
+        },
+        {
+          "term": "testing",
+          "w": 1.5
+        },
+        {
+          "term": "playwright",
+          "w": 1
+        },
+        {
+          "term": "patterns",
+          "w": 1
+        },
+        {
+          "term": "page",
+          "w": 1
+        },
+        {
+          "term": "object",
+          "w": 1
+        },
+        {
+          "term": "model",
+          "w": 1
+        },
+        {
+          "term": "configuration",
+          "w": 1
+        },
+        {
+          "term": "integration",
+          "w": 1
+        },
+        {
+          "term": "artifact",
+          "w": 1
+        },
+        {
+          "term": "management",
+          "w": 1
+        },
+        {
+          "term": "flaky",
+          "w": 1
+        },
+        {
+          "term": "test",
+          "w": 1
+        },
+        {
+          "term": "strategies",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "eval-harness",
+      "description": "Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles",
+      "keywords": [
+        {
+          "term": "eval",
+          "w": 1.5
+        },
+        {
+          "term": "harness",
+          "w": 1.5
+        },
+        {
+          "term": "formal",
+          "w": 1
+        },
+        {
+          "term": "evaluation",
+          "w": 1
+        },
+        {
+          "term": "framework",
+          "w": 1
+        },
+        {
+          "term": "sessions",
+          "w": 1
+        },
+        {
+          "term": "implementing",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "development",
+          "w": 1
+        },
+        {
+          "term": "principles",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "fable-mode",
+      "description": ">",
+      "keywords": [
+        {
+          "term": "fable",
+          "w": 1.5
+        },
+        {
+          "term": "mode",
+          "w": 1.5
+        }
+      ]
+    },
+    {
+      "name": "font-selection",
+      "description": "フォント選定とペアリングのリファレンス。和文(日本語)中心＋欧文。用途/ムードから書体を選び、見出し×本文をペアリングし、Webフォントの性能(WOFF2/サブセット/font-display)・可読性(WCAG/UD)・ライセンス(OFL)を満たす。Google Fonts前提で具体的な書体名・印象・実装まで。UIや単一HTML/PWAで「生成AI感のない、意図したフォント」を選ぶときに使う。",
+      "keywords": [
+        {
+          "term": "font",
+          "w": 1.5
+        },
+        {
+          "term": "selection",
+          "w": 1.5
+        },
+        {
+          "term": "フォント選定とペアリングのリファレンス",
+          "w": 1
+        },
+        {
+          "term": "ムードから書体を選び",
+          "w": 1
+        },
+        {
+          "term": "本文をペアリングし",
+          "w": 1
+        },
+        {
+          "term": "webフォントの性能",
+          "w": 1
+        },
+        {
+          "term": "woff2",
+          "w": 1
+        },
+        {
+          "term": "サブセット",
+          "w": 1
+        },
+        {
+          "term": "display",
+          "w": 1
+        },
+        {
+          "term": "wcag",
+          "w": 1
+        },
+        {
+          "term": "ライセンス",
+          "w": 1
+        },
+        {
+          "term": "を満たす",
+          "w": 1
+        },
+        {
+          "term": "google",
+          "w": 1
+        },
+        {
+          "term": "fonts前提で具体的な書体名",
+          "w": 1
+        },
+        {
+          "term": "実装まで",
+          "w": 1
+        },
+        {
+          "term": "uiや単一html",
+          "w": 1
+        },
+        {
+          "term": "pwaで",
+          "w": 1
+        },
+        {
+          "term": "生成ai感のない",
+          "w": 1
+        },
+        {
+          "term": "意図したフォント",
+          "w": 1
+        },
+        {
+          "term": "を選ぶときに使う",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "frontend-ui-engineering",
+      "description": "Builds production-quality, accessible, responsive user-facing UIs. Use when building or modifying interfaces and pages, creating components, implementing layouts, meeting WCAG accessibility requirements, managing state, or when the output n",
+      "keywords": [
+        {
+          "term": "frontend",
+          "w": 1.5
+        },
+        {
+          "term": "engineering",
+          "w": 1.5
+        },
+        {
+          "term": "building",
+          "w": 2
+        },
+        {
+          "term": "modifying",
+          "w": 2
+        },
+        {
+          "term": "interfaces",
+          "w": 2
+        },
+        {
+          "term": "pages",
+          "w": 2
+        },
+        {
+          "term": "components",
+          "w": 2
+        },
+        {
+          "term": "implementing",
+          "w": 2
+        },
+        {
+          "term": "layouts",
+          "w": 2
+        },
+        {
+          "term": "meeting",
+          "w": 2
+        },
+        {
+          "term": "wcag",
+          "w": 2
+        },
+        {
+          "term": "accessibility",
+          "w": 2
+        },
+        {
+          "term": "requirements",
+          "w": 2
+        },
+        {
+          "term": "managing",
+          "w": 2
+        },
+        {
+          "term": "state",
+          "w": 2
+        },
+        {
+          "term": "output",
+          "w": 2
+        },
+        {
+          "term": "look",
+          "w": 2
+        },
+        {
+          "term": "feel",
+          "w": 2
+        },
+        {
+          "term": "production",
+          "w": 2
+        },
+        {
+          "term": "quality",
+          "w": 2
+        },
+        {
+          "term": "rather",
+          "w": 2
+        },
+        {
+          "term": "generated",
+          "w": 2
+        },
+        {
+          "term": "builds",
+          "w": 1
+        },
+        {
+          "term": "accessible",
+          "w": 1
+        },
+        {
+          "term": "responsive",
+          "w": 1
+        },
+        {
+          "term": "facing",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "full-output-enforcement",
+      "description": "Overrides default LLM truncation behavior. Enforces complete code generation, bans placeholder patterns, and handles token-limit splits cleanly. Apply to any task requiring exhaustive, unabridged output.",
+      "keywords": [
+        {
+          "term": "full",
+          "w": 1.5
+        },
+        {
+          "term": "output",
+          "w": 1.5
+        },
+        {
+          "term": "enforcement",
+          "w": 1.5
+        },
+        {
+          "term": "overrides",
+          "w": 1
+        },
+        {
+          "term": "default",
+          "w": 1
+        },
+        {
+          "term": "truncation",
+          "w": 1
+        },
+        {
+          "term": "behavior",
+          "w": 1
+        },
+        {
+          "term": "enforces",
+          "w": 1
+        },
+        {
+          "term": "complete",
+          "w": 1
+        },
+        {
+          "term": "generation",
+          "w": 1
+        },
+        {
+          "term": "bans",
+          "w": 1
+        },
+        {
+          "term": "placeholder",
+          "w": 1
+        },
+        {
+          "term": "patterns",
+          "w": 1
+        },
+        {
+          "term": "handles",
+          "w": 1
+        },
+        {
+          "term": "token",
+          "w": 1
+        },
+        {
+          "term": "limit",
+          "w": 1
+        },
+        {
+          "term": "splits",
+          "w": 1
+        },
+        {
+          "term": "cleanly",
+          "w": 1
+        },
+        {
+          "term": "apply",
+          "w": 1
+        },
+        {
+          "term": "requiring",
+          "w": 1
+        },
+        {
+          "term": "exhaustive",
+          "w": 1
+        },
+        {
+          "term": "unabridged",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "git-workflow-and-versioning",
+      "description": "Structures git workflow practices. Use when making any code change. Use when committing, branching, resolving conflicts, or when you need to organize work across multiple parallel streams. Use when cutting a release, choosing a semantic ver",
+      "keywords": [
+        {
+          "term": "git",
+          "w": 1.5
+        },
+        {
+          "term": "workflow",
+          "w": 1.5
+        },
+        {
+          "term": "versioning",
+          "w": 1.5
+        },
+        {
+          "term": "committing",
+          "w": 2
+        },
+        {
+          "term": "branching",
+          "w": 2
+        },
+        {
+          "term": "resolving",
+          "w": 2
+        },
+        {
+          "term": "conflicts",
+          "w": 2
+        },
+        {
+          "term": "organize",
+          "w": 2
+        },
+        {
+          "term": "multiple",
+          "w": 2
+        },
+        {
+          "term": "parallel",
+          "w": 2
+        },
+        {
+          "term": "streams",
+          "w": 2
+        },
+        {
+          "term": "cutting",
+          "w": 2
+        },
+        {
+          "term": "release",
+          "w": 2
+        },
+        {
+          "term": "choosing",
+          "w": 2
+        },
+        {
+          "term": "semantic",
+          "w": 2
+        },
+        {
+          "term": "version",
+          "w": 2
+        },
+        {
+          "term": "bump",
+          "w": 2
+        },
+        {
+          "term": "tagging",
+          "w": 2
+        },
+        {
+          "term": "changelog",
+          "w": 2
+        },
+        {
+          "term": "structures",
+          "w": 1
+        },
+        {
+          "term": "practices",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "github",
+      "description": "Interact with GitHub using the `gh` CLI. Use `gh issue`, `gh pr`, `gh run`, and `gh api` for issues, PRs, CI runs, and advanced queries. Use when the user asks about GitHub issues, pull requests, workflows, or wants to interact with GitHub ",
+      "keywords": [
+        {
+          "term": "github",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "about",
+          "w": 2
+        },
+        {
+          "term": "issues",
+          "w": 2
+        },
+        {
+          "term": "pull",
+          "w": 2
+        },
+        {
+          "term": "requests",
+          "w": 2
+        },
+        {
+          "term": "workflows",
+          "w": 2
+        },
+        {
+          "term": "wants",
+          "w": 2
+        },
+        {
+          "term": "interact",
+          "w": 2
+        },
+        {
+          "term": "repositories",
+          "w": 2
+        },
+        {
+          "term": "command",
+          "w": 2
+        },
+        {
+          "term": "line",
+          "w": 2
+        },
+        {
+          "term": "including",
+          "w": 2
+        },
+        {
+          "term": "check",
+          "w": 2
+        },
+        {
+          "term": "status",
+          "w": 2
+        },
+        {
+          "term": "list",
+          "w": 2
+        },
+        {
+          "term": "query",
+          "w": 2
+        },
+        {
+          "term": "issue",
+          "w": 1
+        },
+        {
+          "term": "runs",
+          "w": 1
+        },
+        {
+          "term": "advanced",
+          "w": 1
+        },
+        {
+          "term": "queries",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "glassmorphism",
+      "description": "ガラスモーフィズム（半透明＋背景ぼかし）UIの実装リファレンス。Apple Liquid Glass / HIG Materials と a11y ベストプラクティス（NN/g・Axess Lab）に基づく。blur/opacity トークン、可読性(WCAG)担保、prefers-reduced-transparency 等のフォールバック、性能注意、コピペCSS。全面ガラス化UIを破綻なく作るときに使う。",
+      "keywords": [
+        {
+          "term": "glassmorphism",
+          "w": 1.5
+        },
+        {
+          "term": "ガラスモーフィズム",
+          "w": 1
+        },
+        {
+          "term": "背景ぼかし",
+          "w": 1
+        },
+        {
+          "term": "uiの実装リファレンス",
+          "w": 1
+        },
+        {
+          "term": "apple",
+          "w": 1
+        },
+        {
+          "term": "liquid",
+          "w": 1
+        },
+        {
+          "term": "glass",
+          "w": 1
+        },
+        {
+          "term": "materials",
+          "w": 1
+        },
+        {
+          "term": "a11y",
+          "w": 1
+        },
+        {
+          "term": "ベストプラクティス",
+          "w": 1
+        },
+        {
+          "term": "axess",
+          "w": 1
+        },
+        {
+          "term": "に基づく",
+          "w": 1
+        },
+        {
+          "term": "blur",
+          "w": 1
+        },
+        {
+          "term": "opacity",
+          "w": 1
+        },
+        {
+          "term": "トークン",
+          "w": 1
+        },
+        {
+          "term": "wcag",
+          "w": 1
+        },
+        {
+          "term": "prefers",
+          "w": 1
+        },
+        {
+          "term": "reduced",
+          "w": 1
+        },
+        {
+          "term": "transparency",
+          "w": 1
+        },
+        {
+          "term": "等のフォールバック",
+          "w": 1
+        },
+        {
+          "term": "性能注意",
+          "w": 1
+        },
+        {
+          "term": "コピペcss",
+          "w": 1
+        },
+        {
+          "term": "全面ガラス化uiを破綻なく作るときに使う",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "gpt-taste",
+      "description": "Elite UX/UI & Advanced GSAP Motion Engineer. Enforces Python-driven true randomization for layout variance, strict AIDA page structure, wide editorial typography (bans 6-line wraps), gapless bento grids, strict GSAP ScrollTriggers (pinning,",
+      "keywords": [
+        {
+          "term": "gpt",
+          "w": 1.5
+        },
+        {
+          "term": "taste",
+          "w": 1.5
+        },
+        {
+          "term": "elite",
+          "w": 1
+        },
+        {
+          "term": "advanced",
+          "w": 1
+        },
+        {
+          "term": "gsap",
+          "w": 1
+        },
+        {
+          "term": "motion",
+          "w": 1
+        },
+        {
+          "term": "engineer",
+          "w": 1
+        },
+        {
+          "term": "enforces",
+          "w": 1
+        },
+        {
+          "term": "python",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "true",
+          "w": 1
+        },
+        {
+          "term": "randomization",
+          "w": 1
+        },
+        {
+          "term": "layout",
+          "w": 1
+        },
+        {
+          "term": "variance",
+          "w": 1
+        },
+        {
+          "term": "strict",
+          "w": 1
+        },
+        {
+          "term": "aida",
+          "w": 1
+        },
+        {
+          "term": "page",
+          "w": 1
+        },
+        {
+          "term": "structure",
+          "w": 1
+        },
+        {
+          "term": "wide",
+          "w": 1
+        },
+        {
+          "term": "editorial",
+          "w": 1
+        },
+        {
+          "term": "typography",
+          "w": 1
+        },
+        {
+          "term": "bans",
+          "w": 1
+        },
+        {
+          "term": "line",
+          "w": 1
+        },
+        {
+          "term": "wraps",
+          "w": 1
+        },
+        {
+          "term": "gapless",
+          "w": 1
+        },
+        {
+          "term": "bento",
+          "w": 1
+        },
+        {
+          "term": "grids",
+          "w": 1
+        },
+        {
+          "term": "scrolltriggers",
+          "w": 1
+        },
+        {
+          "term": "pinning",
+          "w": 1
+        },
+        {
+          "term": "stacking",
+          "w": 1
+        },
+        {
+          "term": "scrubbing",
+          "w": 1
+        },
+        {
+          "term": "inline",
+          "w": 1
+        },
+        {
+          "term": "micro",
+          "w": 1
+        },
+        {
+          "term": "images",
+          "w": 1
+        },
+        {
+          "term": "massive",
+          "w": 1
+        },
+        {
+          "term": "section",
+          "w": 1
+        },
+        {
+          "term": "spacing",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "high-end-visual-design",
+      "description": "Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.",
+      "keywords": [
+        {
+          "term": "high",
+          "w": 1.5
+        },
+        {
+          "term": "end",
+          "w": 1.5
+        },
+        {
+          "term": "visual",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "teaches",
+          "w": 1
+        },
+        {
+          "term": "agency",
+          "w": 1
+        },
+        {
+          "term": "defines",
+          "w": 1
+        },
+        {
+          "term": "exact",
+          "w": 1
+        },
+        {
+          "term": "fonts",
+          "w": 1
+        },
+        {
+          "term": "spacing",
+          "w": 1
+        },
+        {
+          "term": "shadows",
+          "w": 1
+        },
+        {
+          "term": "card",
+          "w": 1
+        },
+        {
+          "term": "structures",
+          "w": 1
+        },
+        {
+          "term": "animations",
+          "w": 1
+        },
+        {
+          "term": "website",
+          "w": 1
+        },
+        {
+          "term": "feel",
+          "w": 1
+        },
+        {
+          "term": "expensive",
+          "w": 1
+        },
+        {
+          "term": "blocks",
+          "w": 1
+        },
+        {
+          "term": "common",
+          "w": 1
+        },
+        {
+          "term": "defaults",
+          "w": 1
+        },
+        {
+          "term": "designs",
+          "w": 1
+        },
+        {
+          "term": "look",
+          "w": 1
+        },
+        {
+          "term": "cheap",
+          "w": 1
+        },
+        {
+          "term": "generic",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "hookify-rules",
+      "description": "This skill should be used when the user asks to create a hookify rule, write a hook rule, configure hookify, add a hookify rule, or needs guidance on hookify rule syntax and patterns.",
+      "keywords": [
+        {
+          "term": "hookify",
+          "w": 1.5
+        },
+        {
+          "term": "rules",
+          "w": 1.5
+        },
+        {
+          "term": "should",
+          "w": 1
+        },
+        {
+          "term": "asks",
+          "w": 1
+        },
+        {
+          "term": "rule",
+          "w": 1
+        },
+        {
+          "term": "hook",
+          "w": 1
+        },
+        {
+          "term": "configure",
+          "w": 1
+        },
+        {
+          "term": "guidance",
+          "w": 1
+        },
+        {
+          "term": "syntax",
+          "w": 1
+        },
+        {
+          "term": "patterns",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "idd-workflow",
+      "description": "ikki の Intent-Driven Development (IDD) v2 methodology を実行するための skill。Phase -1 (Incubation) → 0 (Intent) → 1 (Plan) → 2 (MVP) → 3 (Review) → 4 (v1) → 5 (v2) → 6 (Closeout) の 6 Phase イテレーションを駆動する。ユーザーが Intent / Plan / MVP / Review / v1 / v2 /",
+      "keywords": [
+        {
+          "term": "idd",
+          "w": 1.5
+        },
+        {
+          "term": "workflow",
+          "w": 1.5
+        },
+        {
+          "term": "ikki",
+          "w": 1
+        },
+        {
+          "term": "intent",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "development",
+          "w": 1
+        },
+        {
+          "term": "methodology",
+          "w": 1
+        },
+        {
+          "term": "を実行するための",
+          "w": 1
+        },
+        {
+          "term": "phase",
+          "w": 1
+        },
+        {
+          "term": "incubation",
+          "w": 1
+        },
+        {
+          "term": "plan",
+          "w": 1
+        },
+        {
+          "term": "closeout",
+          "w": 1
+        },
+        {
+          "term": "イテレーションを駆動する",
+          "w": 1
+        },
+        {
+          "term": "ユーザーが",
+          "w": 1
+        },
+        {
+          "term": "用語を口にした時",
+          "w": 1
+        },
+        {
+          "term": "slash",
+          "w": 1
+        },
+        {
+          "term": "command",
+          "w": 1
+        },
+        {
+          "term": "を叩いた時に発動する",
+          "w": 1
+        },
+        {
+          "term": "軸レビュー",
+          "w": 1
+        },
+        {
+          "term": "の構造化",
+          "w": 1
+        },
+        {
+          "term": "削軸の必須化",
+          "w": 1
+        },
+        {
+          "term": "追軸のデフォルト",
+          "w": 1
+        },
+        {
+          "term": "提案禁止などのガードレールを内包する",
+          "w": 1
+        },
+        {
+          "term": "出力は必ず",
+          "w": 1
+        },
+        {
+          "term": "markdown",
+          "w": 1
+        },
+        {
+          "term": "active",
+          "w": 1
+        },
+        {
+          "term": "slug",
+          "w": 1
+        },
+        {
+          "term": "ごとのファイルとして保存する",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "idea-refine",
+      "description": "Refines raw ideas into sharp, actionable concepts through structured divergent and convergent thinking. Use when an idea is still vague, when you need to stress-test assumptions before committing to a plan, or when you want to expand option",
+      "keywords": [
+        {
+          "term": "idea",
+          "w": 2
+        },
+        {
+          "term": "refine",
+          "w": 2
+        },
+        {
+          "term": "still",
+          "w": 2
+        },
+        {
+          "term": "vague",
+          "w": 2
+        },
+        {
+          "term": "stress",
+          "w": 2
+        },
+        {
+          "term": "test",
+          "w": 2
+        },
+        {
+          "term": "assumptions",
+          "w": 2
+        },
+        {
+          "term": "committing",
+          "w": 2
+        },
+        {
+          "term": "plan",
+          "w": 2
+        },
+        {
+          "term": "want",
+          "w": 2
+        },
+        {
+          "term": "expand",
+          "w": 2
+        },
+        {
+          "term": "options",
+          "w": 2
+        },
+        {
+          "term": "converging",
+          "w": 2
+        },
+        {
+          "term": "ideate",
+          "w": 2
+        },
+        {
+          "term": "refines",
+          "w": 1
+        },
+        {
+          "term": "ideas",
+          "w": 1
+        },
+        {
+          "term": "sharp",
+          "w": 1
+        },
+        {
+          "term": "actionable",
+          "w": 1
+        },
+        {
+          "term": "concepts",
+          "w": 1
+        },
+        {
+          "term": "through",
+          "w": 1
+        },
+        {
+          "term": "structured",
+          "w": 1
+        },
+        {
+          "term": "divergent",
+          "w": 1
+        },
+        {
+          "term": "convergent",
+          "w": 1
+        },
+        {
+          "term": "thinking",
+          "w": 1
+        },
+        {
+          "term": "triggers",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "image-to-code",
+      "description": "Elite website image-to-code skill for Codex. For visually important web tasks, it must first generate the design image(s) itself, deeply analyze them, then implement the website to match them as closely as possible. In Codex, it must prefer",
+      "keywords": [
+        {
+          "term": "image",
+          "w": 1.5
+        },
+        {
+          "term": "elite",
+          "w": 1
+        },
+        {
+          "term": "website",
+          "w": 1
+        },
+        {
+          "term": "codex",
+          "w": 1
+        },
+        {
+          "term": "visually",
+          "w": 1
+        },
+        {
+          "term": "important",
+          "w": 1
+        },
+        {
+          "term": "must",
+          "w": 1
+        },
+        {
+          "term": "first",
+          "w": 1
+        },
+        {
+          "term": "generate",
+          "w": 1
+        },
+        {
+          "term": "design",
+          "w": 1
+        },
+        {
+          "term": "itself",
+          "w": 1
+        },
+        {
+          "term": "deeply",
+          "w": 1
+        },
+        {
+          "term": "analyze",
+          "w": 1
+        },
+        {
+          "term": "implement",
+          "w": 1
+        },
+        {
+          "term": "match",
+          "w": 1
+        },
+        {
+          "term": "closely",
+          "w": 1
+        },
+        {
+          "term": "possible",
+          "w": 1
+        },
+        {
+          "term": "prefer",
+          "w": 1
+        },
+        {
+          "term": "large",
+          "w": 1
+        },
+        {
+          "term": "readable",
+          "w": 1
+        },
+        {
+          "term": "section",
+          "w": 1
+        },
+        {
+          "term": "specific",
+          "w": 1
+        },
+        {
+          "term": "images",
+          "w": 1
+        },
+        {
+          "term": "instead",
+          "w": 1
+        },
+        {
+          "term": "tiny",
+          "w": 1
+        },
+        {
+          "term": "compressed",
+          "w": 1
+        },
+        {
+          "term": "boards",
+          "w": 1
+        },
+        {
+          "term": "fresh",
+          "w": 1
+        },
+        {
+          "term": "standalone",
+          "w": 1
+        },
+        {
+          "term": "sections",
+          "w": 1
+        },
+        {
+          "term": "detail",
+          "w": 1
+        },
+        {
+          "term": "views",
+          "w": 1
+        },
+        {
+          "term": "cropping",
+          "w": 1
+        },
+        {
+          "term": "ones",
+          "w": 1
+        },
+        {
+          "term": "avoid",
+          "w": 1
+        },
+        {
+          "term": "lazy",
+          "w": 1
+        },
+        {
+          "term": "generation",
+          "w": 1
+        },
+        {
+          "term": "cards",
+          "w": 1
+        },
+        {
+          "term": "inside",
+          "w": 1
+        },
+        {
+          "term": "keep",
+          "w": 1
+        },
+        {
+          "term": "hero",
+          "w": 1
+        },
+        {
+          "term": "clean",
+          "w": 1
+        },
+        {
+          "term": "spacious",
+          "w": 1
+        },
+        {
+          "term": "visible",
+          "w": 1
+        },
+        {
+          "term": "small",
+          "w": 1
+        },
+        {
+          "term": "laptop",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "imagegen-frontend-mobile",
+      "description": "Elite mobile app image-generation skill for creating premium, app-native screen concepts and flows. Designed for iOS, Android, and cross-platform mobile products. Prioritizes clean hierarchy, comfortably readable text, strong multi-screen c",
+      "keywords": [
+        {
+          "term": "imagegen",
+          "w": 1.5
+        },
+        {
+          "term": "frontend",
+          "w": 1.5
+        },
+        {
+          "term": "mobile",
+          "w": 1.5
+        },
+        {
+          "term": "elite",
+          "w": 1
+        },
+        {
+          "term": "image",
+          "w": 1
+        },
+        {
+          "term": "generation",
+          "w": 1
+        },
+        {
+          "term": "premium",
+          "w": 1
+        },
+        {
+          "term": "native",
+          "w": 1
+        },
+        {
+          "term": "screen",
+          "w": 1
+        },
+        {
+          "term": "concepts",
+          "w": 1
+        },
+        {
+          "term": "flows",
+          "w": 1
+        },
+        {
+          "term": "designed",
+          "w": 1
+        },
+        {
+          "term": "android",
+          "w": 1
+        },
+        {
+          "term": "cross",
+          "w": 1
+        },
+        {
+          "term": "platform",
+          "w": 1
+        },
+        {
+          "term": "products",
+          "w": 1
+        },
+        {
+          "term": "prioritizes",
+          "w": 1
+        },
+        {
+          "term": "clean",
+          "w": 1
+        },
+        {
+          "term": "hierarchy",
+          "w": 1
+        },
+        {
+          "term": "comfortably",
+          "w": 1
+        },
+        {
+          "term": "readable",
+          "w": 1
+        },
+        {
+          "term": "text",
+          "w": 1
+        },
+        {
+          "term": "strong",
+          "w": 1
+        },
+        {
+          "term": "multi",
+          "w": 1
+        },
+        {
+          "term": "consistency",
+          "w": 1
+        },
+        {
+          "term": "controlled",
+          "w": 1
+        },
+        {
+          "term": "color",
+          "w": 1
+        },
+        {
+          "term": "palettes",
+          "w": 1
+        },
+        {
+          "term": "generic",
+          "w": 1
+        },
+        {
+          "term": "creative",
+          "w": 1
+        },
+        {
+          "term": "direction",
+          "w": 1
+        },
+        {
+          "term": "textured",
+          "w": 1
+        },
+        {
+          "term": "surfaces",
+          "w": 1
+        },
+        {
+          "term": "composition",
+          "w": 1
+        },
+        {
+          "term": "tasteful",
+          "w": 1
+        },
+        {
+          "term": "custom",
+          "w": 1
+        },
+        {
+          "term": "iconography",
+          "w": 1
+        },
+        {
+          "term": "phone",
+          "w": 1
+        },
+        {
+          "term": "mockup",
+          "w": 1
+        },
+        {
+          "term": "framing",
+          "w": 1
+        },
+        {
+          "term": "default",
+          "w": 1
+        },
+        {
+          "term": "screens",
+          "w": 1
+        },
+        {
+          "term": "should",
+          "w": 1
+        },
+        {
+          "term": "shown",
+          "w": 1
+        },
+        {
+          "term": "inside",
+          "w": 1
+        },
+        {
+          "term": "subtle",
+          "w": 1
+        },
+        {
+          "term": "iphone",
+          "w": 1
+        },
+        {
+          "term": "similar",
+          "w": 1
+        },
+        {
+          "term": "visible",
+          "w": 1
+        },
+        {
+          "term": "frame",
+          "w": 1
+        },
+        {
+          "term": "while",
+          "w": 1
+        },
+        {
+          "term": "main",
+          "w": 1
+        },
+        {
+          "term": "focus",
+          "w": 1
+        },
+        {
+          "term": "stays",
+          "w": 1
+        },
+        {
+          "term": "content",
+          "w": 1
+        },
+        {
+          "term": "itself",
+          "w": 1
+        },
+        {
+          "term": "generates",
+          "w": 1
+        },
+        {
+          "term": "images",
+          "w": 1
+        },
+        {
+          "term": "only",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "imagegen-frontend-web",
+      "description": "Elite frontend image-direction skill for generating premium, conversion-aware website design references. CRITICAL OUTPUT RULE — generate ONE separate horizontal image FOR EVERY section. A landing page with 8 sections produces 8 images. Neve",
+      "keywords": [
+        {
+          "term": "imagegen",
+          "w": 1.5
+        },
+        {
+          "term": "frontend",
+          "w": 1.5
+        },
+        {
+          "term": "web",
+          "w": 1.5
+        },
+        {
+          "term": "elite",
+          "w": 1
+        },
+        {
+          "term": "image",
+          "w": 1
+        },
+        {
+          "term": "direction",
+          "w": 1
+        },
+        {
+          "term": "generating",
+          "w": 1
+        },
+        {
+          "term": "premium",
+          "w": 1
+        },
+        {
+          "term": "conversion",
+          "w": 1
+        },
+        {
+          "term": "aware",
+          "w": 1
+        },
+        {
+          "term": "website",
+          "w": 1
+        },
+        {
+          "term": "design",
+          "w": 1
+        },
+        {
+          "term": "references",
+          "w": 1
+        },
+        {
+          "term": "critical",
+          "w": 1
+        },
+        {
+          "term": "output",
+          "w": 1
+        },
+        {
+          "term": "rule",
+          "w": 1
+        },
+        {
+          "term": "generate",
+          "w": 1
+        },
+        {
+          "term": "separate",
+          "w": 1
+        },
+        {
+          "term": "horizontal",
+          "w": 1
+        },
+        {
+          "term": "every",
+          "w": 1
+        },
+        {
+          "term": "section",
+          "w": 1
+        },
+        {
+          "term": "landing",
+          "w": 1
+        },
+        {
+          "term": "page",
+          "w": 1
+        },
+        {
+          "term": "sections",
+          "w": 1
+        },
+        {
+          "term": "produces",
+          "w": 1
+        },
+        {
+          "term": "images",
+          "w": 1
+        },
+        {
+          "term": "never",
+          "w": 1
+        },
+        {
+          "term": "compress",
+          "w": 1
+        },
+        {
+          "term": "multiple",
+          "w": 1
+        },
+        {
+          "term": "enforces",
+          "w": 1
+        },
+        {
+          "term": "composition",
+          "w": 1
+        },
+        {
+          "term": "variety",
+          "w": 1
+        },
+        {
+          "term": "always",
+          "w": 1
+        },
+        {
+          "term": "left",
+          "w": 1
+        },
+        {
+          "term": "text",
+          "w": 1
+        },
+        {
+          "term": "right",
+          "w": 1
+        },
+        {
+          "term": "background",
+          "w": 1
+        },
+        {
+          "term": "freedom",
+          "w": 1
+        },
+        {
+          "term": "varied",
+          "w": 1
+        },
+        {
+          "term": "ctas",
+          "w": 1
+        },
+        {
+          "term": "hero",
+          "w": 1
+        },
+        {
+          "term": "scales",
+          "w": 1
+        },
+        {
+          "term": "giant",
+          "w": 1
+        },
+        {
+          "term": "mini",
+          "w": 1
+        },
+        {
+          "term": "minimalist",
+          "w": 1
+        },
+        {
+          "term": "narrative",
+          "w": 1
+        },
+        {
+          "term": "concept",
+          "w": 1
+        },
+        {
+          "term": "spine",
+          "w": 1
+        },
+        {
+          "term": "second",
+          "w": 1
+        },
+        {
+          "term": "moments",
+          "w": 1
+        },
+        {
+          "term": "single",
+          "w": 1
+        },
+        {
+          "term": "consistent",
+          "w": 1
+        },
+        {
+          "term": "palette",
+          "w": 1
+        },
+        {
+          "term": "optimized",
+          "w": 1
+        },
+        {
+          "term": "pages",
+          "w": 1
+        },
+        {
+          "term": "marketing",
+          "w": 1
+        },
+        {
+          "term": "sites",
+          "w": 1
+        },
+        {
+          "term": "product",
+          "w": 1
+        },
+        {
+          "term": "comps",
+          "w": 1
+        },
+        {
+          "term": "developers",
+          "w": 1
+        },
+        {
+          "term": "coding",
+          "w": 1
+        },
+        {
+          "term": "models",
+          "w": 1
+        },
+        {
+          "term": "accurately",
+          "w": 1
+        },
+        {
+          "term": "recreate",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "incremental-implementation",
+      "description": "Delivers changes incrementally. Use when implementing any feature or change that touches more than one file. Use when you're about to write a large amount of code at once, or when a task feels too big to land in one step.",
+      "keywords": [
+        {
+          "term": "incremental",
+          "w": 1.5
+        },
+        {
+          "term": "implementation",
+          "w": 1.5
+        },
+        {
+          "term": "implementing",
+          "w": 2
+        },
+        {
+          "term": "feature",
+          "w": 2
+        },
+        {
+          "term": "touches",
+          "w": 2
+        },
+        {
+          "term": "about",
+          "w": 2
+        },
+        {
+          "term": "large",
+          "w": 2
+        },
+        {
+          "term": "amount",
+          "w": 2
+        },
+        {
+          "term": "once",
+          "w": 2
+        },
+        {
+          "term": "feels",
+          "w": 2
+        },
+        {
+          "term": "land",
+          "w": 2
+        },
+        {
+          "term": "step",
+          "w": 2
+        },
+        {
+          "term": "delivers",
+          "w": 1
+        },
+        {
+          "term": "incrementally",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "industrial-brutalist-ui",
+      "description": "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics. Rigid grids, extreme type scale contrast, utilitarian color, analog degradation effects. For data-heavy dashboards, portfolios, or editorial sites t",
+      "keywords": [
+        {
+          "term": "industrial",
+          "w": 1.5
+        },
+        {
+          "term": "brutalist",
+          "w": 1.5
+        },
+        {
+          "term": "mechanical",
+          "w": 1
+        },
+        {
+          "term": "interfaces",
+          "w": 1
+        },
+        {
+          "term": "fusing",
+          "w": 1
+        },
+        {
+          "term": "swiss",
+          "w": 1
+        },
+        {
+          "term": "typographic",
+          "w": 1
+        },
+        {
+          "term": "print",
+          "w": 1
+        },
+        {
+          "term": "military",
+          "w": 1
+        },
+        {
+          "term": "terminal",
+          "w": 1
+        },
+        {
+          "term": "aesthetics",
+          "w": 1
+        },
+        {
+          "term": "rigid",
+          "w": 1
+        },
+        {
+          "term": "grids",
+          "w": 1
+        },
+        {
+          "term": "extreme",
+          "w": 1
+        },
+        {
+          "term": "type",
+          "w": 1
+        },
+        {
+          "term": "scale",
+          "w": 1
+        },
+        {
+          "term": "contrast",
+          "w": 1
+        },
+        {
+          "term": "utilitarian",
+          "w": 1
+        },
+        {
+          "term": "color",
+          "w": 1
+        },
+        {
+          "term": "analog",
+          "w": 1
+        },
+        {
+          "term": "degradation",
+          "w": 1
+        },
+        {
+          "term": "effects",
+          "w": 1
+        },
+        {
+          "term": "data",
+          "w": 1
+        },
+        {
+          "term": "heavy",
+          "w": 1
+        },
+        {
+          "term": "dashboards",
+          "w": 1
+        },
+        {
+          "term": "portfolios",
+          "w": 1
+        },
+        {
+          "term": "editorial",
+          "w": 1
+        },
+        {
+          "term": "sites",
+          "w": 1
+        },
+        {
+          "term": "feel",
+          "w": 1
+        },
+        {
+          "term": "declassified",
+          "w": 1
+        },
+        {
+          "term": "blueprints",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "interview-me",
+      "description": "Extracts what the user actually wants instead of what they think they should want. Achieves this through one-question-at-a-time interview until ~95% confidence about the underlying intent. Use when an ask is underspecified (\"build me X\" wit",
+      "keywords": [
+        {
+          "term": "interview",
+          "w": 2
+        },
+        {
+          "term": "underspecified",
+          "w": 2
+        },
+        {
+          "term": "without",
+          "w": 2
+        },
+        {
+          "term": "whom",
+          "w": 2
+        },
+        {
+          "term": "explicitly",
+          "w": 2
+        },
+        {
+          "term": "invokes",
+          "w": 2
+        },
+        {
+          "term": "grill",
+          "w": 2
+        },
+        {
+          "term": "sure",
+          "w": 2
+        },
+        {
+          "term": "stress",
+          "w": 2
+        },
+        {
+          "term": "test",
+          "w": 2
+        },
+        {
+          "term": "thinking",
+          "w": 2
+        },
+        {
+          "term": "catch",
+          "w": 2
+        },
+        {
+          "term": "yourself",
+          "w": 2
+        },
+        {
+          "term": "silently",
+          "w": 2
+        },
+        {
+          "term": "filling",
+          "w": 2
+        },
+        {
+          "term": "ambiguous",
+          "w": 2
+        },
+        {
+          "term": "requirements",
+          "w": 2
+        },
+        {
+          "term": "plan",
+          "w": 2
+        },
+        {
+          "term": "spec",
+          "w": 2
+        },
+        {
+          "term": "exists",
+          "w": 2
+        },
+        {
+          "term": "extracts",
+          "w": 1
+        },
+        {
+          "term": "actually",
+          "w": 1
+        },
+        {
+          "term": "wants",
+          "w": 1
+        },
+        {
+          "term": "instead",
+          "w": 1
+        },
+        {
+          "term": "think",
+          "w": 1
+        },
+        {
+          "term": "should",
+          "w": 1
+        },
+        {
+          "term": "want",
+          "w": 1
+        },
+        {
+          "term": "achieves",
+          "w": 1
+        },
+        {
+          "term": "through",
+          "w": 1
+        },
+        {
+          "term": "question",
+          "w": 1
+        },
+        {
+          "term": "time",
+          "w": 1
+        },
+        {
+          "term": "until",
+          "w": 1
+        },
+        {
+          "term": "confidence",
+          "w": 1
+        },
+        {
+          "term": "about",
+          "w": 1
+        },
+        {
+          "term": "underlying",
+          "w": 1
+        },
+        {
+          "term": "intent",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ios-debugger-agent",
+      "description": "Use XcodeBuildMCP to build, run, launch, and debug the current iOS project on a booted simulator. Trigger when asked to run an iOS app, interact with the simulator UI, inspect on-screen state, capture logs/console output, or diagnose runtim",
+      "keywords": [
+        {
+          "term": "ios",
+          "w": 1.5
+        },
+        {
+          "term": "debugger",
+          "w": 1.5
+        },
+        {
+          "term": "xcodebuildmcp",
+          "w": 1
+        },
+        {
+          "term": "launch",
+          "w": 1
+        },
+        {
+          "term": "debug",
+          "w": 1
+        },
+        {
+          "term": "current",
+          "w": 1
+        },
+        {
+          "term": "booted",
+          "w": 1
+        },
+        {
+          "term": "simulator",
+          "w": 1
+        },
+        {
+          "term": "trigger",
+          "w": 1
+        },
+        {
+          "term": "asked",
+          "w": 1
+        },
+        {
+          "term": "interact",
+          "w": 1
+        },
+        {
+          "term": "inspect",
+          "w": 1
+        },
+        {
+          "term": "screen",
+          "w": 1
+        },
+        {
+          "term": "state",
+          "w": 1
+        },
+        {
+          "term": "capture",
+          "w": 1
+        },
+        {
+          "term": "logs",
+          "w": 1
+        },
+        {
+          "term": "console",
+          "w": 1
+        },
+        {
+          "term": "output",
+          "w": 1
+        },
+        {
+          "term": "diagnose",
+          "w": 1
+        },
+        {
+          "term": "runtime",
+          "w": 1
+        },
+        {
+          "term": "behavior",
+          "w": 1
+        },
+        {
+          "term": "tools",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "iterative-retrieval",
+      "description": "Pattern for progressively refining context retrieval to solve the subagent context problem",
+      "keywords": [
+        {
+          "term": "iterative",
+          "w": 1.5
+        },
+        {
+          "term": "retrieval",
+          "w": 1.5
+        },
+        {
+          "term": "pattern",
+          "w": 1
+        },
+        {
+          "term": "progressively",
+          "w": 1
+        },
+        {
+          "term": "refining",
+          "w": 1
+        },
+        {
+          "term": "context",
+          "w": 1
+        },
+        {
+          "term": "solve",
+          "w": 1
+        },
+        {
+          "term": "subagent",
+          "w": 1
+        },
+        {
+          "term": "problem",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "last30days",
+      "description": "Research what people actually say about any topic in the last 30 days. Pulls posts and engagement from Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub, and the web. Includes a doctor health check to diagnose broken or missing so",
+      "keywords": [
+        {
+          "term": "last30days",
+          "w": 1.5
+        },
+        {
+          "term": "research",
+          "w": 1
+        },
+        {
+          "term": "people",
+          "w": 1
+        },
+        {
+          "term": "actually",
+          "w": 1
+        },
+        {
+          "term": "about",
+          "w": 1
+        },
+        {
+          "term": "topic",
+          "w": 1
+        },
+        {
+          "term": "last",
+          "w": 1
+        },
+        {
+          "term": "days",
+          "w": 1
+        },
+        {
+          "term": "pulls",
+          "w": 1
+        },
+        {
+          "term": "posts",
+          "w": 1
+        },
+        {
+          "term": "engagement",
+          "w": 1
+        },
+        {
+          "term": "reddit",
+          "w": 1
+        },
+        {
+          "term": "youtube",
+          "w": 1
+        },
+        {
+          "term": "tiktok",
+          "w": 1
+        },
+        {
+          "term": "hacker",
+          "w": 1
+        },
+        {
+          "term": "news",
+          "w": 1
+        },
+        {
+          "term": "polymarket",
+          "w": 1
+        },
+        {
+          "term": "github",
+          "w": 1
+        },
+        {
+          "term": "includes",
+          "w": 1
+        },
+        {
+          "term": "doctor",
+          "w": 1
+        },
+        {
+          "term": "health",
+          "w": 1
+        },
+        {
+          "term": "check",
+          "w": 1
+        },
+        {
+          "term": "diagnose",
+          "w": 1
+        },
+        {
+          "term": "broken",
+          "w": 1
+        },
+        {
+          "term": "missing",
+          "w": 1
+        },
+        {
+          "term": "sources",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "layout-composition",
+      "description": "レイアウト/コンポジション（構図）のレシピ集。ベント・エディトリアル・broken grid・ヒーローの型・余白のリズム・スクロールテリング・大型タイポ・モバイル構図の8パターンをコピペCSS付きで提供。生成AIが収束しがちな「均一カードグリッド＋中央寄せヒーロー」を構図の引き出しで打破する。anti-ai-design で路線を決めた後、実装前に構図を1つ選ぶために使う。",
+      "keywords": [
+        {
+          "term": "layout",
+          "w": 1.5
+        },
+        {
+          "term": "composition",
+          "w": 1.5
+        },
+        {
+          "term": "レイアウト",
+          "w": 1
+        },
+        {
+          "term": "コンポジション",
+          "w": 1
+        },
+        {
+          "term": "のレシピ集",
+          "w": 1
+        },
+        {
+          "term": "エディトリアル",
+          "w": 1
+        },
+        {
+          "term": "broken",
+          "w": 1
+        },
+        {
+          "term": "grid",
+          "w": 1
+        },
+        {
+          "term": "ヒーローの型",
+          "w": 1
+        },
+        {
+          "term": "余白のリズム",
+          "w": 1
+        },
+        {
+          "term": "スクロールテリング",
+          "w": 1
+        },
+        {
+          "term": "大型タイポ",
+          "w": 1
+        },
+        {
+          "term": "モバイル構図の8パターンをコピペcss付きで提供",
+          "w": 1
+        },
+        {
+          "term": "生成aiが収束しがちな",
+          "w": 1
+        },
+        {
+          "term": "均一カードグリッド",
+          "w": 1
+        },
+        {
+          "term": "中央寄せヒーロー",
+          "w": 1
+        },
+        {
+          "term": "を構図の引き出しで打破する",
+          "w": 1
+        },
+        {
+          "term": "anti",
+          "w": 1
+        },
+        {
+          "term": "design",
+          "w": 1
+        },
+        {
+          "term": "で路線を決めた後",
+          "w": 1
+        },
+        {
+          "term": "実装前に構図を1つ選ぶために使う",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "macos-menubar-tuist-app",
+      "description": "Build, refactor, or review macOS menubar apps that use Tuist and SwiftUI. Use when creating or maintaining LSUIElement menubar utilities, defining Tuist targets/manifests, implementing model-client-store-view architecture, adding script-bas",
+      "keywords": [
+        {
+          "term": "macos",
+          "w": 1.5
+        },
+        {
+          "term": "menubar",
+          "w": 2
+        },
+        {
+          "term": "tuist",
+          "w": 2
+        },
+        {
+          "term": "app",
+          "w": 1.5
+        },
+        {
+          "term": "maintaining",
+          "w": 2
+        },
+        {
+          "term": "lsuielement",
+          "w": 2
+        },
+        {
+          "term": "utilities",
+          "w": 2
+        },
+        {
+          "term": "defining",
+          "w": 2
+        },
+        {
+          "term": "targets",
+          "w": 2
+        },
+        {
+          "term": "manifests",
+          "w": 2
+        },
+        {
+          "term": "implementing",
+          "w": 2
+        },
+        {
+          "term": "model",
+          "w": 2
+        },
+        {
+          "term": "client",
+          "w": 2
+        },
+        {
+          "term": "store",
+          "w": 2
+        },
+        {
+          "term": "view",
+          "w": 2
+        },
+        {
+          "term": "architecture",
+          "w": 2
+        },
+        {
+          "term": "adding",
+          "w": 2
+        },
+        {
+          "term": "script",
+          "w": 2
+        },
+        {
+          "term": "launch",
+          "w": 2
+        },
+        {
+          "term": "flows",
+          "w": 2
+        },
+        {
+          "term": "validating",
+          "w": 2
+        },
+        {
+          "term": "reliable",
+          "w": 2
+        },
+        {
+          "term": "local",
+          "w": 2
+        },
+        {
+          "term": "behavior",
+          "w": 2
+        },
+        {
+          "term": "without",
+          "w": 2
+        },
+        {
+          "term": "xcode",
+          "w": 2
+        },
+        {
+          "term": "first",
+          "w": 2
+        },
+        {
+          "term": "workflows",
+          "w": 2
+        },
+        {
+          "term": "refactor",
+          "w": 1
+        },
+        {
+          "term": "apps",
+          "w": 1
+        },
+        {
+          "term": "swiftui",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "macos-spm-app-packaging",
+      "description": "Scaffold, build, and package SwiftPM-based macOS apps without an Xcode project. Use when you need a from-scratch macOS app layout, SwiftPM targets/resources, a custom .app bundle assembly script, or signing/notarization/appcast steps outsid",
+      "keywords": [
+        {
+          "term": "macos",
+          "w": 2
+        },
+        {
+          "term": "spm",
+          "w": 1.5
+        },
+        {
+          "term": "app",
+          "w": 1.5
+        },
+        {
+          "term": "packaging",
+          "w": 1.5
+        },
+        {
+          "term": "scratch",
+          "w": 2
+        },
+        {
+          "term": "layout",
+          "w": 2
+        },
+        {
+          "term": "swiftpm",
+          "w": 2
+        },
+        {
+          "term": "targets",
+          "w": 2
+        },
+        {
+          "term": "resources",
+          "w": 2
+        },
+        {
+          "term": "custom",
+          "w": 2
+        },
+        {
+          "term": "scaffold",
+          "w": 1
+        },
+        {
+          "term": "package",
+          "w": 1
+        },
+        {
+          "term": "apps",
+          "w": 1
+        },
+        {
+          "term": "without",
+          "w": 1
+        },
+        {
+          "term": "xcode",
+          "w": 1
+        },
+        {
+          "term": "bundle",
+          "w": 1
+        },
+        {
+          "term": "assembly",
+          "w": 1
+        },
+        {
+          "term": "script",
+          "w": 1
+        },
+        {
+          "term": "signing",
+          "w": 1
+        },
+        {
+          "term": "notarization",
+          "w": 1
+        },
+        {
+          "term": "appcast",
+          "w": 1
+        },
+        {
+          "term": "steps",
+          "w": 1
+        },
+        {
+          "term": "outside",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "material-design-3",
+      "description": "Google Material Design 3 (M3 / M3 Expressive) の UI/UX リファレンス。カラーロール・タイプスケール・シェイプ・エレベーション・モーション・状態レイヤー・主要コンポーネント・アクセシビリティを、実装に使えるトークン値とコピペCSSで提供する。Android/Material 風の体系的でアクセシブルなUIを作るときに使う。脱・量産感には anti-ai-design と併用する。",
+      "keywords": [
+        {
+          "term": "material",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "google",
+          "w": 1
+        },
+        {
+          "term": "expressive",
+          "w": 1
+        },
+        {
+          "term": "リファレンス",
+          "w": 1
+        },
+        {
+          "term": "カラーロール",
+          "w": 1
+        },
+        {
+          "term": "タイプスケール",
+          "w": 1
+        },
+        {
+          "term": "シェイプ",
+          "w": 1
+        },
+        {
+          "term": "エレベーション",
+          "w": 1
+        },
+        {
+          "term": "モーション",
+          "w": 1
+        },
+        {
+          "term": "状態レイヤー",
+          "w": 1
+        },
+        {
+          "term": "主要コンポーネント",
+          "w": 1
+        },
+        {
+          "term": "アクセシビリティを",
+          "w": 1
+        },
+        {
+          "term": "実装に使えるトークン値とコピペcssで提供する",
+          "w": 1
+        },
+        {
+          "term": "android",
+          "w": 1
+        },
+        {
+          "term": "風の体系的でアクセシブルなuiを作るときに使う",
+          "w": 1
+        },
+        {
+          "term": "量産感には",
+          "w": 1
+        },
+        {
+          "term": "anti",
+          "w": 1
+        },
+        {
+          "term": "と併用する",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "minimalist-ui",
+      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
+      "keywords": [
+        {
+          "term": "minimalist",
+          "w": 1.5
+        },
+        {
+          "term": "clean",
+          "w": 1
+        },
+        {
+          "term": "editorial",
+          "w": 1
+        },
+        {
+          "term": "style",
+          "w": 1
+        },
+        {
+          "term": "interfaces",
+          "w": 1
+        },
+        {
+          "term": "warm",
+          "w": 1
+        },
+        {
+          "term": "monochrome",
+          "w": 1
+        },
+        {
+          "term": "palette",
+          "w": 1
+        },
+        {
+          "term": "typographic",
+          "w": 1
+        },
+        {
+          "term": "contrast",
+          "w": 1
+        },
+        {
+          "term": "flat",
+          "w": 1
+        },
+        {
+          "term": "bento",
+          "w": 1
+        },
+        {
+          "term": "grids",
+          "w": 1
+        },
+        {
+          "term": "muted",
+          "w": 1
+        },
+        {
+          "term": "pastels",
+          "w": 1
+        },
+        {
+          "term": "gradients",
+          "w": 1
+        },
+        {
+          "term": "heavy",
+          "w": 1
+        },
+        {
+          "term": "shadows",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "modern-css",
+      "description": "2026年時点のモダンCSS実装技術リファレンス。container queries・:has()・OKLCH/color-mix・clamp()流体タイポ・scroll-driven animations・subgrid・text-wrap・nesting・anchor positioning・@starting-style・popover/dialog・field-sizing のBaseline判定・コピペ最小コード・フォールバック方針を提供。ビルド不要・単一HTML/",
+      "keywords": [
+        {
+          "term": "modern",
+          "w": 1.5
+        },
+        {
+          "term": "css",
+          "w": 1.5
+        },
+        {
+          "term": "2026年時点のモダンcss実装技術リファレンス",
+          "w": 1
+        },
+        {
+          "term": "container",
+          "w": 1
+        },
+        {
+          "term": "queries",
+          "w": 1
+        },
+        {
+          "term": "oklch",
+          "w": 1
+        },
+        {
+          "term": "color",
+          "w": 1
+        },
+        {
+          "term": "clamp",
+          "w": 1
+        },
+        {
+          "term": "流体タイポ",
+          "w": 1
+        },
+        {
+          "term": "scroll",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "animations",
+          "w": 1
+        },
+        {
+          "term": "subgrid",
+          "w": 1
+        },
+        {
+          "term": "text",
+          "w": 1
+        },
+        {
+          "term": "wrap",
+          "w": 1
+        },
+        {
+          "term": "nesting",
+          "w": 1
+        },
+        {
+          "term": "anchor",
+          "w": 1
+        },
+        {
+          "term": "positioning",
+          "w": 1
+        },
+        {
+          "term": "starting",
+          "w": 1
+        },
+        {
+          "term": "style",
+          "w": 1
+        },
+        {
+          "term": "popover",
+          "w": 1
+        },
+        {
+          "term": "dialog",
+          "w": 1
+        },
+        {
+          "term": "field",
+          "w": 1
+        },
+        {
+          "term": "sizing",
+          "w": 1
+        },
+        {
+          "term": "のbaseline判定",
+          "w": 1
+        },
+        {
+          "term": "コピペ最小コード",
+          "w": 1
+        },
+        {
+          "term": "フォールバック方針を提供",
+          "w": 1
+        },
+        {
+          "term": "ビルド不要",
+          "w": 1
+        },
+        {
+          "term": "単一html",
+          "w": 1
+        },
+        {
+          "term": "pwaで",
+          "w": 1
+        },
+        {
+          "term": "2026年の実装",
+          "w": 1
+        },
+        {
+          "term": "をするときに使う",
+          "w": 1
+        },
+        {
+          "term": "採用判断",
+          "w": 1
+        },
+        {
+          "term": "使ってよい",
+          "w": 1
+        },
+        {
+          "term": "pe必須",
+          "w": 1
+        },
+        {
+          "term": "を間違えないための正本",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "motion-design",
+      "description": "Webアプリのモーション設計リファレンス。View Transitions API（同一/クロスドキュメント）、スプリング/イージング・トークン、マイクロインタラクション、ジャンク回避、reduced-motion対応を実装レシピで提供。ビルド不要・単一HTML/PWAで“ネイティブ級のなめらかさ”を出すために使う。anti-ai-design / 各デザイン路線と併用。",
+      "keywords": [
+        {
+          "term": "motion",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "webアプリのモーション設計リファレンス",
+          "w": 1
+        },
+        {
+          "term": "view",
+          "w": 1
+        },
+        {
+          "term": "transitions",
+          "w": 1
+        },
+        {
+          "term": "クロスドキュメント",
+          "w": 1
+        },
+        {
+          "term": "スプリング",
+          "w": 1
+        },
+        {
+          "term": "イージング",
+          "w": 1
+        },
+        {
+          "term": "トークン",
+          "w": 1
+        },
+        {
+          "term": "マイクロインタラクション",
+          "w": 1
+        },
+        {
+          "term": "ジャンク回避",
+          "w": 1
+        },
+        {
+          "term": "reduced",
+          "w": 1
+        },
+        {
+          "term": "motion対応を実装レシピで提供",
+          "w": 1
+        },
+        {
+          "term": "ビルド不要",
+          "w": 1
+        },
+        {
+          "term": "単一html",
+          "w": 1
+        },
+        {
+          "term": "pwaで",
+          "w": 1
+        },
+        {
+          "term": "ネイティブ級のなめらかさ",
+          "w": 1
+        },
+        {
+          "term": "を出すために使う",
+          "w": 1
+        },
+        {
+          "term": "anti",
+          "w": 1
+        },
+        {
+          "term": "各デザイン路線と併用",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "observability-and-instrumentation",
+      "description": "Instruments code so production behavior is visible and diagnosable. Use when adding logging, metrics, tracing, or alerting. Use when shipping any feature that runs in production and you need evidence it works. Use when production issues are",
+      "keywords": [
+        {
+          "term": "observability",
+          "w": 1.5
+        },
+        {
+          "term": "instrumentation",
+          "w": 1.5
+        },
+        {
+          "term": "adding",
+          "w": 2
+        },
+        {
+          "term": "logging",
+          "w": 2
+        },
+        {
+          "term": "metrics",
+          "w": 2
+        },
+        {
+          "term": "tracing",
+          "w": 2
+        },
+        {
+          "term": "alerting",
+          "w": 2
+        },
+        {
+          "term": "shipping",
+          "w": 2
+        },
+        {
+          "term": "feature",
+          "w": 2
+        },
+        {
+          "term": "runs",
+          "w": 2
+        },
+        {
+          "term": "production",
+          "w": 2
+        },
+        {
+          "term": "evidence",
+          "w": 2
+        },
+        {
+          "term": "works",
+          "w": 2
+        },
+        {
+          "term": "issues",
+          "w": 2
+        },
+        {
+          "term": "reported",
+          "w": 2
+        },
+        {
+          "term": "tell",
+          "w": 2
+        },
+        {
+          "term": "happened",
+          "w": 2
+        },
+        {
+          "term": "available",
+          "w": 2
+        },
+        {
+          "term": "data",
+          "w": 2
+        },
+        {
+          "term": "instruments",
+          "w": 1
+        },
+        {
+          "term": "behavior",
+          "w": 1
+        },
+        {
+          "term": "visible",
+          "w": 1
+        },
+        {
+          "term": "diagnosable",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "orchestrate-batch-refactor",
+      "description": "Plan and execute large refactor or rewrite efforts efficiently with parallel multi-agent analysis and implementation. Use when a user asks to refactor many files, split workstreams, analyze a target code area, and coordinate sub-agents with",
+      "keywords": [
+        {
+          "term": "orchestrate",
+          "w": 1.5
+        },
+        {
+          "term": "batch",
+          "w": 1.5
+        },
+        {
+          "term": "refactor",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "many",
+          "w": 2
+        },
+        {
+          "term": "split",
+          "w": 2
+        },
+        {
+          "term": "workstreams",
+          "w": 2
+        },
+        {
+          "term": "analyze",
+          "w": 2
+        },
+        {
+          "term": "target",
+          "w": 2
+        },
+        {
+          "term": "area",
+          "w": 2
+        },
+        {
+          "term": "coordinate",
+          "w": 2
+        },
+        {
+          "term": "clear",
+          "w": 2
+        },
+        {
+          "term": "ownership",
+          "w": 2
+        },
+        {
+          "term": "dependency",
+          "w": 2
+        },
+        {
+          "term": "aware",
+          "w": 2
+        },
+        {
+          "term": "execution",
+          "w": 2
+        },
+        {
+          "term": "plan",
+          "w": 1
+        },
+        {
+          "term": "execute",
+          "w": 1
+        },
+        {
+          "term": "large",
+          "w": 1
+        },
+        {
+          "term": "rewrite",
+          "w": 1
+        },
+        {
+          "term": "efforts",
+          "w": 1
+        },
+        {
+          "term": "efficiently",
+          "w": 1
+        },
+        {
+          "term": "parallel",
+          "w": 1
+        },
+        {
+          "term": "multi",
+          "w": 1
+        },
+        {
+          "term": "analysis",
+          "w": 1
+        },
+        {
+          "term": "implementation",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "performance-optimization",
+      "description": "Optimizes application performance across frontend, backend, queries, and databases. Use when performance requirements exist, when you suspect performance regressions, when Core Web Vitals or load times need improvement, when N+1 query patte",
+      "keywords": [
+        {
+          "term": "performance",
+          "w": 2
+        },
+        {
+          "term": "optimization",
+          "w": 1.5
+        },
+        {
+          "term": "requirements",
+          "w": 2
+        },
+        {
+          "term": "exist",
+          "w": 2
+        },
+        {
+          "term": "suspect",
+          "w": 2
+        },
+        {
+          "term": "regressions",
+          "w": 2
+        },
+        {
+          "term": "core",
+          "w": 2
+        },
+        {
+          "term": "vitals",
+          "w": 2
+        },
+        {
+          "term": "load",
+          "w": 2
+        },
+        {
+          "term": "times",
+          "w": 2
+        },
+        {
+          "term": "improvement",
+          "w": 2
+        },
+        {
+          "term": "query",
+          "w": 2
+        },
+        {
+          "term": "patterns",
+          "w": 2
+        },
+        {
+          "term": "fixing",
+          "w": 2
+        },
+        {
+          "term": "profiling",
+          "w": 2
+        },
+        {
+          "term": "reveals",
+          "w": 2
+        },
+        {
+          "term": "bottlenecks",
+          "w": 2
+        },
+        {
+          "term": "optimizes",
+          "w": 1
+        },
+        {
+          "term": "application",
+          "w": 1
+        },
+        {
+          "term": "frontend",
+          "w": 1
+        },
+        {
+          "term": "backend",
+          "w": 1
+        },
+        {
+          "term": "queries",
+          "w": 1
+        },
+        {
+          "term": "databases",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "plankton-code-quality",
+      "description": "Write-time code quality enforcement using Plankton — auto-formatting, linting, and Claude-powered fixes on every file edit via hooks.",
+      "keywords": [
+        {
+          "term": "plankton",
+          "w": 1.5
+        },
+        {
+          "term": "quality",
+          "w": 1.5
+        },
+        {
+          "term": "time",
+          "w": 1
+        },
+        {
+          "term": "enforcement",
+          "w": 1
+        },
+        {
+          "term": "auto",
+          "w": 1
+        },
+        {
+          "term": "formatting",
+          "w": 1
+        },
+        {
+          "term": "linting",
+          "w": 1
+        },
+        {
+          "term": "powered",
+          "w": 1
+        },
+        {
+          "term": "fixes",
+          "w": 1
+        },
+        {
+          "term": "every",
+          "w": 1
+        },
+        {
+          "term": "edit",
+          "w": 1
+        },
+        {
+          "term": "hooks",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "planning-and-task-breakdown",
+      "description": "Breaks work into ordered tasks. Use when you have a spec or clear requirements and need to break work into implementable tasks. Use when a task feels too large to start, when you need to estimate scope, or when parallel work is possible.",
+      "keywords": [
+        {
+          "term": "planning",
+          "w": 1.5
+        },
+        {
+          "term": "breakdown",
+          "w": 1.5
+        },
+        {
+          "term": "have",
+          "w": 2
+        },
+        {
+          "term": "spec",
+          "w": 2
+        },
+        {
+          "term": "clear",
+          "w": 2
+        },
+        {
+          "term": "requirements",
+          "w": 2
+        },
+        {
+          "term": "break",
+          "w": 2
+        },
+        {
+          "term": "implementable",
+          "w": 2
+        },
+        {
+          "term": "feels",
+          "w": 2
+        },
+        {
+          "term": "large",
+          "w": 2
+        },
+        {
+          "term": "start",
+          "w": 2
+        },
+        {
+          "term": "estimate",
+          "w": 2
+        },
+        {
+          "term": "scope",
+          "w": 2
+        },
+        {
+          "term": "parallel",
+          "w": 2
+        },
+        {
+          "term": "possible",
+          "w": 2
+        },
+        {
+          "term": "breaks",
+          "w": 1
+        },
+        {
+          "term": "ordered",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "project-skill-audit",
+      "description": "Analyze a project's past Codex sessions, memory files, and existing local skills to recommend the highest-value skills to create or update. Use when a user asks what skills a project needs, wants skill ideas grounded in real project history",
+      "keywords": [
+        {
+          "term": "audit",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "wants",
+          "w": 2
+        },
+        {
+          "term": "ideas",
+          "w": 2
+        },
+        {
+          "term": "grounded",
+          "w": 2
+        },
+        {
+          "term": "real",
+          "w": 2
+        },
+        {
+          "term": "history",
+          "w": 2
+        },
+        {
+          "term": "current",
+          "w": 2
+        },
+        {
+          "term": "local",
+          "w": 2
+        },
+        {
+          "term": "recommendations",
+          "w": 2
+        },
+        {
+          "term": "updating",
+          "w": 2
+        },
+        {
+          "term": "stale",
+          "w": 2
+        },
+        {
+          "term": "incomplete",
+          "w": 2
+        },
+        {
+          "term": "instead",
+          "w": 2
+        },
+        {
+          "term": "duplicates",
+          "w": 2
+        },
+        {
+          "term": "analyze",
+          "w": 1
+        },
+        {
+          "term": "past",
+          "w": 1
+        },
+        {
+          "term": "codex",
+          "w": 1
+        },
+        {
+          "term": "sessions",
+          "w": 1
+        },
+        {
+          "term": "memory",
+          "w": 1
+        },
+        {
+          "term": "existing",
+          "w": 1
+        },
+        {
+          "term": "recommend",
+          "w": 1
+        },
+        {
+          "term": "highest",
+          "w": 1
+        },
+        {
+          "term": "value",
+          "w": 1
+        },
+        {
+          "term": "update",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "react-component-performance",
+      "description": "Analyze and optimize React component performance issues (slow renders, re-render thrash, laggy lists, expensive computations). Use when asked to profile or improve a React component, reduce re-renders, or speed up UI updates in React apps.",
+      "keywords": [
+        {
+          "term": "react",
+          "w": 2
+        },
+        {
+          "term": "component",
+          "w": 2
+        },
+        {
+          "term": "performance",
+          "w": 1.5
+        },
+        {
+          "term": "asked",
+          "w": 2
+        },
+        {
+          "term": "profile",
+          "w": 2
+        },
+        {
+          "term": "improve",
+          "w": 2
+        },
+        {
+          "term": "reduce",
+          "w": 2
+        },
+        {
+          "term": "renders",
+          "w": 2
+        },
+        {
+          "term": "speed",
+          "w": 2
+        },
+        {
+          "term": "updates",
+          "w": 2
+        },
+        {
+          "term": "apps",
+          "w": 2
+        },
+        {
+          "term": "analyze",
+          "w": 1
+        },
+        {
+          "term": "optimize",
+          "w": 1
+        },
+        {
+          "term": "issues",
+          "w": 1
+        },
+        {
+          "term": "slow",
+          "w": 1
+        },
+        {
+          "term": "render",
+          "w": 1
+        },
+        {
+          "term": "thrash",
+          "w": 1
+        },
+        {
+          "term": "laggy",
+          "w": 1
+        },
+        {
+          "term": "lists",
+          "w": 1
+        },
+        {
+          "term": "expensive",
+          "w": 1
+        },
+        {
+          "term": "computations",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "redesign-existing-projects",
+      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.",
+      "keywords": [
+        {
+          "term": "redesign",
+          "w": 1.5
+        },
+        {
+          "term": "existing",
+          "w": 1.5
+        },
+        {
+          "term": "upgrades",
+          "w": 1
+        },
+        {
+          "term": "websites",
+          "w": 1
+        },
+        {
+          "term": "apps",
+          "w": 1
+        },
+        {
+          "term": "premium",
+          "w": 1
+        },
+        {
+          "term": "quality",
+          "w": 1
+        },
+        {
+          "term": "audits",
+          "w": 1
+        },
+        {
+          "term": "current",
+          "w": 1
+        },
+        {
+          "term": "design",
+          "w": 1
+        },
+        {
+          "term": "identifies",
+          "w": 1
+        },
+        {
+          "term": "generic",
+          "w": 1
+        },
+        {
+          "term": "patterns",
+          "w": 1
+        },
+        {
+          "term": "applies",
+          "w": 1
+        },
+        {
+          "term": "high",
+          "w": 1
+        },
+        {
+          "term": "standards",
+          "w": 1
+        },
+        {
+          "term": "without",
+          "w": 1
+        },
+        {
+          "term": "breaking",
+          "w": 1
+        },
+        {
+          "term": "functionality",
+          "w": 1
+        },
+        {
+          "term": "works",
+          "w": 1
+        },
+        {
+          "term": "framework",
+          "w": 1
+        },
+        {
+          "term": "vanilla",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "review-and-simplify-changes",
+      "description": "Review a git diff or explicit file scope for reuse, code quality, efficiency, clarity, and standards issues, then optionally apply safe Codex-driven fixes. Use when the user asks to \\\"simplify code\\\", \\\"review changed code\\\", \\\"check for co",
+      "keywords": [
+        {
+          "term": "simplify",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "changed",
+          "w": 2
+        },
+        {
+          "term": "check",
+          "w": 2
+        },
+        {
+          "term": "reuse",
+          "w": 2
+        },
+        {
+          "term": "quality",
+          "w": 2
+        },
+        {
+          "term": "efficiency",
+          "w": 2
+        },
+        {
+          "term": "clean",
+          "w": 2
+        },
+        {
+          "term": "refactor",
+          "w": 2
+        },
+        {
+          "term": "diff",
+          "w": 1
+        },
+        {
+          "term": "explicit",
+          "w": 1
+        },
+        {
+          "term": "scope",
+          "w": 1
+        },
+        {
+          "term": "clarity",
+          "w": 1
+        },
+        {
+          "term": "standards",
+          "w": 1
+        },
+        {
+          "term": "issues",
+          "w": 1
+        },
+        {
+          "term": "optionally",
+          "w": 1
+        },
+        {
+          "term": "apply",
+          "w": 1
+        },
+        {
+          "term": "safe",
+          "w": 1
+        },
+        {
+          "term": "codex",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "fixes",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "review-swarm",
+      "description": "Parallel read-only multi-agent review of a current git diff or explicit file scope to find behavioral regressions, security or privacy risks, performance or reliability issues, and contract or test coverage gaps. Use when the user asks for ",
+      "keywords": [
+        {
+          "term": "swarm",
+          "w": 2
+        },
+        {
+          "term": "asks",
+          "w": 2
+        },
+        {
+          "term": "parallel",
+          "w": 2
+        },
+        {
+          "term": "diff",
+          "w": 2
+        },
+        {
+          "term": "regression",
+          "w": 2
+        },
+        {
+          "term": "security",
+          "w": 2
+        },
+        {
+          "term": "wants",
+          "w": 2
+        },
+        {
+          "term": "high",
+          "w": 2
+        },
+        {
+          "term": "signal",
+          "w": 2
+        },
+        {
+          "term": "issues",
+          "w": 2
+        },
+        {
+          "term": "plus",
+          "w": 2
+        },
+        {
+          "term": "prioritized",
+          "w": 2
+        },
+        {
+          "term": "path",
+          "w": 2
+        },
+        {
+          "term": "without",
+          "w": 2
+        },
+        {
+          "term": "editing",
+          "w": 2
+        },
+        {
+          "term": "only",
+          "w": 1
+        },
+        {
+          "term": "multi",
+          "w": 1
+        },
+        {
+          "term": "current",
+          "w": 1
+        },
+        {
+          "term": "explicit",
+          "w": 1
+        },
+        {
+          "term": "scope",
+          "w": 1
+        },
+        {
+          "term": "find",
+          "w": 1
+        },
+        {
+          "term": "behavioral",
+          "w": 1
+        },
+        {
+          "term": "regressions",
+          "w": 1
+        },
+        {
+          "term": "privacy",
+          "w": 1
+        },
+        {
+          "term": "risks",
+          "w": 1
+        },
+        {
+          "term": "performance",
+          "w": 1
+        },
+        {
+          "term": "reliability",
+          "w": 1
+        },
+        {
+          "term": "contract",
+          "w": 1
+        },
+        {
+          "term": "test",
+          "w": 1
+        },
+        {
+          "term": "coverage",
+          "w": 1
+        },
+        {
+          "term": "gaps",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "security-and-hardening",
+      "description": "Hardens code against vulnerabilities. Use when handling user input, authentication, data storage, or external integrations. Use when building any feature that accepts untrusted data, manages user sessions, or interacts with third-party serv",
+      "keywords": [
+        {
+          "term": "security",
+          "w": 1.5
+        },
+        {
+          "term": "hardening",
+          "w": 1.5
+        },
+        {
+          "term": "handling",
+          "w": 2
+        },
+        {
+          "term": "input",
+          "w": 2
+        },
+        {
+          "term": "authentication",
+          "w": 2
+        },
+        {
+          "term": "data",
+          "w": 2
+        },
+        {
+          "term": "storage",
+          "w": 2
+        },
+        {
+          "term": "external",
+          "w": 2
+        },
+        {
+          "term": "integrations",
+          "w": 2
+        },
+        {
+          "term": "building",
+          "w": 2
+        },
+        {
+          "term": "feature",
+          "w": 2
+        },
+        {
+          "term": "accepts",
+          "w": 2
+        },
+        {
+          "term": "untrusted",
+          "w": 2
+        },
+        {
+          "term": "manages",
+          "w": 2
+        },
+        {
+          "term": "sessions",
+          "w": 2
+        },
+        {
+          "term": "interacts",
+          "w": 2
+        },
+        {
+          "term": "third",
+          "w": 2
+        },
+        {
+          "term": "party",
+          "w": 2
+        },
+        {
+          "term": "services",
+          "w": 2
+        },
+        {
+          "term": "hardens",
+          "w": 1
+        },
+        {
+          "term": "against",
+          "w": 1
+        },
+        {
+          "term": "vulnerabilities",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "security-review",
+      "description": "セキュリティ点検リファレンス。OWASP Top 10:2025 / ASVS / MASVS / Cheat Sheets（強いOSS標準）を土台に、クライアントサイドPWA・公開GitHubリポジトリ・将来のSupabaseバックエンドに合わせた実用チェックリストとOSSツール(gitleaks/semgrep)を提供。公開前(pre-publish)の秘密情報スキャンを含む。既存の security-reviewer エージェントの“参照元”として使う。",
+      "keywords": [
+        {
+          "term": "security",
+          "w": 1.5
+        },
+        {
+          "term": "セキュリティ点検リファレンス",
+          "w": 1
+        },
+        {
+          "term": "owasp",
+          "w": 1
+        },
+        {
+          "term": "asvs",
+          "w": 1
+        },
+        {
+          "term": "masvs",
+          "w": 1
+        },
+        {
+          "term": "cheat",
+          "w": 1
+        },
+        {
+          "term": "sheets",
+          "w": 1
+        },
+        {
+          "term": "強いoss標準",
+          "w": 1
+        },
+        {
+          "term": "を土台に",
+          "w": 1
+        },
+        {
+          "term": "クライアントサイドpwa",
+          "w": 1
+        },
+        {
+          "term": "公開githubリポジトリ",
+          "w": 1
+        },
+        {
+          "term": "将来のsupabaseバックエンドに合わせた実用チェックリストとossツール",
+          "w": 1
+        },
+        {
+          "term": "gitleaks",
+          "w": 1
+        },
+        {
+          "term": "semgrep",
+          "w": 1
+        },
+        {
+          "term": "publish",
+          "w": 1
+        },
+        {
+          "term": "の秘密情報スキャンを含む",
+          "w": 1
+        },
+        {
+          "term": "reviewer",
+          "w": 1
+        },
+        {
+          "term": "エージェントの",
+          "w": 1
+        },
+        {
+          "term": "として使う",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "shipping-and-launch",
+      "description": "Prepares production launches. Use when preparing to deploy to production. Use when you need a pre-launch checklist, when setting up monitoring, when planning a staged rollout, or when you need a rollback strategy.",
+      "keywords": [
+        {
+          "term": "shipping",
+          "w": 1.5
+        },
+        {
+          "term": "launch",
+          "w": 2
+        },
+        {
+          "term": "preparing",
+          "w": 2
+        },
+        {
+          "term": "deploy",
+          "w": 2
+        },
+        {
+          "term": "production",
+          "w": 2
+        },
+        {
+          "term": "checklist",
+          "w": 2
+        },
+        {
+          "term": "setting",
+          "w": 2
+        },
+        {
+          "term": "monitoring",
+          "w": 2
+        },
+        {
+          "term": "planning",
+          "w": 2
+        },
+        {
+          "term": "staged",
+          "w": 2
+        },
+        {
+          "term": "rollout",
+          "w": 2
+        },
+        {
+          "term": "rollback",
+          "w": 2
+        },
+        {
+          "term": "strategy",
+          "w": 2
+        },
+        {
+          "term": "prepares",
+          "w": 1
+        },
+        {
+          "term": "launches",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "skill-stocktake",
+      "description": "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation.",
+      "keywords": [
+        {
+          "term": "stocktake",
+          "w": 1.5
+        },
+        {
+          "term": "auditing",
+          "w": 2
+        },
+        {
+          "term": "commands",
+          "w": 2
+        },
+        {
+          "term": "quality",
+          "w": 2
+        },
+        {
+          "term": "supports",
+          "w": 1
+        },
+        {
+          "term": "quick",
+          "w": 1
+        },
+        {
+          "term": "scan",
+          "w": 1
+        },
+        {
+          "term": "changed",
+          "w": 1
+        },
+        {
+          "term": "only",
+          "w": 1
+        },
+        {
+          "term": "full",
+          "w": 1
+        },
+        {
+          "term": "modes",
+          "w": 1
+        },
+        {
+          "term": "sequential",
+          "w": 1
+        },
+        {
+          "term": "subagent",
+          "w": 1
+        },
+        {
+          "term": "batch",
+          "w": 1
+        },
+        {
+          "term": "evaluation",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "source-driven-development",
+      "description": "Grounds every implementation decision in official documentation. Use when you want authoritative, source-cited code free from outdated patterns. Use when building with any framework or library where correctness matters.",
+      "keywords": [
+        {
+          "term": "source",
+          "w": 2
+        },
+        {
+          "term": "driven",
+          "w": 1.5
+        },
+        {
+          "term": "development",
+          "w": 1.5
+        },
+        {
+          "term": "want",
+          "w": 2
+        },
+        {
+          "term": "authoritative",
+          "w": 2
+        },
+        {
+          "term": "cited",
+          "w": 2
+        },
+        {
+          "term": "free",
+          "w": 2
+        },
+        {
+          "term": "outdated",
+          "w": 2
+        },
+        {
+          "term": "patterns",
+          "w": 2
+        },
+        {
+          "term": "building",
+          "w": 2
+        },
+        {
+          "term": "framework",
+          "w": 2
+        },
+        {
+          "term": "library",
+          "w": 2
+        },
+        {
+          "term": "correctness",
+          "w": 2
+        },
+        {
+          "term": "matters",
+          "w": 2
+        },
+        {
+          "term": "grounds",
+          "w": 1
+        },
+        {
+          "term": "every",
+          "w": 1
+        },
+        {
+          "term": "implementation",
+          "w": 1
+        },
+        {
+          "term": "decision",
+          "w": 1
+        },
+        {
+          "term": "official",
+          "w": 1
+        },
+        {
+          "term": "documentation",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "spec-driven-development",
+      "description": "Creates specs before coding. Use when starting a new project, feature, or significant change and no specification exists yet. Use when requirements are unclear, ambiguous, or only exist as a vague idea.",
+      "keywords": [
+        {
+          "term": "spec",
+          "w": 1.5
+        },
+        {
+          "term": "driven",
+          "w": 1.5
+        },
+        {
+          "term": "development",
+          "w": 1.5
+        },
+        {
+          "term": "starting",
+          "w": 2
+        },
+        {
+          "term": "feature",
+          "w": 2
+        },
+        {
+          "term": "significant",
+          "w": 2
+        },
+        {
+          "term": "specification",
+          "w": 2
+        },
+        {
+          "term": "exists",
+          "w": 2
+        },
+        {
+          "term": "requirements",
+          "w": 2
+        },
+        {
+          "term": "unclear",
+          "w": 2
+        },
+        {
+          "term": "ambiguous",
+          "w": 2
+        },
+        {
+          "term": "only",
+          "w": 2
+        },
+        {
+          "term": "exist",
+          "w": 2
+        },
+        {
+          "term": "vague",
+          "w": 2
+        },
+        {
+          "term": "idea",
+          "w": 2
+        },
+        {
+          "term": "creates",
+          "w": 1
+        },
+        {
+          "term": "specs",
+          "w": 1
+        },
+        {
+          "term": "coding",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "stitch-design-taste",
+      "description": "Semantic Design System Skill for Google Stitch. Generates agent-friendly DESIGN.md files that enforce premium, anti-generic UI standards — strict typography, calibrated color, asymmetric layouts, perpetual micro-motion, and hardware-acceler",
+      "keywords": [
+        {
+          "term": "stitch",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 1.5
+        },
+        {
+          "term": "taste",
+          "w": 1.5
+        },
+        {
+          "term": "semantic",
+          "w": 1
+        },
+        {
+          "term": "system",
+          "w": 1
+        },
+        {
+          "term": "google",
+          "w": 1
+        },
+        {
+          "term": "generates",
+          "w": 1
+        },
+        {
+          "term": "friendly",
+          "w": 1
+        },
+        {
+          "term": "enforce",
+          "w": 1
+        },
+        {
+          "term": "premium",
+          "w": 1
+        },
+        {
+          "term": "anti",
+          "w": 1
+        },
+        {
+          "term": "generic",
+          "w": 1
+        },
+        {
+          "term": "standards",
+          "w": 1
+        },
+        {
+          "term": "strict",
+          "w": 1
+        },
+        {
+          "term": "typography",
+          "w": 1
+        },
+        {
+          "term": "calibrated",
+          "w": 1
+        },
+        {
+          "term": "color",
+          "w": 1
+        },
+        {
+          "term": "asymmetric",
+          "w": 1
+        },
+        {
+          "term": "layouts",
+          "w": 1
+        },
+        {
+          "term": "perpetual",
+          "w": 1
+        },
+        {
+          "term": "micro",
+          "w": 1
+        },
+        {
+          "term": "motion",
+          "w": 1
+        },
+        {
+          "term": "hardware",
+          "w": 1
+        },
+        {
+          "term": "accelerated",
+          "w": 1
+        },
+        {
+          "term": "performance",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "strategic-compact",
+      "description": "Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.",
+      "keywords": [
+        {
+          "term": "strategic",
+          "w": 1.5
+        },
+        {
+          "term": "compact",
+          "w": 1.5
+        },
+        {
+          "term": "suggests",
+          "w": 1
+        },
+        {
+          "term": "manual",
+          "w": 1
+        },
+        {
+          "term": "context",
+          "w": 1
+        },
+        {
+          "term": "compaction",
+          "w": 1
+        },
+        {
+          "term": "logical",
+          "w": 1
+        },
+        {
+          "term": "intervals",
+          "w": 1
+        },
+        {
+          "term": "preserve",
+          "w": 1
+        },
+        {
+          "term": "through",
+          "w": 1
+        },
+        {
+          "term": "phases",
+          "w": 1
+        },
+        {
+          "term": "rather",
+          "w": 1
+        },
+        {
+          "term": "arbitrary",
+          "w": 1
+        },
+        {
+          "term": "auto",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "styleseed-design-review",
+      "description": "Reviews UI/frontend code and tells you exactly why it \"looks AI-generated\" — then how to fix it. Use it when a React/Tailwind/HTML interface looks off, generic, or unfinished, when you want a design score before shipping, or when asked to m",
+      "keywords": [
+        {
+          "term": "styleseed",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 2
+        },
+        {
+          "term": "react",
+          "w": 2
+        },
+        {
+          "term": "tailwind",
+          "w": 2
+        },
+        {
+          "term": "html",
+          "w": 2
+        },
+        {
+          "term": "interface",
+          "w": 2
+        },
+        {
+          "term": "looks",
+          "w": 2
+        },
+        {
+          "term": "generic",
+          "w": 2
+        },
+        {
+          "term": "unfinished",
+          "w": 2
+        },
+        {
+          "term": "want",
+          "w": 2
+        },
+        {
+          "term": "score",
+          "w": 2
+        },
+        {
+          "term": "shipping",
+          "w": 2
+        },
+        {
+          "term": "asked",
+          "w": 2
+        },
+        {
+          "term": "look",
+          "w": 2
+        },
+        {
+          "term": "professional",
+          "w": 2
+        },
+        {
+          "term": "polished",
+          "w": 2
+        },
+        {
+          "term": "designed",
+          "w": 2
+        },
+        {
+          "term": "generated",
+          "w": 2
+        },
+        {
+          "term": "reviews",
+          "w": 1
+        },
+        {
+          "term": "frontend",
+          "w": 1
+        },
+        {
+          "term": "tells",
+          "w": 1
+        },
+        {
+          "term": "exactly",
+          "w": 1
+        },
+        {
+          "term": "self",
+          "w": 1
+        },
+        {
+          "term": "contained",
+          "w": 1
+        },
+        {
+          "term": "open",
+          "w": 1
+        },
+        {
+          "term": "source",
+          "w": 1
+        },
+        {
+          "term": "engine",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "swift-concurrency-expert",
+      "description": "Swift Concurrency review and remediation for Swift 6.2+. Use when asked to review Swift Concurrency usage, improve concurrency compliance, or fix Swift concurrency compiler errors in a feature or file. Concrete actions include adding Sendab",
+      "keywords": [
+        {
+          "term": "swift",
+          "w": 2
+        },
+        {
+          "term": "concurrency",
+          "w": 2
+        },
+        {
+          "term": "expert",
+          "w": 1.5
+        },
+        {
+          "term": "asked",
+          "w": 2
+        },
+        {
+          "term": "usage",
+          "w": 2
+        },
+        {
+          "term": "improve",
+          "w": 2
+        },
+        {
+          "term": "compliance",
+          "w": 2
+        },
+        {
+          "term": "compiler",
+          "w": 2
+        },
+        {
+          "term": "errors",
+          "w": 2
+        },
+        {
+          "term": "feature",
+          "w": 2
+        },
+        {
+          "term": "remediation",
+          "w": 1
+        },
+        {
+          "term": "concrete",
+          "w": 1
+        },
+        {
+          "term": "actions",
+          "w": 1
+        },
+        {
+          "term": "include",
+          "w": 1
+        },
+        {
+          "term": "adding",
+          "w": 1
+        },
+        {
+          "term": "sendable",
+          "w": 1
+        },
+        {
+          "term": "conformance",
+          "w": 1
+        },
+        {
+          "term": "applying",
+          "w": 1
+        },
+        {
+          "term": "mainactor",
+          "w": 1
+        },
+        {
+          "term": "annotations",
+          "w": 1
+        },
+        {
+          "term": "resolving",
+          "w": 1
+        },
+        {
+          "term": "actor",
+          "w": 1
+        },
+        {
+          "term": "isolation",
+          "w": 1
+        },
+        {
+          "term": "warnings",
+          "w": 1
+        },
+        {
+          "term": "fixing",
+          "w": 1
+        },
+        {
+          "term": "data",
+          "w": 1
+        },
+        {
+          "term": "race",
+          "w": 1
+        },
+        {
+          "term": "diagnostics",
+          "w": 1
+        },
+        {
+          "term": "migrating",
+          "w": 1
+        },
+        {
+          "term": "completion",
+          "w": 1
+        },
+        {
+          "term": "handlers",
+          "w": 1
+        },
+        {
+          "term": "async",
+          "w": 1
+        },
+        {
+          "term": "await",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "swiftui-liquid-glass",
+      "description": "Implement, review, or improve SwiftUI features using the iOS 26+ Liquid Glass API. Use when asked to adopt Liquid Glass in new SwiftUI UI, refactor an existing feature to Liquid Glass, or review Liquid Glass usage for correctness, performan",
+      "keywords": [
+        {
+          "term": "swiftui",
+          "w": 2
+        },
+        {
+          "term": "liquid",
+          "w": 2
+        },
+        {
+          "term": "glass",
+          "w": 2
+        },
+        {
+          "term": "asked",
+          "w": 2
+        },
+        {
+          "term": "adopt",
+          "w": 2
+        },
+        {
+          "term": "refactor",
+          "w": 2
+        },
+        {
+          "term": "existing",
+          "w": 2
+        },
+        {
+          "term": "feature",
+          "w": 2
+        },
+        {
+          "term": "usage",
+          "w": 2
+        },
+        {
+          "term": "correctness",
+          "w": 2
+        },
+        {
+          "term": "performance",
+          "w": 2
+        },
+        {
+          "term": "design",
+          "w": 2
+        },
+        {
+          "term": "alignment",
+          "w": 2
+        },
+        {
+          "term": "implement",
+          "w": 1
+        },
+        {
+          "term": "improve",
+          "w": 1
+        },
+        {
+          "term": "features",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "swiftui-performance-audit",
+      "description": "Audit and improve SwiftUI runtime performance from code review and architecture. Use for requests to diagnose slow rendering, janky scrolling, high CPU/memory usage, excessive view updates, or layout thrash in SwiftUI apps, and to provide g",
+      "keywords": [
+        {
+          "term": "swiftui",
+          "w": 2
+        },
+        {
+          "term": "performance",
+          "w": 1.5
+        },
+        {
+          "term": "audit",
+          "w": 1.5
+        },
+        {
+          "term": "requests",
+          "w": 2
+        },
+        {
+          "term": "diagnose",
+          "w": 2
+        },
+        {
+          "term": "slow",
+          "w": 2
+        },
+        {
+          "term": "rendering",
+          "w": 2
+        },
+        {
+          "term": "janky",
+          "w": 2
+        },
+        {
+          "term": "scrolling",
+          "w": 2
+        },
+        {
+          "term": "high",
+          "w": 2
+        },
+        {
+          "term": "memory",
+          "w": 2
+        },
+        {
+          "term": "usage",
+          "w": 2
+        },
+        {
+          "term": "excessive",
+          "w": 2
+        },
+        {
+          "term": "view",
+          "w": 2
+        },
+        {
+          "term": "updates",
+          "w": 2
+        },
+        {
+          "term": "layout",
+          "w": 2
+        },
+        {
+          "term": "thrash",
+          "w": 2
+        },
+        {
+          "term": "apps",
+          "w": 2
+        },
+        {
+          "term": "provide",
+          "w": 2
+        },
+        {
+          "term": "guidance",
+          "w": 2
+        },
+        {
+          "term": "instruments",
+          "w": 2
+        },
+        {
+          "term": "profiling",
+          "w": 2
+        },
+        {
+          "term": "alone",
+          "w": 2
+        },
+        {
+          "term": "insufficient",
+          "w": 2
+        },
+        {
+          "term": "improve",
+          "w": 1
+        },
+        {
+          "term": "runtime",
+          "w": 1
+        },
+        {
+          "term": "architecture",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "swiftui-ui-patterns",
+      "description": "Best practices and example-driven guidance for building SwiftUI views and components, including navigation hierarchies, custom view modifiers, and responsive layouts with stacks and grids. Use when creating or refactoring SwiftUI UI, design",
+      "keywords": [
+        {
+          "term": "swiftui",
+          "w": 2
+        },
+        {
+          "term": "patterns",
+          "w": 2
+        },
+        {
+          "term": "refactoring",
+          "w": 2
+        },
+        {
+          "term": "designing",
+          "w": 2
+        },
+        {
+          "term": "architecture",
+          "w": 2
+        },
+        {
+          "term": "tabview",
+          "w": 2
+        },
+        {
+          "term": "composing",
+          "w": 2
+        },
+        {
+          "term": "screens",
+          "w": 2
+        },
+        {
+          "term": "vstack",
+          "w": 2
+        },
+        {
+          "term": "hstack",
+          "w": 2
+        },
+        {
+          "term": "managing",
+          "w": 2
+        },
+        {
+          "term": "state",
+          "w": 2
+        },
+        {
+          "term": "binding",
+          "w": 2
+        },
+        {
+          "term": "building",
+          "w": 2
+        },
+        {
+          "term": "declarative",
+          "w": 2
+        },
+        {
+          "term": "interfaces",
+          "w": 2
+        },
+        {
+          "term": "needing",
+          "w": 2
+        },
+        {
+          "term": "component",
+          "w": 2
+        },
+        {
+          "term": "specific",
+          "w": 2
+        },
+        {
+          "term": "examples",
+          "w": 2
+        },
+        {
+          "term": "best",
+          "w": 1
+        },
+        {
+          "term": "practices",
+          "w": 1
+        },
+        {
+          "term": "example",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "guidance",
+          "w": 1
+        },
+        {
+          "term": "views",
+          "w": 1
+        },
+        {
+          "term": "components",
+          "w": 1
+        },
+        {
+          "term": "including",
+          "w": 1
+        },
+        {
+          "term": "navigation",
+          "w": 1
+        },
+        {
+          "term": "hierarchies",
+          "w": 1
+        },
+        {
+          "term": "custom",
+          "w": 1
+        },
+        {
+          "term": "view",
+          "w": 1
+        },
+        {
+          "term": "modifiers",
+          "w": 1
+        },
+        {
+          "term": "responsive",
+          "w": 1
+        },
+        {
+          "term": "layouts",
+          "w": 1
+        },
+        {
+          "term": "stacks",
+          "w": 1
+        },
+        {
+          "term": "grids",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "swiftui-view-refactor",
+      "description": "Refactor and review SwiftUI view files with strong defaults for small dedicated subviews, MV-over-MVVM data flow, stable view trees, explicit dependency injection, and correct Observation usage. Use when cleaning up a SwiftUI view, splittin",
+      "keywords": [
+        {
+          "term": "swiftui",
+          "w": 2
+        },
+        {
+          "term": "view",
+          "w": 2
+        },
+        {
+          "term": "refactor",
+          "w": 1.5
+        },
+        {
+          "term": "cleaning",
+          "w": 2
+        },
+        {
+          "term": "splitting",
+          "w": 2
+        },
+        {
+          "term": "long",
+          "w": 2
+        },
+        {
+          "term": "bodies",
+          "w": 2
+        },
+        {
+          "term": "removing",
+          "w": 2
+        },
+        {
+          "term": "inline",
+          "w": 2
+        },
+        {
+          "term": "actions",
+          "w": 2
+        },
+        {
+          "term": "side",
+          "w": 2
+        },
+        {
+          "term": "effects",
+          "w": 2
+        },
+        {
+          "term": "reducing",
+          "w": 2
+        },
+        {
+          "term": "computed",
+          "w": 2
+        },
+        {
+          "term": "some",
+          "w": 2
+        },
+        {
+          "term": "helpers",
+          "w": 2
+        },
+        {
+          "term": "standardizing",
+          "w": 2
+        },
+        {
+          "term": "observable",
+          "w": 2
+        },
+        {
+          "term": "model",
+          "w": 2
+        },
+        {
+          "term": "initialization",
+          "w": 2
+        },
+        {
+          "term": "patterns",
+          "w": 2
+        },
+        {
+          "term": "strong",
+          "w": 1
+        },
+        {
+          "term": "defaults",
+          "w": 1
+        },
+        {
+          "term": "small",
+          "w": 1
+        },
+        {
+          "term": "dedicated",
+          "w": 1
+        },
+        {
+          "term": "subviews",
+          "w": 1
+        },
+        {
+          "term": "mvvm",
+          "w": 1
+        },
+        {
+          "term": "data",
+          "w": 1
+        },
+        {
+          "term": "flow",
+          "w": 1
+        },
+        {
+          "term": "stable",
+          "w": 1
+        },
+        {
+          "term": "trees",
+          "w": 1
+        },
+        {
+          "term": "explicit",
+          "w": 1
+        },
+        {
+          "term": "dependency",
+          "w": 1
+        },
+        {
+          "term": "injection",
+          "w": 1
+        },
+        {
+          "term": "correct",
+          "w": 1
+        },
+        {
+          "term": "observation",
+          "w": 1
+        },
+        {
+          "term": "usage",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "tdd-workflow",
+      "description": "Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.",
+      "keywords": [
+        {
+          "term": "tdd",
+          "w": 1.5
+        },
+        {
+          "term": "workflow",
+          "w": 1.5
+        },
+        {
+          "term": "features",
+          "w": 1
+        },
+        {
+          "term": "fixing",
+          "w": 1
+        },
+        {
+          "term": "bugs",
+          "w": 1
+        },
+        {
+          "term": "refactoring",
+          "w": 1
+        },
+        {
+          "term": "enforces",
+          "w": 1
+        },
+        {
+          "term": "test",
+          "w": 1
+        },
+        {
+          "term": "driven",
+          "w": 1
+        },
+        {
+          "term": "development",
+          "w": 1
+        },
+        {
+          "term": "coverage",
+          "w": 1
+        },
+        {
+          "term": "including",
+          "w": 1
+        },
+        {
+          "term": "unit",
+          "w": 1
+        },
+        {
+          "term": "integration",
+          "w": 1
+        },
+        {
+          "term": "tests",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "test-driven-development",
+      "description": "Drives development with tests. Use when implementing any logic, fixing any bug, or changing any behavior. Use when you need to prove that code works, when a bug report arrives, or when you're about to modify existing functionality.",
+      "keywords": [
+        {
+          "term": "test",
+          "w": 1.5
+        },
+        {
+          "term": "driven",
+          "w": 1.5
+        },
+        {
+          "term": "development",
+          "w": 1.5
+        },
+        {
+          "term": "implementing",
+          "w": 2
+        },
+        {
+          "term": "logic",
+          "w": 2
+        },
+        {
+          "term": "fixing",
+          "w": 2
+        },
+        {
+          "term": "behavior",
+          "w": 2
+        },
+        {
+          "term": "prove",
+          "w": 2
+        },
+        {
+          "term": "works",
+          "w": 2
+        },
+        {
+          "term": "report",
+          "w": 2
+        },
+        {
+          "term": "arrives",
+          "w": 2
+        },
+        {
+          "term": "about",
+          "w": 2
+        },
+        {
+          "term": "modify",
+          "w": 2
+        },
+        {
+          "term": "existing",
+          "w": 2
+        },
+        {
+          "term": "functionality",
+          "w": 2
+        },
+        {
+          "term": "drives",
+          "w": 1
+        },
+        {
+          "term": "tests",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ui-craft",
+      "description": "Use for UI design and implementation work to avoid generic AI-looking interfaces. Provides anti-slop rules, a required discovery phase before coding, and guidance for layout, typography, color, motion, accessibility, dashboards, tables, lan",
+      "keywords": [
+        {
+          "term": "craft",
+          "w": 1.5
+        },
+        {
+          "term": "design",
+          "w": 2
+        },
+        {
+          "term": "implementation",
+          "w": 2
+        },
+        {
+          "term": "avoid",
+          "w": 2
+        },
+        {
+          "term": "generic",
+          "w": 2
+        },
+        {
+          "term": "looking",
+          "w": 2
+        },
+        {
+          "term": "interfaces",
+          "w": 2
+        },
+        {
+          "term": "provides",
+          "w": 1
+        },
+        {
+          "term": "anti",
+          "w": 1
+        },
+        {
+          "term": "slop",
+          "w": 1
+        },
+        {
+          "term": "rules",
+          "w": 1
+        },
+        {
+          "term": "required",
+          "w": 1
+        },
+        {
+          "term": "discovery",
+          "w": 1
+        },
+        {
+          "term": "phase",
+          "w": 1
+        },
+        {
+          "term": "coding",
+          "w": 1
+        },
+        {
+          "term": "guidance",
+          "w": 1
+        },
+        {
+          "term": "layout",
+          "w": 1
+        },
+        {
+          "term": "typography",
+          "w": 1
+        },
+        {
+          "term": "color",
+          "w": 1
+        },
+        {
+          "term": "motion",
+          "w": 1
+        },
+        {
+          "term": "accessibility",
+          "w": 1
+        },
+        {
+          "term": "dashboards",
+          "w": 1
+        },
+        {
+          "term": "tables",
+          "w": 1
+        },
+        {
+          "term": "landing",
+          "w": 1
+        },
+        {
+          "term": "pages",
+          "w": 1
+        },
+        {
+          "term": "theming",
+          "w": 1
+        },
+        {
+          "term": "polish",
+          "w": 1
+        },
+        {
+          "term": "trigger",
+          "w": 1
+        },
+        {
+          "term": "editing",
+          "w": 1
+        },
+        {
+          "term": "refining",
+          "w": 1
+        },
+        {
+          "term": "components",
+          "w": 1
+        },
+        {
+          "term": "screens",
+          "w": 1
+        },
+        {
+          "term": "layouts",
+          "w": 1
+        },
+        {
+          "term": "animations",
+          "w": 1
+        },
+        {
+          "term": "responsive",
+          "w": 1
+        },
+        {
+          "term": "behavior",
+          "w": 1
+        },
+        {
+          "term": "systems",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ui-craft-dense-dashboard",
+      "description": "Dense dashboard / admin / Bloomberg / Retool / data-heavy internal tools. Locked knobs: CRAFT=7, MOTION=3, DENSITY=9. IBM Plex + mono numbers, semantic palette, 4/8px grid, sparklines, tabular-nums. Trigger on: dashboard, admin panel, data-",
+      "keywords": [
+        {
+          "term": "craft",
+          "w": 1.5
+        },
+        {
+          "term": "dense",
+          "w": 2
+        },
+        {
+          "term": "dashboard",
+          "w": 2
+        },
+        {
+          "term": "admin",
+          "w": 2
+        },
+        {
+          "term": "panel",
+          "w": 2
+        },
+        {
+          "term": "data",
+          "w": 2
+        },
+        {
+          "term": "analytics",
+          "w": 2
+        },
+        {
+          "term": "bloomberg",
+          "w": 2
+        },
+        {
+          "term": "retool",
+          "w": 2
+        },
+        {
+          "term": "heavy",
+          "w": 1
+        },
+        {
+          "term": "internal",
+          "w": 1
+        },
+        {
+          "term": "tools",
+          "w": 1
+        },
+        {
+          "term": "locked",
+          "w": 1
+        },
+        {
+          "term": "knobs",
+          "w": 1
+        },
+        {
+          "term": "motion",
+          "w": 1
+        },
+        {
+          "term": "density",
+          "w": 1
+        },
+        {
+          "term": "plex",
+          "w": 1
+        },
+        {
+          "term": "mono",
+          "w": 1
+        },
+        {
+          "term": "numbers",
+          "w": 1
+        },
+        {
+          "term": "semantic",
+          "w": 1
+        },
+        {
+          "term": "palette",
+          "w": 1
+        },
+        {
+          "term": "grid",
+          "w": 1
+        },
+        {
+          "term": "sparklines",
+          "w": 1
+        },
+        {
+          "term": "tabular",
+          "w": 1
+        },
+        {
+          "term": "nums",
+          "w": 1
+        },
+        {
+          "term": "trigger",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ui-craft-editorial",
+      "description": "Editorial / magazine / long-form / Medium / Substack / content-heavy UIs. Locked knobs: CRAFT=9, MOTION=4, DENSITY=3. Serif display + humanist body, wide reading column, drop caps, OpenType. Trigger on: editorial, magazine, long-form, blog,",
+      "keywords": [
+        {
+          "term": "craft",
+          "w": 1.5
+        },
+        {
+          "term": "editorial",
+          "w": 2
+        },
+        {
+          "term": "magazine",
+          "w": 2
+        },
+        {
+          "term": "long",
+          "w": 2
+        },
+        {
+          "term": "form",
+          "w": 2
+        },
+        {
+          "term": "blog",
+          "w": 2
+        },
+        {
+          "term": "medium",
+          "w": 2
+        },
+        {
+          "term": "substack",
+          "w": 2
+        },
+        {
+          "term": "content",
+          "w": 1
+        },
+        {
+          "term": "heavy",
+          "w": 1
+        },
+        {
+          "term": "locked",
+          "w": 1
+        },
+        {
+          "term": "knobs",
+          "w": 1
+        },
+        {
+          "term": "motion",
+          "w": 1
+        },
+        {
+          "term": "density",
+          "w": 1
+        },
+        {
+          "term": "serif",
+          "w": 1
+        },
+        {
+          "term": "display",
+          "w": 1
+        },
+        {
+          "term": "humanist",
+          "w": 1
+        },
+        {
+          "term": "body",
+          "w": 1
+        },
+        {
+          "term": "wide",
+          "w": 1
+        },
+        {
+          "term": "column",
+          "w": 1
+        },
+        {
+          "term": "drop",
+          "w": 1
+        },
+        {
+          "term": "caps",
+          "w": 1
+        },
+        {
+          "term": "opentype",
+          "w": 1
+        },
+        {
+          "term": "trigger",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "ui-craft-minimal",
+      "description": "Minimal / clean / Linear / Notion / Vercel / whitespace-heavy UIs. Locked knobs: CRAFT=8, MOTION=3, DENSITY=2. Monochrome + one accent, Inter/Geist, hairline borders over shadows. Trigger on: minimal, clean, Linear-like, Notion-like, Vercel",
+      "keywords": [
+        {
+          "term": "craft",
+          "w": 1.5
+        },
+        {
+          "term": "minimal",
+          "w": 2
+        },
+        {
+          "term": "clean",
+          "w": 2
+        },
+        {
+          "term": "linear",
+          "w": 2
+        },
+        {
+          "term": "notion",
+          "w": 2
+        },
+        {
+          "term": "vercel",
+          "w": 2
+        },
+        {
+          "term": "whitespace",
+          "w": 2
+        },
+        {
+          "term": "heavy",
+          "w": 2
+        },
+        {
+          "term": "locked",
+          "w": 1
+        },
+        {
+          "term": "knobs",
+          "w": 1
+        },
+        {
+          "term": "motion",
+          "w": 1
+        },
+        {
+          "term": "density",
+          "w": 1
+        },
+        {
+          "term": "monochrome",
+          "w": 1
+        },
+        {
+          "term": "accent",
+          "w": 1
+        },
+        {
+          "term": "inter",
+          "w": 1
+        },
+        {
+          "term": "geist",
+          "w": 1
+        },
+        {
+          "term": "hairline",
+          "w": 1
+        },
+        {
+          "term": "borders",
+          "w": 1
+        },
+        {
+          "term": "shadows",
+          "w": 1
+        },
+        {
+          "term": "trigger",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "using-agent-skills",
+      "description": "Discovers and invokes agent skills. Use when starting a session or when you need to discover which skill applies to the current task. This is the meta-skill that governs how all other skills are discovered and invoked.",
+      "keywords": [
+        {
+          "term": "starting",
+          "w": 2
+        },
+        {
+          "term": "session",
+          "w": 2
+        },
+        {
+          "term": "discover",
+          "w": 2
+        },
+        {
+          "term": "applies",
+          "w": 2
+        },
+        {
+          "term": "current",
+          "w": 2
+        },
+        {
+          "term": "discovers",
+          "w": 1
+        },
+        {
+          "term": "invokes",
+          "w": 1
+        },
+        {
+          "term": "meta",
+          "w": 1
+        },
+        {
+          "term": "governs",
+          "w": 1
+        },
+        {
+          "term": "discovered",
+          "w": 1
+        },
+        {
+          "term": "invoked",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "verification-loop",
+      "description": "A comprehensive verification system for Claude Code sessions.",
+      "keywords": [
+        {
+          "term": "verification",
+          "w": 1.5
+        },
+        {
+          "term": "loop",
+          "w": 1.5
+        },
+        {
+          "term": "comprehensive",
+          "w": 1
+        },
+        {
+          "term": "system",
+          "w": 1
+        },
+        {
+          "term": "sessions",
+          "w": 1
+        }
+      ]
+    },
+    {
+      "name": "wcag-accessibility",
+      "description": "WCAG 2.2 (W3C) のアクセシビリティ実装リファレンス。POUR 4原則・適合レベルA/AA/AAA・2.2新規達成基準・Webアプリ向けの実務チェックリストとHTML/ARIAレシピ。すべてのUI実装で適用する（目標はAA）。Material/HIG/デジタル庁などどのデザインでも下敷きにする。",
+      "keywords": [
+        {
+          "term": "wcag",
+          "w": 1.5
+        },
+        {
+          "term": "accessibility",
+          "w": 1.5
+        },
+        {
+          "term": "のアクセシビリティ実装リファレンス",
+          "w": 1
+        },
+        {
+          "term": "pour",
+          "w": 1
+        },
+        {
+          "term": "適合レベルa",
+          "w": 1
+        },
+        {
+          "term": "2新規達成基準",
+          "w": 1
+        },
+        {
+          "term": "webアプリ向けの実務チェックリストとhtml",
+          "w": 1
+        },
+        {
+          "term": "ariaレシピ",
+          "w": 1
+        },
+        {
+          "term": "すべてのui実装で適用する",
+          "w": 1
+        },
+        {
+          "term": "目標はaa",
+          "w": 1
+        },
+        {
+          "term": "material",
+          "w": 1
+        },
+        {
+          "term": "デジタル庁などどのデザインでも下敷きにする",
+          "w": 1
+        }
+      ]
+    }
+  ]
+}
