@@ -115,6 +115,8 @@ tasks_completed: 0
 tasks_failed: 0
 tasks_scope_deferred: 0
 qa_round: 0
+review_round: 0
+build_fix_used: 0
 escalations: 0
 created_at: {ISO 8601}
 updated_at: {ISO 8601}
@@ -196,6 +198,22 @@ state.md 更新:
 - interactive: 3 回失敗で停止
 - auto: 3 回失敗で FAIL_FORWARD → 次タスク
 
+#### Phase 2-a2: 修復ラウンド（ECC build-error-resolver・Sprint あたり1回）
+
+engineer の3回自己修正で直せなかった失敗のうち、**エラー分類が build|type|dep のもの** に限り、
+ECC `build-error-resolver` を本コマンド（メインスレッド）から Task で1回だけ起動する（logic|env は対象外。
+サブエージェント非連鎖原則に従いオーケストレーター仲介・ECC 本体は読み取り利用のみ・無改変）。
+
+- **interactive:** engineer が `[ESCALATION]` で return したら、build-log の「エラー分類」を読む。
+  build|type|dep なら build-error-resolver を起動 → 修復成功時は 2aio-engineer を state.md の
+  `current_task` から resume 再起動 / 修復失敗時は従来どおりユーザー停止。
+- **auto:** Phase 2-a 完了後、build-log の `[FAIL_FORWARD]` に分類 build|type|dep が1件以上あれば
+  build-error-resolver を **Sprint あたり1回だけ** 起動。修復成功時のみ、2aio-engineer を
+  `[FAIL_FORWARD]` + `[SKIPPED_DEP]` タスク限定で1回再起動してから Phase 2-b へ
+  （Phase 2-d の「再実装しない」規則は **この修復ラウンドのみ例外**）。修復失敗時はそのまま Phase 2-b へ。
+- 起動時に state.md の `build_fix_used` を 1 に更新しタイムラインに記録（Sprint あたり上限1回の正本。
+  resume 時もこのカウンタで再起動可否を判定）。
+
 #### Phase 2-b: 2aio-qa 起動（1 往復目）
 
 ```
@@ -213,21 +231,37 @@ state.md 更新:
 
 | 結果 | interactive | auto |
 |---|---|---|
-| Pass | 次 Sprint or Phase 3 へ | 次 Sprint or Phase 3 へ |
+| Pass | Phase 2-b2 レビューゲートへ | Phase 2-b2 レビューゲートへ |
 | Fail (1往復目) | Phase 2-d へ | Phase 2-d へ |
 | Stuck (2往復目 Fail) | 停止 | DEGRADED 記録 + 次 Sprint |
 | Sprint 50% Fail | 停止 | SPRINT_DEGRADED 記録 + 次 Sprint |
 
+#### Phase 2-b2: レビューゲート（QA Pass 後のみ・オーケストレーター仲介）
+
+QA Pass が確定した Sprint に対してのみ実行する（QA Fail で書き直されるコードの先行レビューはトークン浪費のため）。ECC 本体は無改変・読み取り参照のみ。
+
+1. 本コマンド（メインスレッド）が `code-reviewer`（TS スタックなら `typescript-reviewer`）を Task で起動する。
+   - **入力は build-log.md 記載の実装ファイル一覧に限定する（全コード読みは禁止 — トークン予算防衛）**
+2. `security-reviewer` は **認証・認可・ユーザー入力処理を触った Sprint のみ** 条件起動する（トークン節約）。
+3. 指摘の処理:
+   - **CRITICAL / HIGH** → 2aio-engineer へ差し戻し（`review_round` を 1 に更新。**上限 1 往復・qa_round とは独立**）
+     → 修正後、reviewer を **指摘箇所限定** で再確認起動
+     → それでも未解消なら: interactive は停止 / auto は state.md タイムラインに `[REVIEW_DEGRADED]` を記録して続行
+   - **MEDIUM 以下** → 修正せず completion-report の「レビュー指摘（v2 候補）」に記録（スコープ膨張防止）
+4. security-reviewer の CRITICAL も engineer 差し戻しで処理する（devops Step 2.5 の SECURITY_STOP とは別系統。
+   機械スキャンの正本ゲートは従来どおり devops Step 2.5 唯一）。
+5. 通過（または REVIEW_DEGRADED 記録）後、次 Sprint or Phase 3 へ。
+
 #### Phase 2-d: 2aio-engineer 修正（2 往復目）
 
 qa-report-sprint{n}.md の修正指示を入力に再起動。完了後 2aio-qa を再度起動して 2 往復目検証。
-修正対象は qa-report の修正指示に列挙されたタスクのみ。[FAIL_FORWARD] / [SKIPPED_DEP] タスクは再実装しない。
+修正対象は qa-report の修正指示に列挙されたタスクのみ。[FAIL_FORWARD] / [SKIPPED_DEP] タスクは再実装しない（例外: Phase 2-a2 修復ラウンドの再起動のみ）。
 
 #### Phase 2-e: Sprint 完了判定
 
 - 全 Sprint 完了 → Phase 3 へ
 - 残 Sprint あり → Phase 2-a に戻る（次 Sprint）
-  - 次 Sprint へ進む前に state.md の `qa_round: 0` へ Edit でリセットし、タイムラインに記録する
+  - 次 Sprint へ進む前に state.md の `qa_round: 0` / `review_round: 0` / `build_fix_used: 0` へ Edit でリセットし、タイムラインに記録する
   - state.md を `phase: implementing` に戻す
 
 ### Phase 3: 2aio-devops によるデプロイ
@@ -304,6 +338,9 @@ tags: [2aio, {project}, completion]
 ## スコープ外検出（[SCOPE_DEFERRED]）
 {次回 /2aio-plan-project で v2 候補化推奨}
 
+## レビュー指摘（v2 候補）
+{Phase 2-b2 レビューゲートの MEDIUM 以下の指摘一覧。[REVIEW_DEGRADED] があればここに明記}
+
 ## 失敗タスク詳細（[FAIL_FORWARD]）
 {あれば、2aio-engineer の試行履歴と推定原因}
 
@@ -350,7 +387,7 @@ state.md 最終更新:
 2. `phase` フィールドから現在位置を判定:
    - `planning` → Phase 1 から再開
    - `implementing` → state.md の `current_sprint` / `current_task` から Phase 2-a 再開
-   - `qa` → Phase 2-b / 2-d から再開
+   - `qa` → Phase 2-b / 2-d から再開（QA Pass 済みで `review_round` 消化中なら Phase 2-b2 から再開）
    - `deploying` → Phase 3 から再開
    - `completed` / `failed` / `degraded` → 「既に完了しています」と表示
 3. `## 次のアクション` セクションに書かれているエージェントを起動

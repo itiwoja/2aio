@@ -140,12 +140,30 @@ tags: [2aio, build, {略称}]
   - anti-ai-design の禁則（純黒/純白/紫青グラデ/デフォルトフォント無加工なし／絵文字ロゴなし）
   - **インタラクションの質**: anti-ai-design「気づき→行為→反応」＝**無反応な要素を作らない**（全操作に手応え）／motion-design「5つの黄金律」＝構造(IA)を伝える・Ease-out基調・操作に即時同期フィードバック・行為の重みに応じた反応
 - interactive: 詰まったら停止 / auto: fail-forward。
+- **修復ラウンド（`--stack=next|spa` のみ・1回）**: engineer が3回自己修正に失敗し、build-log のエラー分類が
+  build|type|dep の場合に限り、メインスレッドが ECC `build-error-resolver` を1回だけ起動する
+  （既定 stack=html はビルドシステムが無いため本段を起動しない）。修復成功なら engineer を該当タスク限定で
+  再起動、失敗なら従来フロー（interactive 停止 / auto fail-forward）へ。
 
 ### Phase 4: 軽量QA（2aio-qa・1往復）
 入力: `spec.md`（受け入れ条件正本）＋ 実装コード ＋ `state.md`（モード判定の正本）。
 - 受け入れ条件のチェックと明らかな不具合のみ確認（重厚なテスト計画は不要）。
+- **省略不可の全体検証（該当ツールチェーンが存在する範囲で。非交渉ゲート）**:
+  1. ビルドスクリプトが存在すればビルド exit 0
+  2. TS プロジェクトなら `tsc --noEmit` exit 0 ／ lint 設定があれば error 0（warning は記録のみ・非ブロック）
+  3. テストが存在すれば全実行
+  - 既定 stack=html（ビルド工程なし）では該当ツールがある項目のみ実行。**検出と記録の省略は不可**。
+  - 判定は既存モード意味論に従う: interactive は Fail→修正往復→Stuck、auto は DEGRADED 続行可。
+    ただし DEGRADED で公開する場合は deploy-report に build/型/lint の未達を必ず明記（新たな絶対の安全線には昇格させない）。
+- 本レーンではカバレッジ計測と E2E は任意（spec に明記された場合のみ必須）。
 - qa-report は `output/{project}/qa-report.md` 単一で可（Sprint 概念なし）。
 - Fail なら 2aio-engineer に1回だけ修正指示 → 再確認。auto は2往復目 Fail で DEGRADED 続行。
+
+#### Phase 4.5: 軽量レビューゲート（QA Pass 後・CRITICAL のみブロック）
+- QA Pass 後、メインスレッドが `code-reviewer`（TS なら `typescript-reviewer`）を Task で1回起動する。入力は変更ファイル一覧に限定（全コード読み禁止）。
+- **CRITICAL のみ** 2aio-engineer 差し戻し（1回）。HIGH 以下は qa-report に記録のみで非ブロック（本レーンの高速性を守る）。
+- `--local`（非公開プロトタイプ）ではこのゲートをスキップ可。
+- security-reviewer は起動しない（機械スキャンは devops Step 2.5 / --local 時は Phase 5-pre が担当）。
 
 ### Phase 5: 公開（2aio-devops）/ または ローカル
 
@@ -168,7 +186,7 @@ tags: [2aio, build, {略称}]
 `output/{project}/state.md` を `phase: completed` 更新、`deployed_url` 記録。簡潔に「完成／URL／受け入れ条件の達成状況」を報告。
 
 ## モデル指針（コスト最適化）
-- サブエージェントのモデルは各 agent frontmatter が正本（未指定はセッション継承。2aio-r-* は haiku 固定だが本レーンでは使わない）。
+- サブエージェントのモデルは各 agent frontmatter が正本（実装3体 engineer/qa/devops は sonnet 固定＝セッション継承しない。未指定 agent のみセッション継承。2aio-r-* は haiku 固定だが本レーンでは使わない）。
 - Phase 1 スペックと Phase 1.5 デザイン方針は本体セッションで実行される。ルーチン案件はセッションを sonnet のまま使う（opus セッションでの /2aio-build 実行は非推奨）。
 
 ## ガードレール
