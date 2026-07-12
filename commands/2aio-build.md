@@ -144,6 +144,14 @@ tags: [2aio, build, {略称}]
 ### Phase 4: 軽量QA（2aio-qa・1往復）
 入力: `spec.md`（受け入れ条件正本）＋ 実装コード ＋ `state.md`（モード判定の正本）。
 - 受け入れ条件のチェックと明らかな不具合のみ確認（重厚なテスト計画は不要）。
+- **省略不可の全体検証（該当ツールチェーンが存在する範囲で。非交渉ゲート）**:
+  1. ビルドスクリプトが存在すればビルド exit 0
+  2. TS プロジェクトなら `tsc --noEmit` exit 0 ／ lint 設定があれば error 0（warning は記録のみ・非ブロック）
+  3. テストが存在すれば全実行
+  - 既定 stack=html（ビルド工程なし）では該当ツールがある項目のみ実行。**検出と記録の省略は不可**。
+  - 判定は既存モード意味論に従う: interactive は Fail→修正往復→Stuck、auto は DEGRADED 続行可。
+    ただし DEGRADED で公開する場合は deploy-report に build/型/lint の未達を必ず明記（新たな絶対の安全線には昇格させない）。
+- 本レーンではカバレッジ計測と E2E は任意（spec に明記された場合のみ必須）。
 - qa-report は `output/{project}/qa-report.md` 単一で可（Sprint 概念なし）。
 - Fail なら 2aio-engineer に1回だけ修正指示 → 再確認。auto は2往復目 Fail で DEGRADED 続行。
 
