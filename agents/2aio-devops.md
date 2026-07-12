@@ -109,6 +109,9 @@ model: sonnet
 - ルート URL に GET → 200 応答（必須条件）
 - 静的アセット（CSS / JS / 画像）の読み込み → 200 応答（必須条件）
 - 主要ページ（PRD のユーザーストーリーから 2〜3 件）→ 200 応答。SPA のサブルートは 404 fallback 構成（GitHub Pages 等）を考慮して警告扱い（単独ではロールバック発動条件にしない）
+- **ブラウザ実機検証（UI 成果物の場合）**: `node C:/Users/1kkim/projects/dev/skills/2aio/scripts/ui-smoke.mjs {本番URL} --out {output}/{project}/screenshots` を実行（Playwright headless。合格条件は未捕捉例外0件＋主要要素 visible。console error は警告記録のみ）。スクリーンショット（320/1440px）のパスを deploy-report.md に記録。
+  - Playwright 未導入（exit 3）: `[TOOL_MISSING]` を記録し、従来の curl スモークのみで **degraded 続行**（初回セットアップ: `npm i -D playwright && npx playwright install chromium`）
+  - **ブラウザ検証 Fail は degraded 記録のみ** — auto の自動ロールバック発動条件は従来どおり「ルート URL 200 以外」に限定する（誤ロールバック防止）
 
 失敗時の挙動はモード別:
 
