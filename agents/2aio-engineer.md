@@ -18,7 +18,7 @@ model: sonnet
 ## 入力データ
 
 - **必須:** `output/{project}/state.md`（**起動時に最初に読む。モード判定の正本**）
-- **必須:** 計画正本 — impl-plan-*.md（`/2aio-implement-project` レーン）または spec.md + design.md（`/2aio-build` レーン。spec の「主要機能 / 受け入れ条件 / スコープ外」をスコープ防衛の正本とし、Sprint 概念は適用しない）
+- **必須:** 計画正本 — impl-plan-*.md（`/2aio-implement-project` レーン）または spec.md + design.md（`/2aio-build` レーン。spec の「主要機能 / 受け入れ条件 / スコープ外」をスコープ防衛の正本とし、Sprint 概念は適用しない）。`/2aio-dev` レーン（state.md の `lane: dev-*`）では impl-plan（--lite、feature 時）または「再現テスト赤→緑の最小差分」（fix 時）が正本で、あわせて `output/{repo-slug}/conventions.md`（対象 repo の規約）に従う
 - **必須:** 技術スタック情報（CTO 評価セクション。`/2aio-build` レーンでは spec.md の「技術」節と state.md の `stack` フィールド）
 - **任意:** 既存の `output/{project}/build-log.md`（前回までの実装状況）
 - **任意:** PRD（ユーザーストーリー・受け入れ条件の参照用）
@@ -31,6 +31,7 @@ state.md の `mode` フィールドを確認:
 |---|---|
 | `interactive`（デフォルト） | `[ESCALATION]` を記録し、残タスクを実行せず最終報告として親オーケストレーターへ return する（ユーザーへの確認は `/2aio-implement-project` が行う。自分はユーザーと対話できない） |
 | `auto` | `[FAIL_FORWARD]` を build-log.md と state.md に記録し **次タスクへ進む**、停止しない |
+| `auto` + `lane: dev-fix` | **FAIL_FORWARD 禁止・ESCALATION 固定**（バグ修正で「直ったつもり」を前進させない。/2aio-dev fix モード専用） |
 
 `auto` モードでも以下の安全停止は維持:
 - 計画正本（impl-plan または spec）が読めない・破損している
@@ -55,11 +56,16 @@ state.md は Edit で該当フィールドのみ更新。
 - 計画書の MVP スコープ以外（Phase 2 / Should / Could）は、明示的に指示されない限り実装しない。
 - 「リファクタリング・整理」も計画書にない限り禁止。
 
-### 2. 1 タスク 1 コミット原則
+### 2. 1 タスク 1 コミット原則（実 git 操作）
 
 - T-001 を完了させてから T-002 に着手する。並行実装はしない。
 - タスク完了の定義 = **受け入れ条件を満たすことを自己検証できた状態**。
-- タスクを完了したら、build-log.md に「実装ファイル一覧・受け入れ条件チェック結果・所要時間」を追記してから次タスクへ。
+- **ブランチ確保（Sprint / 実行単位の開始時に1回）**: repo が git 未初期化なら `git init`。
+  レーン別命名: `/2aio-implement-project` は `2aio/sprint-{n}` ／ `/2aio-build` は `2aio/build-{project}`（Sprint 概念なし）／ `/2aio-dev` は Phase 3 で確保済みの `2aio/dev-{slug}` を使う。
+- **タスクの受け入れ条件 Pass 後に実コミット**: conventional commits 形式 `feat: T-XXX {タスク名}`（fix タスクは `fix:`）。
+  - commit 前の秘密スキャンは**行わない**（原則3: スキャンは devops Step 2.5 の exactly once。commit はローカル操作であり公開ではない）。
+- タスクを完了したら、build-log.md に「実装ファイル一覧・受け入れ条件チェック結果・コミットハッシュ・所要時間」を追記してから次タスクへ。
+- **FAIL_FORWARD 時の巻き戻しは自動実行しない**: `git reset` 等は実行せず、直前の成功コミットへ戻す巻き戻しコマンドを build-log.md に記録するのみ（破壊的操作の自動実行禁止）。作業ツリーに失敗タスクの残骸がある場合は `git stash` ではなく該当ファイルのみ記録して次タスクへ。
 
 ### 3. 受け入れ条件の自己検証
 

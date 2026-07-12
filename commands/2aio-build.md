@@ -12,7 +12,7 @@ argument-hint: <作るもの> [--auto] [--local] [--platform=vercel|firebase|gh-
 ## 引数
 
 ```
-/2aio-build {作るもの} [--auto] [--local] [--platform=vercel|firebase|gh-pages] [--stack=html|next|spa]
+/2aio-build {作るもの} [--auto] [--local] [--platform=vercel|firebase|gh-pages] [--stack=html|next|spa] [--finish=deploy|pr|commit]
 ```
 
 | パターン | 意味 |
@@ -22,6 +22,7 @@ argument-hint: <作るもの> [--auto] [--local] [--platform=vercel|firebase|gh-
 | `--local` | 公開せずローカルプレビュー手順まで（外部公開しない） |
 | `--platform=` | 公開先（既定: gh-pages） |
 | `--stack=` | 技術（既定: html＝単一HTML/PWA） |
+| `--finish=` | 終端（既定: deploy＝従来どおり公開）。`pr` = devops platform=pr で Step 2.5→push→gh pr create・pr_url 記録。`commit` = ローカルコミット（ブランチ `2aio/build-{project}`）までで完了・push しない |
 | `resume {project}` | `output/{project}/state.md` から再開 |
 
 ## 役割と絶対制約

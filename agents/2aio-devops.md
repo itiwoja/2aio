@@ -29,8 +29,11 @@ model: sonnet
 | **Vercel** | Next.js / 静的サイト / React・Vue SPA | `vercel` CLI（`npm i -g vercel`） |
 | **Firebase Hosting** | 静的サイト / SPA | `firebase` CLI（`npm i -g firebase-tools`） |
 | **GitHub Pages** | 静的サイト | git push + `gh-pages` ブランチ |
+| **pr**（PR 終端） | 既存 repo 開発・レビュー可能な成果物が欲しい場合 | git push + `gh` CLI |
 
 注記:
+
+- **pr プラットフォーム**（`--finish=pr`）: デプロイの代わりに Step 2.5 → push → `gh pr create`（qa-report の要約を PR 本文に添付）→ `pr_url` を state.md に記録、の順で実行する。承認は既存の state.md 承認機構をそのまま流用（`deploy_approved` を「PR 作成承認」として読む）。push は履歴公開のため gitleaks **履歴込み** スキャン必須（GitHub Pages と同条件）。URL スモークテストは PR に対しては行わず、`gh pr view` で作成成功のみ確認する。
 
 - CLI 未導入の場合: interactive はインストール可否を確認、auto はグローバルインストールせず `npx vercel` 等の一時実行を優先。不可なら `[TOOL_MISSING]` で停止。
 - GitHub Pages はプロジェクト専用リポジトリ前提。存在しなければ `gh repo create {project} --public` で作成してから push（既存リポの gh-pages を別プロジェクトで上書きしない）。
@@ -106,6 +109,9 @@ model: sonnet
 - ルート URL に GET → 200 応答（必須条件）
 - 静的アセット（CSS / JS / 画像）の読み込み → 200 応答（必須条件）
 - 主要ページ（PRD のユーザーストーリーから 2〜3 件）→ 200 応答。SPA のサブルートは 404 fallback 構成（GitHub Pages 等）を考慮して警告扱い（単独ではロールバック発動条件にしない）
+- **ブラウザ実機検証（UI 成果物の場合）**: `node C:/Users/1kkim/projects/dev/skills/2aio/scripts/ui-smoke.mjs {本番URL} --out {output}/{project}/screenshots` を実行（Playwright headless。合格条件は未捕捉例外0件＋主要要素 visible。console error は警告記録のみ）。スクリーンショット（320/1440px）のパスを deploy-report.md に記録。
+  - Playwright 未導入（exit 3）: `[TOOL_MISSING]` を記録し、従来の curl スモークのみで **degraded 続行**（初回セットアップ: `npm i -D playwright && npx playwright install chromium`）
+  - **ブラウザ検証 Fail は degraded 記録のみ** — auto の自動ロールバック発動条件は従来どおり「ルート URL 200 以外」に限定する（誤ロールバック防止）
 
 失敗時の挙動はモード別:
 
@@ -151,7 +157,7 @@ git push origin {直前のgh-pagesコミットhash}:gh-pages --force-with-lease
 3. npm audit（条件付き）: `package-lock.json` が存在する npm プロジェクトのみ `npm audit --audit-level=critical` を実行。critical 検出はブロック条件に含める。audit 実行自体の失敗も auto では下記 fail-closed 規則に従う
 4. CSP / クリックジャッキング対策の確認（外部公開時）
 
-ブロック条件: gitleaks leak>0 / SAST CRITICAL>0 / npm audit critical>0 は `[SECURITY_STOP]` を state.md と deploy-report.md に記録してモード問わず停止。デプロイしない。本ゲートが正本（オーケストレーター側での重複実行はしない。devops を経ない /2aio-build --local のみ例外）。
+ブロック条件: gitleaks leak>0 / SAST CRITICAL>0 / npm audit critical>0 は `[SECURITY_STOP]` を state.md と deploy-report.md に記録してモード問わず停止。デプロイしない。本ゲートが正本（オーケストレーター側での重複実行はしない。devops を経ない例外レーンは /2aio-build --local と /2aio-dev の2つのみ — どちらも同等条件をメインスレッドで1回だけ実施する）。
 
 **fail-closed 規則（無言故障の禁止）**: スキャナの**実行自体の失敗**（非0 exit かつ結果 JSON/出力なし）は「leak 有無不明」であり clean 扱いにしない。`[TOOL_MISSING]` を state.md と deploy-report.md に記録して**モード問わず停止**する（未導入時のフォールバック規定とは別 — フォールバックは代替手段があるときのみ）。
 
