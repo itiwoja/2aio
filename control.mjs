@@ -16,10 +16,13 @@ import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
 import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
 import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
 
-const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
-const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
+// #22: ROOT/上限は env で注入可能（統合テストが一時ディレクトリで実レジストリを汚染しないため）。
+// import 時の副作用（listen / setInterval / プリウォーム / reconcile）は末尾の main ガード内のみ。
+const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const ROOT = process.env.AIO_CONTROL_ROOT || HERE;
+const CFG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
 const GOV = { tokenThreshold: 0.8, maxConcurrency: 1, pollMs: 5000, ...(CFG.governor || {}) };
-const TOKEN_LIMIT = CFG.claudeMax5x?.tokenLimit || 0;
+const TOKEN_LIMIT = Number(process.env.AIO_TOKEN_LIMIT ?? (CFG.claudeMax5x?.tokenLimit || 0));
 const PORT = process.env.AIO_CONTROL_PORT || 7900;
 const CLAUDE = process.env.AIO_CLAUDE_BIN || process.env.CLAUDE_BIN || 'claude';
 // テスト/ドライラン用に worker コマンドを丸ごと差し替え可能(既定は claude -p)
@@ -471,16 +474,22 @@ const server = http.createServer(async (req, res) => {
   send(res, 404, 'text/plain', 'not found');
 });
 // 書き込み(spawn)を伴うためローカル限定バインド。LAN公開は Phase 3(トークン認証)まで行わない。
-// 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
-// (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
-const rec = reconcile(ROOT, (id) => procs.has(id));
-if (rec.interrupted.length || rec.requeued.length) {
-  console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
-}
+// #22: テストから server / tick を直接使えるよう export（main ガードにより import では listen しない）
+export { server, tick };
 
-server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
-claudeUsage(); // ccusage プリウォーム
-setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
+// main ガード: 直接実行時のみ副作用を開始する（import 時はサーバ生成のみで listen しない）
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(HERE, 'control.mjs');
+if (isMain) {
+  // 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
+  // (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
+  const rec = reconcile(ROOT, (id) => procs.has(id));
+  if (rec.interrupted.length || rec.requeued.length) {
+    console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
+  }
+  server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
+  claudeUsage(); // ccusage プリウォーム
+  setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
+}
 
 const HTML = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>2AIO Control</title><style>

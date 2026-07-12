@@ -16,14 +16,17 @@ const GITLEAKS =
 const SECURITY_SCAN =
   process.env.SECURITY_SCAN_MJS || "C:/Users/1kkim/projects/scripts/security-scan.mjs";
 
-test("gitleaks 実体が存在する (Step 2.5 の正本スキャナ)", () => {
+// ローカルツールチェーンの回帰テスト — CI (ubuntu) には gitleaks/security-scan が無いためスキップ
+const onCI = !!process.env.CI;
+
+test("gitleaks 実体が存在する (Step 2.5 の正本スキャナ)", { skip: onCI && "ローカル環境依存" }, () => {
   assert.ok(
     existsSync(GITLEAKS),
     `gitleaks が見つからない: ${GITLEAKS} — Step 2.5 はフォールバック運用になる。移設したなら GITLEAKS_BIN で指す`
   );
 });
 
-test("security-scan.mjs 実体が存在する (Step 2.5 の SAST)", () => {
+test("security-scan.mjs 実体が存在する (Step 2.5 の SAST)", { skip: onCI && "ローカル環境依存" }, () => {
   assert.ok(
     existsSync(SECURITY_SCAN),
     `security-scan.mjs が見つからない: ${SECURITY_SCAN} — 移設したなら SECURITY_SCAN_MJS で指す`

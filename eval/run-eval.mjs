@@ -114,8 +114,9 @@ export function scoreProject(projectDir, job = null) {
       && job.tokensAfter - job.tokensBefore >= 0
       ? job.tokensAfter - job.tokensBefore : null,
   };
-  const pass = metrics.gitleaksLeaks === 0 && metrics.escalation === 0
-    && (metrics.tasksFailed === 0 || metrics.tasksFailed === null);
+  // 粗い pass/fail ゲート。null（計測不能）の指標は判定に使わない（Issue #25 仕様）
+  const gate = (v) => v === 0 || v === null;
+  const pass = gate(metrics.gitleaksLeaks) && gate(metrics.escalation) && gate(metrics.tasksFailed);
   return { pass, reason: null, metrics, projectDir: resolvedProjectDir, artifactDir };
 }
 

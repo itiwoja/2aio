@@ -22,3 +22,4 @@ security/scanners/_reports/
 control/
 repos.json
 workspaces/
+eval/results/

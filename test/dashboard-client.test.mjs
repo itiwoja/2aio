@@ -7,7 +7,7 @@ import { extractServedScript } from './helpers/served-script.mjs';
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
-test('配信されるクライアント<script>が構文的に正しい', () => {
-  const script = extractServedScript(path.join(here, '..', 'control.mjs'), { args: { PORT: 7900 } });
-  assert.doesNotThrow(() => new vm.Script(script), '配信クライアントJSに構文エラー');
+test('dashboard が配信するクライアント script は構文的に正しい', () => {
+  const script = extractServedScript(path.join(here, '..', 'dashboard.mjs'));
+  assert.doesNotThrow(() => new vm.Script(script), '配信クライアント JS に構文エラー');
 });

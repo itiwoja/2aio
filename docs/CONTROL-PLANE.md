@@ -58,6 +58,7 @@ API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠
 - ジョブ全文ログ (#14): `control/logs/<jobId>.ndjson`（stream-json イベント追記。queue.json の log[] は最新20行プレビューのみ）。**`control/logs/` はルートの `history/`（2AIOForge の vault 変更履歴）とは別物。**
 - ワーカー: ガバナー許可がある限り `queued` を古い順に起動 → `spawn('claude', ['-p', '--output-format', 'stream-json', '--verbose', prompt], { cwd: repo.path })`。終了時に result イベントから usage / total_cost_usd / 失敗理由を抽出し、成果物リンクは `output/*/state.md`（正本）から拾う。
 - API: `GET /api/control`／`GET /api/job?id=`（詳細+ログ末尾）／`POST /api/register`／`GET,POST /api/intake[/answer]`／`POST /api/analyze`／`POST /api/enqueue`／`POST /api/cancel`（実行中はツリーkill）／`GET /api/debug`（ccusage生診断）。CSRF対策（Origin検査）は dashboard.mjs と同一。
+- テスト/カバレッジ (#22): CI ゲートは「テスト全パス」必須。カバレッジ 80% 閾値はテスト済みコアモジュール（governor/queue/policy/proposals/intake/repo）に限定して適用。外部プロセスラッパー（claude/ccusage/search/ollama/usage/history）は当面除外 — **lib 全体 80% は将来目標**（Node のカバレッジはロードされたファイルのみ報告するため、真に課すとモック大量作成でスコープが膨張する）。
 - **対話ヒアリングの方式**: 「ダッシュボード上でAI対話」を採用。headless `claude -p` は非対話だが、UIが1ターンずつ回答を集め、各ターンで `claude -p` に次の質問を生成させることで**Webで完結する真の対話**を実現（サブスク枠を使用）。
 
 ## kind → プロンプト対応（control.mjs `buildPrompt`）
