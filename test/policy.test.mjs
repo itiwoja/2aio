@@ -2,6 +2,7 @@
 // 実行: node --test test/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { decideAction } from '../lib/policy.mjs';
 import { within, resolvePaths } from '../lib/paths.mjs';
 
@@ -46,7 +47,11 @@ test('within: 配下は許可・外/親/同一パスは拒否', () => {
 });
 
 test('resolvePaths: 相対はroot基準・絶対はそのまま', () => {
-  const r = resolvePaths('C:/repo', { proposals: 'proposals', vault: 'C:/Users/x/vault' });
-  assert.match(r.proposals.replace(/\\/g, '/'), /^C:\/repo\/proposals$/);
-  assert.match(r.vault.replace(/\\/g, '/'), /^C:\/Users\/x\/vault$/);
+  // プラットフォーム依存を避ける: 'C:/...' は Linux では絶対パスでないため（CI=ubuntu で発覚）、
+  // 実行環境ネイティブの絶対パスで検証する
+  const root = path.resolve('/repo');
+  const abs = path.resolve('/users/x/vault');
+  const r = resolvePaths(root, { proposals: 'proposals', vault: abs });
+  assert.equal(path.normalize(r.proposals), path.join(root, 'proposals'));
+  assert.equal(path.normalize(r.vault), path.normalize(abs));
 });
