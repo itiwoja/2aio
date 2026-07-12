@@ -140,6 +140,10 @@ tags: [2aio, build, {略称}]
   - anti-ai-design の禁則（純黒/純白/紫青グラデ/デフォルトフォント無加工なし／絵文字ロゴなし）
   - **インタラクションの質**: anti-ai-design「気づき→行為→反応」＝**無反応な要素を作らない**（全操作に手応え）／motion-design「5つの黄金律」＝構造(IA)を伝える・Ease-out基調・操作に即時同期フィードバック・行為の重みに応じた反応
 - interactive: 詰まったら停止 / auto: fail-forward。
+- **修復ラウンド（`--stack=next|spa` のみ・1回）**: engineer が3回自己修正に失敗し、build-log のエラー分類が
+  build|type|dep の場合に限り、メインスレッドが ECC `build-error-resolver` を1回だけ起動する
+  （既定 stack=html はビルドシステムが無いため本段を起動しない）。修復成功なら engineer を該当タスク限定で
+  再起動、失敗なら従来フロー（interactive 停止 / auto fail-forward）へ。
 
 ### Phase 4: 軽量QA（2aio-qa・1往復）
 入力: `spec.md`（受け入れ条件正本）＋ 実装コード ＋ `state.md`（モード判定の正本）。
