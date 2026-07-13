@@ -83,7 +83,9 @@ Write-Host "  backup: settings.json.bak-$stamp"
 $env:SETTINGS = $settings
 $env:HOOK_ABS = (& $py -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/hooks/command-guard.py')).as_posix())")
 $env:PYBIN = $py
-& $py - @"
+# NOTE: pipe the here-string into `python -` via stdin. Passing it as an argument to
+# `& $py - <here-string>` makes `python -` block on stdin (hang). Always pipe.
+@"
 import json, os
 settings_path = os.environ["SETTINGS"]
 hook_abs = os.environ["HOOK_ABS"]
@@ -144,7 +146,7 @@ frontdoor_added = wire_ups(frontdoor_advisor_abs, "front-door/2aio-advisor.mjs")
 with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
 print(f"  merged {added} PreToolUse matcher(s) + {enforcer_added} delegation-enforcer + {advisor_added} model-advisor + {skill_added} skill-advisor + {codex_added} codex-advisor + {frontdoor_added} front-door")
-"@
+"@ | & $py -
 
 Write-Host "✓ Harness armed:" -ForegroundColor Green
 Write-Host "  - Guard (PreToolUse): blocks irreversible ops on Bash/Write/Edit/MultiEdit/NotebookEdit."

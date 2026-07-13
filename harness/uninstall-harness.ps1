@@ -15,7 +15,9 @@ $backup = "$settings.bak-$stamp"
 Copy-Item $settings $backup
 
 $env:SETTINGS = $settings
-& $py - @"
+# NOTE: pipe the here-string into `python -` via stdin. Passing it as an argument to
+# `& $py - <here-string>` makes `python -` block on stdin (hang). Always pipe.
+@"
 import json, os
 p = os.environ["SETTINGS"]
 with open(p, encoding="utf-8") as f:
@@ -45,6 +47,6 @@ if "hooks" in cfg and not hooks:
 with open(p, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
 print("  removed 2AIO guard, delegation-enforcer, and advisor hooks from settings.json")
-"@
+"@ | & $py -
 
 Write-Host "✓ Harness disarmed (backup: $backup). Hook files + rules kept for re-arming." -ForegroundColor Green
