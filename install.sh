@@ -17,8 +17,12 @@ done
 
 echo "=== 2AIO Installation ==="
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
-[ -d "$CLAUDE_DIR" ] || { echo "Claude Code not found"; exit 1; }
-mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/skills"
+# PowerShell may pass a Windows path into Git Bash through CLAUDE_DIR.
+if command -v cygpath >/dev/null 2>&1 && [[ "$CLAUDE_DIR" == *\\* ]]; then
+  CLAUDE_DIR="$(cygpath -u "$CLAUDE_DIR")"
+fi
+[ -d "$CLAUDE_DIR" ] || { echo "Claude Code not found: $CLAUDE_DIR"; exit 1; }
+mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/2aio/lanes"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$CLAUDE_DIR/.2aio-manifest"
 MANIFEST_WORK="$(mktemp)"
@@ -48,9 +52,25 @@ repo_contains() {
   grep -Fxq "$1" "$REPO_SKILLS"
 }
 
-# Agents + commands (2aio-*)
+# Retire only command files managed by 2AIO. A user note or any non-2aio file
+# is intentionally preserved.
+for installed in "$CLAUDE_DIR/commands"/2aio-*.md; do
+  [ -e "$installed" ] || continue
+  name="$(basename "$installed")"
+  if [ ! -e "$SCRIPT_DIR/commands/$name" ]; then
+    rm -f "$installed"
+    echo "  removed retired command: $name"
+  fi
+done
+
+# Agents + entry commands + internal lanes (always overwritten)
 [ -d "$SCRIPT_DIR/agents" ] && cp "$SCRIPT_DIR/agents"/*.md "$CLAUDE_DIR/agents/"
 [ -d "$SCRIPT_DIR/commands" ] && cp "$SCRIPT_DIR/commands"/*.md "$CLAUDE_DIR/commands/"
+if [ -d "$SCRIPT_DIR/lanes" ]; then
+  for source in "$SCRIPT_DIR/lanes"/2aio-*.md; do
+    [ -e "$source" ] && cp "$source" "$CLAUDE_DIR/2aio/lanes/"
+  done
+fi
 
 # Collect shipped skills once so adoption and manifest warnings use the same set.
 if [ -d "$SCRIPT_DIR/skills" ]; then
@@ -104,5 +124,5 @@ if [ "$MANIFEST_DIRTY" -eq 1 ]; then
   mv "$MANIFEST_WORK.sorted" "$MANIFEST"
 fi
 
-echo "✓ 2AIO Installation Complete (agents + commands + skills)"
+echo "✓ 2AIO Installation Complete (agents + commands + lanes + skills)"
 echo "  Security / memory / observability are external tools — install per their README."

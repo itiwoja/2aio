@@ -110,3 +110,10 @@ re-audit, loop until clean
 ## For Complete Documentation
 
 See GitHub: https://github.com/itiwoja/2aio
+## Public commands and installed lanes
+
+The public interface is `/2aio-create` and `/2aio-check` only. `/2aio-create`
+selects quick or full mode, while `/2aio-check` audits an existing project and
+requires an explicit remediation choice. The implementation workflows are the
+ten `lanes/2aio-*.md` files installed at `~/.claude/2aio/lanes/`; control-plane
+jobs invoke those installed lane paths directly.

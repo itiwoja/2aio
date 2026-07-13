@@ -4,6 +4,8 @@ argument-hint: '--themes="..." | --themes-file=... | --resume={batch_id} [--boar
 disable-model-invocation: true
 ---
 
+> **表記の読み替え:** 本文中の `/2aio-<name>` は旧スラッシュコマンド表記。`~/.claude/2aio/lanes/2aio-<name>.md` を Read し、後続テキストを $ARGUMENTS としてその指示に従う意味に読み替える。
+
 複数のテーマについて、2AIO の全フェーズ（取締役会 → 計画 → 実装 → デプロイ）を **一切止まらず** 連続実行してください。
 
 **入力:** $ARGUMENTS

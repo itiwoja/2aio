@@ -36,7 +36,9 @@ function fixture() {
   fs.mkdirSync(claudeDir, { recursive: true });
   fs.copyFileSync(sourceInstaller, path.join(repo, "install.sh"));
   write(path.join(repo, "agents", "a.md"), "agent\n");
-  write(path.join(repo, "commands", "c.md"), "command\n");
+  write(path.join(repo, "commands", "2aio-create.md"), "create\n");
+  write(path.join(repo, "commands", "2aio-check.md"), "check\n");
+  write(path.join(repo, "lanes", "2aio-build.md"), "build lane\n");
   write(path.join(repo, "skills", "cat", "skill-a", "SKILL.md"), "repo skill-a\n");
   write(path.join(repo, "skills", "cat", "skill-b", "SKILL.md"), "repo skill-b\n");
   return { root, repo, claudeDir };
@@ -138,5 +140,31 @@ test("不明なフラグは失敗する", () => {
   const env = fixture();
   try {
     assert.notEqual(run(env, "--unknown").status, 0);
+  } finally { cleanup(env); }
+});
+
+test("入口 2 コマンドと lanes を配備し、引退した 2aio コマンドだけ掃除する", () => {
+  const env = fixture();
+  try {
+    write(path.join(env.claudeDir, "commands", "2aio-old.md"), "retired\n");
+    write(path.join(env.claudeDir, "commands", "user-note.md"), "preserve\n");
+    const result = run(env);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.existsSync(path.join(env.claudeDir, "commands", "2aio-old.md")), false);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "user-note.md"), "utf8"), "preserve\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-create.md"), "utf8"), "create\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-check.md"), "utf8"), "check\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "lanes", "2aio-build.md"), "utf8"), "build lane\n");
+    assert.match(result.stdout, /removed retired command: 2aio-old\.md/);
+  } finally { cleanup(env); }
+});
+
+test("lanes は再実行で常に repo 版へ上書きされる", () => {
+  const env = fixture();
+  try {
+    assert.equal(run(env).status, 0);
+    write(path.join(env.repo, "lanes", "2aio-build.md"), "build lane v2\n");
+    assert.equal(run(env).status, 0);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "lanes", "2aio-build.md"), "utf8"), "build lane v2\n");
   } finally { cleanup(env); }
 });

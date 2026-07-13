@@ -13,14 +13,16 @@ foreach ($arg in $args) {
 }
 
 Write-Host "`n=== 2AIO Installation ===" -ForegroundColor Cyan
-$claudeDir = if ($env:CLAUDE_DIR) { $env:CLAUDE_DIR } else { "$env:USERPROFILE/.claude" }
+$claudeDir = if ($env:CLAUDE_DIR) { $env:CLAUDE_DIR } else { Join-Path $env:USERPROFILE '.claude' }
 if (-not (Test-Path $claudeDir)) {
-    Write-Host "Claude Code not found"; exit 1
+    Write-Host "Claude Code not found: $claudeDir"; exit 1
 }
 $repoDir = Split-Path $MyInvocation.MyCommand.Path
 foreach ($sub in @("agents", "commands", "skills")) {
-    New-Item -ItemType Directory -Force "$claudeDir/$sub" | Out-Null
+    New-Item -ItemType Directory -Force (Join-Path $claudeDir $sub) | Out-Null
 }
+$lanesDir = Join-Path $claudeDir '2aio/lanes'
+New-Item -ItemType Directory -Force $lanesDir | Out-Null
 
 $manifestPath = "$claudeDir/.2aio-manifest"
 $manifestEntries = @{}
@@ -41,11 +43,23 @@ function Add-ManifestEntry($Name) {
     }
 }
 
-Write-Host "Installing agents and commands..." -ForegroundColor Cyan
+# Retire only command files managed by 2AIO. A user note or any non-2aio file
+# is intentionally preserved.
+Get-ChildItem (Join-Path $claudeDir 'commands') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    if (-not (Test-Path (Join-Path $repoDir "commands/$($_.Name)"))) {
+        Remove-Item -LiteralPath $_.FullName -Force
+        Write-Host "  removed retired command: $($_.Name)"
+    }
+}
+
+Write-Host "Installing agents, commands and lanes..." -ForegroundColor Cyan
 @("agents", "commands") | ForEach-Object {
     if (Test-Path "$repoDir/$_") {
-        Copy-Item "$repoDir/$_/*.md" "$claudeDir/$_/" -Force
+        Copy-Item "$repoDir/$_/*.md" (Join-Path $claudeDir $_) -Force
     }
+}
+Get-ChildItem (Join-Path $repoDir 'lanes') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination $lanesDir -Force
 }
 
 $repoSkills = @()
@@ -75,7 +89,7 @@ foreach ($name in $manifestEntries.Keys) {
     }
 }
 
-Write-Host "Installing skills (flattened, ECC-safe: never overwrite existing)" -ForegroundColor Cyan
+Write-Host "Installing skills (flattened, ECC-safe: never overwrite existing)..." -ForegroundColor Cyan
 $count = 0
 $updated = 0
 foreach ($skill in $repoSkills) {
@@ -101,5 +115,5 @@ if ($manifestDirty) {
     $manifestEntries.Keys | Sort-Object | Set-Content -LiteralPath $manifestPath -Encoding utf8
 }
 
-Write-Host "`n✓ 2AIO Installation Complete (agents + commands + skills)" -ForegroundColor Green
+Write-Host "`n✓ 2AIO Installation Complete (agents + commands + lanes + skills)" -ForegroundColor Green
 Write-Host "  Security / memory / observability are external tools — install per their README."

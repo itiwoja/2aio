@@ -27,3 +27,10 @@ test("ordinary coding / questions -> no lane (null)", () => {
   assert.equal(pickLane("なぜこのバグが起きる？"), null);
   assert.equal(pickLane("短い"), null);
 });
+
+test("all routed entries point to the public two-mode surface (or researcher)", () => {
+  assert.equal(pickLane("既存アプリを全面強化して").entry, "/2aio-check");
+  assert.equal(pickLane("should i build this startup idea?").entry, "/2aio-create");
+  assert.equal(pickLane("redesign the landing page, it looks dated").entry, "/2aio-check");
+  assert.equal(pickLane("競合を調べてまとめて").entry, "2aio-researcher");
+});

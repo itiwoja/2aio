@@ -60,3 +60,10 @@
 | **Grok / その他** | ⚠️ CLI 次第（instructions ファイルを読むなら本ファイルを置く。hook が無ければ"指示ベース"の弱い強制） | 本ファイルを instructions として読ませる |
 
 どの host でも **コア（guard.py / router / codex-run.sh / rules）は共通**。違うのは「どれだけ自動で強制されるか」だけ。hook を持つ host ほど強い。
+## Public command surface
+
+`commands/` contains only `/2aio-create` and `/2aio-check`. The former selects
+quick (`2aio-build`) or full (start, plan, implement) mode; the latter audits
+before asking the user to select remediation. The ten detailed workflows live
+in `lanes/` and are installed under `~/.claude/2aio/lanes/`. Do not copy lane
+contents back into public command files.

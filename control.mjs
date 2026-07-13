@@ -13,7 +13,7 @@ import { admitJob } from './lib/governor.mjs';
 import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips } from './lib/queue.mjs';
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
-import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
+import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT, laneInvocation } from './lib/intake.mjs';
 import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
 import { mapIssueToJob, filterUnseen, finalizeAction, detectCompletion, loadSeen, saveSeen, fetchAutoIssues, moveIssueState, commentOnIssue } from './lib/linear.mjs';
 
@@ -144,15 +144,15 @@ function buildPrompt(job, repo = null) {
 }
 function corePrompt(job, a) {
   switch (job.kind) {
-    case 'build': return `/2aio-build ${a.theme || ''} ${a.flags || '--auto'}`.trim();
-    case 'start': return `/2aio-start-project ${a.theme || ''}`.trim();
-    case 'plan': return `/2aio-plan-project ${a.prd || 'latest'}`.trim();
-    case 'implement': return `/2aio-implement-project ${a.plan || 'latest'} ${a.flags || '--auto'}`.trim();
+    case 'build': return laneInvocation('2aio-build', `${a.theme || ''} ${a.flags || '--auto'}`.trim());
+    case 'start': return laneInvocation('2aio-start-project', a.theme || '');
+    case 'plan': return laneInvocation('2aio-plan-project', a.prd || 'latest');
+    case 'implement': return laneInvocation('2aio-implement-project', `${a.plan || 'latest'} ${a.flags || '--auto'}`.trim());
     case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。最後に、解析結果の要点（構成理解・主要コマンド・注意点）を CLAUDE.md に反映してください（無ければ作成。次回以降のジョブが自動ロードして使う）。`;
-    // ── 開発 kind (#9)。feature/fix/issue は /2aio-dev レーン(#1)へ委譲 ──
-    case 'feature': return `/2aio-dev . ${a.theme || ''} ${a.flags || '--auto'}`.trim();
-    case 'fix': return `/2aio-dev . --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim();
-    case 'issue': return `gh issue view ${a.issue || a.target || a.theme} をコメント込みで読み、内容を1行に要約したうえで、バグ報告なら「/2aio-dev . --fix "{要約}" --auto」、機能要望なら「/2aio-dev . "{要約}" --auto」を実行してください。`;
+    // ── 開発 kind (#9)。feature/fix/issue は 2aio-dev レーン(#1)へ委譲 ──
+    case 'issue': return `gh issue view ${a.issue || a.target || a.theme} をコメント込みで読み、内容を1行に要約したうえで、バグ報告なら ${laneInvocation('2aio-dev', '. --fix "{要約}" --auto')} 機能要望なら ${laneInvocation('2aio-dev', '. "{要約}" --auto')}`;
+    case 'feature': return laneInvocation('2aio-dev', `. ${a.theme || ''} ${a.flags || '--auto'}`.trim());
+    case 'fix': return laneInvocation('2aio-dev', `. --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim());
     case 'test': return `このリポジトリのテストコマンドを検出して全実行してください（package.json scripts / Makefile / pytest 等）。失敗があれば原因を特定して修正し、全テストが緑になるまで繰り返す（最大3往復。直せなければ失敗内容を報告して終了）。テスト基盤が無ければ「テスト基盤なし」と報告して終了。`;
     case 'review': return `/code-review ${a.target}`.trim();
     case 'refactor': return `/refactor-clean ${a.target || ''}`.trim();

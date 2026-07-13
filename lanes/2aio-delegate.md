@@ -3,6 +3,8 @@ description: Claude(Fable/Opus)が計画に専念し、実装を Codex(Terra/Lun
 argument-hint: <やりたいこと> [--write] [--parallel] [--model auto|luna|terra|sol] [--dir <repo>] [--auto]
 ---
 
+> **表記の読み替え:** 本文中の `/2aio-<name>` は旧スラッシュコマンド表記。`~/.claude/2aio/lanes/2aio-<name>.md` を Read し、後続テキストを $ARGUMENTS としてその指示に従う意味に読み替える。
+
 **Claude が「考える」、Codex が「書く」。** 高価な Claude(Fable/Opus)トークンは *計画・レビュー・統合* に集中させ、機械的〜中難度の実装は安価な Codex(Terra/Luna) に流す委譲オーケストレーター。狙いは **同じ品質をより少ない Claude トークンで**。
 
 **タスク:** $ARGUMENTS
