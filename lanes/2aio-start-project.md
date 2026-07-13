@@ -76,9 +76,6 @@ CMO を「CEOブリーフの該当部分 + Phase 2b の集約結果（要約+統
 - 取締役会議レポート: `output/board-meeting-{テーマ略称}-{YYYY-MM-DD}.md`
 - PRD（該当する場合）: `output/prd-{テーマ略称}-{YYYY-MM-DD}.md`
 
-### Phase 6: Linear 起票（approved / conditional のみ・任意）
-`LINEAR_API_KEY` が利用可能なら、Linear BIZ チームに Issue を起票する: タイトル「[2AIO] {テーマ略称}: PRD実装」、本文に PRD パス・最終判断・即時アクション。Linear GraphQL API（ローカルに linear 用スクリプトがあればそれでも可）を使用。rejected / 起票不可の場合はレポートに「起票なし」と記録する。
-
 ---
 
 ## 最終レポートフォーマット

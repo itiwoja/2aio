@@ -359,7 +359,6 @@ tags: [2aio, {project}, completion]
 - 本番 URL 動作確認
 - v2 計画化（degraded 項目を解消する PRD を作成）
 - アーカイブ: completion-report.md が正本。output/_memory/index.md に索引追記済み
-- 対応する Linear Issue があれば Done に遷移（lib/linear.mjs の moveIssueState を node -e で呼ぶ。**Linear 経由（control.mjs ポーリング #7）で投入されたジョブでは実行しない** — 遷移責務はコントロールプレーンに一本化されており、プロンプトにその旨が明示される）
 ```
 
 state.md 最終更新:
