@@ -56,7 +56,7 @@
         "startup idea",
         "go to market"
       ],
-      "directive": "This is a business/viability question. Use the /2aio-create command in full mode: it runs the board pipeline (取締役会: CEO/CFO/CMO/CTO/CSO → PRD) and continues through planning and implementation, instead of answering ad hoc."
+      "directive": "This is a business/viability question. Use the /2aio-create command in full mode: it runs the board pipeline (取締役会: CEO/CMO/CTO → PRD) and continues through planning and implementation, instead of answering ad hoc."
     },
     {
       "lane": "redesign",

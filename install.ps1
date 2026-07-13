@@ -54,6 +54,15 @@ Get-ChildItem (Join-Path $claudeDir 'commands') -Filter '2aio-*.md' -File -Error
     }
 }
 
+# Retire only agents managed by 2AIO. User-defined agents are intentionally
+# preserved, while a removed shipped agent must not survive an update.
+Get-ChildItem (Join-Path $claudeDir 'agents') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    if (-not (Test-Path (Join-Path $repoDir "agents/$($_.Name)"))) {
+        Remove-Item -LiteralPath $_.FullName -Force
+        Write-Host "  removed retired agent: $($_.Name)"
+    }
+}
+
 Write-Host "Installing agents, commands and lanes..." -ForegroundColor Cyan
 @("agents", "commands") | ForEach-Object {
     if (Test-Path "$repoDir/$_") {
