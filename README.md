@@ -6,7 +6,7 @@
 
 ```
 2AIO
-├─ agents/ commands/      … エージェント 27 体 + ワークフロー 9 コマンド（native）
+├─ agents/ commands/      … エージェント 27 体 + ワークフロー 10 コマンド（native）
 ├─ harness/               … ライブハーネス（guard / model・skill ルーティング / Codex委譲 / enforcer / front-door / providers）
 ├─ AGENTS.md adapters/    … クロスhost 操作モデル（Claude / Codex / 任意の OpenAI 互換 AI 共通）
 ├─ skills/                … 66 スキル（SDLC / Apple / 設計 / オーケストレーション / リサーチ）
@@ -38,7 +38,7 @@ git clone https://github.com/itiwoja/2aio.git
 cd 2aio
 bash install.sh        # macOS / Linux
 ```
-`agents/`（27 体）`commands/`（9 個）`skills/`（66 個）を `~/.claude/` に配備します（**既存スキルは上書きしません** — ECC セーフ）。
+`agents/`（27 体）`commands/`（10 個）`skills/`（66 個）を `~/.claude/` に配備します（**既存スキルは上書きしません** — ECC セーフ）。
 セキュリティ / メモリ / 可観測性は外部ツール — 各 README に従って個別導入してください。
 
 ### 2.（任意）ライブハーネスを有効化
@@ -52,7 +52,7 @@ bash harness/install-harness.sh    # guard + 4 advisor + enforcer を settings.j
 ```bash
 /2aio-build "ポモドーロタイマー PWA" --auto   # 最短で 1 本走らせる（PRD 不要の高速レーン）
 ```
-`/2aio-` と打って補完に 9 コマンドが出れば導入成功です。本格的に使うなら:
+`/2aio-` と打って補完に 10 コマンドが出れば導入成功です。本格的に使うなら:
 ```bash
 /2aio-start-project "作りたいもの"    # 取締役会 → PRD から始めるフルコース
 /2aio-delegate "<実装タスク>"         # Codex 委譲（ハーネス導入 + Codex CLI が前提）
@@ -66,6 +66,24 @@ npm run control        # 制御プレーン（複数 repo 進行） → http://l
 詳細はそれぞれ Part 5 / Part 6 を参照。
 
 ---
+
+## 🔄 更新方法
+
+```bash
+cd 2aio
+git pull
+./install.ps1 --update             # または bash install.sh --update
+bash harness/install-harness.sh    # ハーネスを入れている場合（冪等・設定は保持）
+```
+
+| レイヤー | `--update` 時の挙動 |
+|---|---|
+| agents / commands | 常に最新へ上書き |
+| skills | **2AIO が配備したものだけ**（`~/.claude/.2aio-manifest` 記載分）を上書き。ユーザー独自スキルには触らない |
+| ハーネス | コード本体は更新、設定（security-rules.json / enforce-rules.json）はカスタマイズを保持 |
+
+マニフェスト導入前（旧版）からのユーザーは、初回のみ `--adopt-all --update` を実行すると
+同梱スキルがマニフェストに登録され、以後の更新が届くようになります。
 
 ## ⚙️ ライブハーネス（最重要 — Claude 司令塔 → Codex 実装）
 
