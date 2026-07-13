@@ -11,22 +11,26 @@ import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const GITLEAKS =
-  process.env.GITLEAKS_BIN || "C:/Users/1kkim/projects/tools/gitleaks/gitleaks.exe";
-const SECURITY_SCAN =
-  process.env.SECURITY_SCAN_MJS || "C:/Users/1kkim/projects/scripts/security-scan.mjs";
+// ツール解決: 環境変数が正本。未設定なら PATH の gitleaks を探す（配布先ではどちらも無くてよい）。
+function whichGitleaks() {
+  if (process.env.GITLEAKS_BIN) return process.env.GITLEAKS_BIN;
+  const probe = spawnSync(process.platform === "win32" ? "where" : "which", ["gitleaks"], { encoding: "utf8" });
+  const hit = (probe.stdout || "").split(/\r?\n/).filter(Boolean)[0];
+  return hit || null;
+}
+const GITLEAKS = whichGitleaks();
+const SECURITY_SCAN = process.env.SECURITY_SCAN_MJS || null;
 
-// ローカルツールチェーンの回帰テスト — CI (ubuntu) には gitleaks/security-scan が無いためスキップ
-const onCI = !!process.env.CI;
+// ローカルツールチェーンの回帰テスト — ツールが無い環境（CI / 配布先）ではスキップ。
+// GITLEAKS_BIN / SECURITY_SCAN_MJS を明示設定した環境では実在を保証する。
+const noGitleaks = !GITLEAKS || !existsSync(GITLEAKS);
+const noSecScan = !SECURITY_SCAN;
 
-test("gitleaks 実体が存在する (Step 2.5 の正本スキャナ)", { skip: onCI && "ローカル環境依存" }, () => {
-  assert.ok(
-    existsSync(GITLEAKS),
-    `gitleaks が見つからない: ${GITLEAKS} — Step 2.5 はフォールバック運用になる。移設したなら GITLEAKS_BIN で指す`
-  );
+test("gitleaks 実体が存在する (Step 2.5 の正本スキャナ)", { skip: noGitleaks && "gitleaks 未導入（Step 2.5 はフォールバック運用。GITLEAKS_BIN で指定可）" }, () => {
+  assert.ok(existsSync(GITLEAKS), `gitleaks が見つからない: ${GITLEAKS}`);
 });
 
-test("security-scan.mjs 実体が存在する (Step 2.5 の SAST)", { skip: onCI && "ローカル環境依存" }, () => {
+test("security-scan.mjs 実体が存在する (Step 2.5 の SAST)", { skip: noSecScan && "SECURITY_SCAN_MJS 未設定（SAST は任意）" }, () => {
   assert.ok(
     existsSync(SECURITY_SCAN),
     `security-scan.mjs が見つからない: ${SECURITY_SCAN} — 移設したなら SECURITY_SCAN_MJS で指す`
@@ -40,7 +44,7 @@ function runGitleaks(dir) {
   });
 }
 
-test("gitleaks exit code 契約: clean ディレクトリ → 0", { skip: !existsSync(GITLEAKS) }, () => {
+test("gitleaks exit code 契約: clean ディレクトリ → 0", { skip: noGitleaks }, () => {
   const dir = mkdtempSync(join(tmpdir(), "gl-clean-"));
   try {
     writeFileSync(join(dir, "app.js"), 'console.log("no secrets here");\n');
@@ -51,7 +55,7 @@ test("gitleaks exit code 契約: clean ディレクトリ → 0", { skip: !exist
   }
 });
 
-test("gitleaks exit code 契約: ダミー秘密 → 1", { skip: !existsSync(GITLEAKS) }, () => {
+test("gitleaks exit code 契約: ダミー秘密 → 1", { skip: noGitleaks }, () => {
   const dir = mkdtempSync(join(tmpdir(), "gl-leak-"));
   try {
     // AWS access key 形式 (AKIA + 16 文字) を実行時に決定的に生成

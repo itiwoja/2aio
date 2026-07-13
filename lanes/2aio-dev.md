@@ -98,7 +98,7 @@ conventions.md 記載のビルド・テスト・lint コマンドで全体検証
 1. conventional commits 形式でコミット（`feat: ...` / `fix: ...`）。
 2. **push / PR 前セキュリティゲート（/2aio-build --local の Phase 5-pre と同形式・メインスレッド直接実施）**:
    push 対象コミットに対し gitleaks（未導入時は devops Step 2.5 のフォールバック規定を流用）+
-   `node C:/Users/1kkim/projects/scripts/security-scan.mjs {repo}` を実行。
+   環境変数 `SECURITY_SCAN_MJS` があれば `node $SECURITY_SCAN_MJS {repo}` を実行（無ければ gitleaks / レビューで代替）。
    **leak>0 / CRITICAL>0 はモード問わず push 禁止**（`[SECURITY_STOP]` を state.md に記録）。
 3. `--pr` 指定時のみ: 承認取得（interactive）→ `push_approved` 記録 → push → `gh pr create`
    （qa-report の要約を PR 本文に添付）→ `pr_url` を state.md に記録。

@@ -23,6 +23,8 @@ foreach ($sub in @("agents", "commands", "skills")) {
 }
 $lanesDir = Join-Path $claudeDir '2aio/lanes'
 New-Item -ItemType Directory -Force $lanesDir | Out-Null
+$scriptsDir = Join-Path $claudeDir '2aio/scripts'
+New-Item -ItemType Directory -Force $scriptsDir | Out-Null
 
 $manifestPath = "$claudeDir/.2aio-manifest"
 $manifestEntries = @{}
@@ -60,6 +62,9 @@ Write-Host "Installing agents, commands and lanes..." -ForegroundColor Cyan
 }
 Get-ChildItem (Join-Path $repoDir 'lanes') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $lanesDir -Force
+}
+Get-ChildItem (Join-Path $repoDir 'scripts') -Filter '*.mjs' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination $scriptsDir -Force
 }
 
 $repoSkills = @()

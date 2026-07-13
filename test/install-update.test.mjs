@@ -39,6 +39,7 @@ function fixture() {
   write(path.join(repo, "commands", "2aio-create.md"), "create\n");
   write(path.join(repo, "commands", "2aio-check.md"), "check\n");
   write(path.join(repo, "lanes", "2aio-build.md"), "build lane\n");
+  write(path.join(repo, "scripts", "ui-smoke.mjs"), "// smoke\n");
   write(path.join(repo, "skills", "cat", "skill-a", "SKILL.md"), "repo skill-a\n");
   write(path.join(repo, "skills", "cat", "skill-b", "SKILL.md"), "repo skill-b\n");
   return { root, repo, claudeDir };
@@ -155,6 +156,7 @@ test("入口 2 コマンドと lanes を配備し、引退した 2aio コマン�
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-create.md"), "utf8"), "create\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-check.md"), "utf8"), "check\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "lanes", "2aio-build.md"), "utf8"), "build lane\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "scripts", "ui-smoke.mjs"), "utf8"), "// smoke\n");
     assert.match(result.stdout, /removed retired command: 2aio-old\.md/);
   } finally { cleanup(env); }
 });

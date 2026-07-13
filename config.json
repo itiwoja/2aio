@@ -10,8 +10,8 @@
   "auditRoles": ["factuality", "hallucination", "2aio-fit", "safety"],
   "search": { "maxResults": 5, "maxCharsPerResult": 1800 },
   "paths": {
-    "vault": "C:/Users/1kkim/projects/vault",
-    "skills": "C:/Users/1kkim/.claude/skills",
+    "vault": "vault",
+    "skills": "~/.claude/skills",
     "proposals": "proposals",
     "runs": "runs"
   },

@@ -9,7 +9,7 @@ argument-hint: <テーマ|--lite>
 
 **テーマ:** $ARGUMENTS
 
-> `output/` は 2AIO ワークスペース `C:/Users/1kkim/projects/2aio-output/` を正本とする（カレントディレクトリ相対にしない）。
+> `output/` の正本は環境変数 `TWOAIO_OUTPUT_DIR`（設定時のみ）。未設定なら対象プロジェクト直下の `output/` を使う。
 > 使い分け: 事業性判断が必要な新テーマ=本コマンド（フル） / 個人ツール・開発ツール・社内ツール・学習目的で即PRD=--lite（ビジネス役員フル編成のトークンを開発テーマに使わない — #18） / 調査不要・即実装=/2aio-build / Intent を自分で書ける反復開発=IDD（/idd-intent〜。2AIOを通さない）。実装フェーズは 2AIO レーンと IDD のどちらか一方のみ使用する。
 
 ---
@@ -83,7 +83,7 @@ CMO/CSO を「CEOブリーフの該当部分 + Phase 2b の集約結果（要約
 - PRD（該当する場合）: `output/prd-{テーマ略称}-{YYYY-MM-DD}.md`
 
 ### Phase 7: Linear 起票（approved / conditional のみ・任意）
-`LINEAR_API_KEY` が利用可能なら、Linear BIZ チームに Issue を起票する: タイトル「[2AIO] {テーマ略称}: PRD実装」、本文に PRD パス・最終判断・即時アクション。`C:/Users/1kkim/projects/scripts/linear/` のスクリプトまたは GraphQL を使用。rejected / 起票不可の場合はレポートに「起票なし」と記録する。
+`LINEAR_API_KEY` が利用可能なら、Linear BIZ チームに Issue を起票する: タイトル「[2AIO] {テーマ略称}: PRD実装」、本文に PRD パス・最終判断・即時アクション。Linear GraphQL API（ローカルに linear 用スクリプトがあればそれでも可）を使用。rejected / 起票不可の場合はレポートに「起票なし」と記録する。
 
 ---
 

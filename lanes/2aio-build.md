@@ -7,7 +7,7 @@ argument-hint: <作るもの> [--auto] [--local] [--platform=vercel|firebase|gh-
 
 「いつもの実装」用の **2AIO 高速レーン**。取締役会・PRD・WBS・コスト試算を行わず、最短で「作って・検証して・公開」まで通す軽量オーケストレーターです。
 
-> `output/` の正本は `C:/Users/1kkim/projects/2aio-output/` に固定（cwd 依存禁止）。以下の `output/{project}/...` は全てこの配下を指す。
+> `output/` の正本は環境変数 `TWOAIO_OUTPUT_DIR`（設定時のみ）。未設定なら対象プロジェクト直下の `output/` を使う。以下の `output/{project}/...` は全てこの配下を指す。
 
 **作るもの:** $ARGUMENTS
 
@@ -172,7 +172,7 @@ tags: [2aio, build, {略称}]
 
 #### Phase 5-pre: 公開前セキュリティゲート ★必須（外部公開時）
 **正本ゲートは 2aio-devops の Step 2.5**（devops 起動時に必ず実行される。gitleaks 未導入時のフォールバック規定も Step 2.5 側に定義済み）。本コマンドでは重複実行しない。
-- **`--local` で devops を起動しない場合のみ**、`security-review` スキル準拠で本節をメインスレッドで直接実施: (1) gitleaks（未導入なら `git log -p --all | grep -niE "(api[_-]?key|secret|service_role|token|password)\s*[:=]"` で代替） (2) `node C:/Users/1kkim/projects/scripts/security-scan.mjs <project>` (3) CSP/frame-busting 確認。
+- **`--local` で devops を起動しない場合のみ**、`security-review` スキル準拠で本節をメインスレッドで直接実施: (1) gitleaks（未導入なら `git log -p --all | grep -niE "(api[_-]?key|secret|service_role|token|password)\s*[:=]"` で代替） (2) 環境変数 `SECURITY_SCAN_MJS` があれば `node $SECURITY_SCAN_MJS <project>`（無ければスキップ） (3) CSP/frame-busting 確認。
 - **ブロック条件（絶対の安全線・auto でも停止）**: gitleaks leak>0 / SAST CRITICAL>0。→ 修正するまで公開しない。
 - HIGH/MEDIUM は精査（誤検知＝アプリ定数/blob URL 等なら記録の上で許容、実入力なら esc() を確認）。
 

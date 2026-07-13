@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const DEFAULT_GITLEAKS = 'C:/Users/1kkim/projects/tools/gitleaks/gitleaks.exe';
+const DEFAULT_GITLEAKS = process.env.GITLEAKS_BIN || 'gitleaks';
 const METRIC_DIRECTIONS = {
   gitleaksLeaks: 'lower', failForward: 'lower', escalation: 'lower', skippedDep: 'lower',
   qaPassRate: 'higher', tasksFailed: 'lower', tokensUsed: 'lower',

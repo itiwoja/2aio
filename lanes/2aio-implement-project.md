@@ -9,7 +9,7 @@ argument-hint: "<impl-planパス|latest|resume {project}> [--auto|--interactive]
 
 **入力 実装計画ファイル:** $ARGUMENTS
 
-> 注記: `output/` の正本は `C:/Users/1kkim/projects/2aio-output/` に固定（cwd 依存禁止）。本ファイル中の `output/` はすべてこのパスを指す。
+> 注記: `output/` の正本は環境変数 `TWOAIO_OUTPUT_DIR`（設定時のみ）。未設定なら対象プロジェクト直下の `output/` を使う。本ファイル中の `output/` はすべてこのパスを指す。
 
 ## 引数の解釈
 
