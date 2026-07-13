@@ -1,0 +1,142 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import test from "node:test";
+
+const sourceInstaller = path.resolve("install.sh");
+
+// Windows では素の "bash" が WSL の System32\bash.exe に解決され、/c/... パスが
+// 通らない。Git Bash を優先的に探す（無ければ PATH の bash にフォールバック）。
+function resolveBash() {
+  if (process.platform !== "win32") return "bash";
+  const candidates = [
+    "C:/Program Files/Git/bin/bash.exe",
+    "C:/Program Files (x86)/Git/bin/bash.exe",
+    process.env.ProgramFiles ? path.join(process.env.ProgramFiles, "Git/bin/bash.exe") : null,
+  ].filter(Boolean);
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return "bash";
+}
+const BASH = resolveBash();
+
+function write(file, contents) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, contents);
+}
+
+function fixture() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "2aio-install-"));
+  const repo = path.join(root, "repo");
+  const claudeDir = path.join(root, "claude");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.mkdirSync(claudeDir, { recursive: true });
+  fs.copyFileSync(sourceInstaller, path.join(repo, "install.sh"));
+  write(path.join(repo, "agents", "a.md"), "agent\n");
+  write(path.join(repo, "commands", "c.md"), "command\n");
+  write(path.join(repo, "skills", "cat", "skill-a", "SKILL.md"), "repo skill-a\n");
+  write(path.join(repo, "skills", "cat", "skill-b", "SKILL.md"), "repo skill-b\n");
+  return { root, repo, claudeDir };
+}
+
+function run({ repo, claudeDir }, ...args) {
+  return spawnSync(BASH, ["install.sh", ...args], {
+    cwd: repo,
+    env: { ...process.env, CLAUDE_DIR: gitBashPath(claudeDir) },
+    encoding: "utf8",
+  });
+}
+
+function gitBashPath(value) {
+  if (process.platform !== "win32") return value;
+  return value.replace(/^([A-Za-z]):/, (_, drive) => `/${drive.toLowerCase()}`).replaceAll("\\", "/");
+}
+
+function manifest(dir) {
+  return fs.readFileSync(path.join(dir, ".2aio-manifest"), "utf8").trim().split(/\r?\n/);
+}
+
+function cleanup({ root }) {
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+test("通常インストールは新規スキルをマニフェストに記録する", () => {
+  const env = fixture();
+  try {
+    assert.equal(run(env).status, 0);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "utf8"), "repo skill-a\n");
+    assert.deepEqual(manifest(env.claudeDir), ["skill-a", "skill-b"]);
+  } finally { cleanup(env); }
+});
+
+test("通常インストールは既存スキルを変更も登録もしない", () => {
+  const env = fixture();
+  try {
+    write(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "user version\n");
+    assert.equal(run(env).status, 0);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "utf8"), "user version\n");
+    assert.deepEqual(manifest(env.claudeDir), ["skill-b"]);
+  } finally { cleanup(env); }
+});
+
+test("--update は管理済みだけを更新しユーザースキルを守る", () => {
+  const env = fixture();
+  try {
+    assert.equal(run(env).status, 0);
+    write(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "changed locally\n");
+    write(path.join(env.claudeDir, "skills", "user-x", "SKILL.md"), "user skill\n");
+    assert.equal(run(env, "--update").status, 0);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "utf8"), "repo skill-a\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "skills", "user-x", "SKILL.md"), "utf8"), "user skill\n");
+  } finally { cleanup(env); }
+});
+
+test("--update は管理済みスキルの古いファイルを残さない", () => {
+  const env = fixture();
+  try {
+    assert.equal(run(env).status, 0);
+    write(path.join(env.claudeDir, "skills", "skill-a", "extra.md"), "obsolete\n");
+    assert.equal(run(env, "--update").status, 0);
+    assert.equal(fs.existsSync(path.join(env.claudeDir, "skills", "skill-a", "extra.md")), false);
+  } finally { cleanup(env); }
+});
+
+test("--adopt-all は既存の同梱スキルをコピーせず登録する", () => {
+  const env = fixture();
+  try {
+    write(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "existing skill\n");
+    assert.equal(run(env, "--adopt-all").status, 0);
+    assert.deepEqual(manifest(env.claudeDir), ["skill-a", "skill-b"]);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "utf8"), "existing skill\n");
+  } finally { cleanup(env); }
+});
+
+test("--adopt-all --update は採用してから更新する", () => {
+  const env = fixture();
+  try {
+    write(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "old local skill\n");
+    assert.equal(run(env, "--adopt-all", "--update").status, 0);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "skills", "skill-a", "SKILL.md"), "utf8"), "repo skill-a\n");
+    assert.deepEqual(manifest(env.claudeDir), ["skill-a", "skill-b"]);
+  } finally { cleanup(env); }
+});
+
+test("同じコマンドを二回実行しても成功しマニフェストは不変", () => {
+  const env = fixture();
+  try {
+    assert.equal(run(env).status, 0);
+    const first = fs.readFileSync(path.join(env.claudeDir, ".2aio-manifest"), "utf8");
+    assert.equal(run(env).status, 0);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, ".2aio-manifest"), "utf8"), first);
+  } finally { cleanup(env); }
+});
+
+test("不明なフラグは失敗する", () => {
+  const env = fixture();
+  try {
+    assert.notEqual(run(env, "--unknown").status, 0);
+  } finally { cleanup(env); }
+});
