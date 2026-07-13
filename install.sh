@@ -29,7 +29,7 @@ MANIFEST_DIRTY=0
 if [ -f "$MANIFEST" ]; then
   # Tolerate PowerShell's UTF-8 BOM and CRLF, plus blank or padded lines.
   tr -d '\r' < "$MANIFEST" | sed $'1s/^\xef\xbb\xbf//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | awk 'NF' > "$MANIFEST_WORK"
-elif [ "$UPDATE" -eq 1 ]; then
+elif [ "$UPDATE" -eq 1 ] && [ "$ADOPT_ALL" -eq 0 ]; then
   echo "manifest not found; only new skills will be installed. Use --adopt-all to register existing skills."
 fi
 

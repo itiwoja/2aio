@@ -30,7 +30,7 @@ if (Test-Path -LiteralPath $manifestPath) {
         $name = $_.Trim().TrimStart([char]0xFEFF)
         if ($name) { $manifestEntries[$name] = $true }
     }
-} elseif ($update) {
+} elseif ($update -and -not $adoptAll) {
     Write-Host "manifest not found; only new skills will be installed. Use --adopt-all to register existing skills."
 }
 
