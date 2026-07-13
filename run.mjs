@@ -245,7 +245,7 @@ async function runTopic(topic) {
   log(`  監査: ${a.pass ? 'PASS' : 'NG(' + a.issues.length + ')'}`);
 
   // 安全分岐（README仕様）: vault × low × 監査PASS のみ自動適用。それ以外は全て提案（承認制）。
-  const { action, why } = decideAction({ targetType: topic.target.type, risk: topic.risk, auditPass: a.pass, dry });
+  const { action, why } = decideAction({ targetType: topic.target.type, risk: topic.risk, auditPass: a.pass, dry, autoApplyVault: CFG.autoApplyVault === true });
   if (action === 'propose') {
     const p = proposeChange(topic, draft, a, why);
     log(`  📝 提案のみ: ${p}（${why}）`);

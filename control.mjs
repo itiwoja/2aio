@@ -13,6 +13,8 @@ import { admitJob } from './lib/governor.mjs';
 import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips } from './lib/queue.mjs';
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
+import { within } from './lib/paths.mjs';
+import { getApiToken, tokenEquals } from './lib/token.mjs';
 import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT, laneInvocation } from './lib/intake.mjs';
 import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
 import { mapIssueToJob, filterUnseen, finalizeAction, detectCompletion, loadSeen, saveSeen, fetchAutoIssues, moveIssueState, commentOnIssue } from './lib/linear.mjs';
@@ -41,6 +43,8 @@ function git(dir, ...args) {
 const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
 const WORKSPACES = path.join(ROOT, 'workspaces');
 const REPOS_FILE = path.join(ROOT, 'repos.json');
+// API 認証トークン: 全 /api/* に x-2aio-token を要求（同一マシンの他プロセスからの操作を拒否）
+const API_TOKEN = getApiToken(ROOT);
 
 // 登録簿の正本は repos.json（UIのHTTPS登録で生成・更新）。未作成なら空。
 // repos.example.json は「手で書く場合の見本」であり、自動では取り込まない（実レジストリを汚さない）。
@@ -66,6 +70,7 @@ function registerRepo(url) {
   if (!info) return { ok: false, err: 'URL解析に失敗（https://host/owner/name 形式）' };
   const id = `${info.owner}-${info.name}`.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
   const dest = path.join(WORKSPACES, info.name);
+  if (!within(dest, WORKSPACES)) return { ok: false, err: 'ワークスペース外への登録は拒否されました' };
   const rec = { id, url, slug: info.slug, path: dest, branch: null, mode: null, state: 'cloning', error: null, defaultLane: 'build' };
   upsertRepo(rec);
   ensureDir(WORKSPACES);
@@ -233,6 +238,21 @@ function collectArtifacts(repoPath) {
   } catch { return null; }
 }
 
+// ジョブ終了時の次状態を決める純関数（#15/#23 の分岐。test/control-state.test.mjs で固定）。
+// waiting_approval は exit 0 でも上書きしない。idd-mvp の正常終了は waiting_review（削軸レビュー待ち）。
+export function resolveNextState(currentState, code, kind) {
+  if (currentState === 'waiting_approval') return 'waiting_approval';
+  if (code === 0 && kind === 'idd-mvp') return 'waiting_review';
+  return code === 0 ? 'done' : 'failed';
+}
+
+// ワーカー起動コマンドの組み立て（純関数）。--allowedTools は可変長のため末尾、プロンプトは先頭の
+// 位置引数にする（後ろだと allowedTools が飲み込み「Input must be provided」になる既知バグ。eval 実走で発覚）。
+export function buildWorkerArgs({ workerCmd, claudeBin, prompt, permissionMode, allowedTools }) {
+  if (workerCmd) { const parts = workerCmd.split(' '); return { cmd: parts[0], args: [...parts.slice(1), prompt] }; }
+  return { cmd: claudeBin, args: ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', permissionMode, '--allowedTools', allowedTools] };
+}
+
 function startJob(job) {
   const repo = repoById(job.repo);
   if (!repo) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), log: [`repo未登録: ${job.repo}`] }); return; }
@@ -270,18 +290,14 @@ function startJob(job) {
   // 2AIO ルールで禁止のため、正規の acceptEdits + allowedTools 前置きで許可する
   // （Ring-1 guard フックは引き続き全ツール呼び出しを審査する）。config.json の worker で上書き可。
   const WK = CFG.worker || {};
-  const PERMISSION_MODE = WK.permissionMode || 'acceptEdits';
-  const ALLOWED_TOOLS = WK.allowedTools
-    || 'Read,Write,Edit,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(mkdir:*),Bash(curl:*),Bash(vercel:*),Bash(firebase:*)';
-  let cmd, args;
-  if (WORKER_CMD) { const parts = WORKER_CMD.split(' '); cmd = parts[0]; args = [...parts.slice(1), prompt]; }
-  else {
-    cmd = CLAUDE;
-    // 引数順に注意: --allowedTools は可変長のため、後ろに置くとプロンプト位置引数まで
-    // 飲み込んで「Input must be provided」エラーになる（eval 実走で発覚）。プロンプトを先頭に置く。
-    args = ['-p', prompt, '--output-format', 'stream-json', '--verbose',
-      '--permission-mode', PERMISSION_MODE, '--allowedTools', ALLOWED_TOOLS];
-  }
+  const { cmd, args } = buildWorkerArgs({
+    workerCmd: WORKER_CMD,
+    claudeBin: CLAUDE,
+    prompt,
+    permissionMode: WK.permissionMode || 'acceptEdits',
+    allowedTools: WK.allowedTools
+      || 'Read,Write,Edit,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(mkdir:*),Bash(curl:*),Bash(vercel:*),Bash(firebase:*)',
+  });
 
   let child;
   try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true }); }
@@ -352,9 +368,7 @@ function startJob(job) {
     // #23: idd-mvp 完了は done でなく waiting_review（ikki の /idd-review 4軸レビュー待ちを可視化。
     //      後続の自動投入はしない — 削軸レビューは対話必須）
     const current = loadQueue(ROOT).find((x) => x.id === job.id);
-    const nextState = current?.state === 'waiting_approval' ? 'waiting_approval'
-      : (code === 0 && job.kind === 'idd-mvp') ? 'waiting_review'
-      : (code === 0 ? 'done' : 'failed');
+    const nextState = resolveNextState(current?.state, code, job.kind);
     const updated = updateJob(ROOT, job.id, {
       state: nextState, exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
@@ -468,7 +482,11 @@ function overview() {
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   if (csrfBlocked(req)) return send(res, 403, 'application/json', JSON.stringify({ ok: false, err: 'cross-origin POST拒否' }));
-  if (u.pathname === '/') return send(res, 200, 'text/html; charset=utf-8', HTML);
+  // 認証: / も /api/* もトークン必須（ヘッダ x-2aio-token か ?token=）。
+  // / を未認証にすると埋め込みトークンが漏れる（curl で窃取可能）ため、HTML 配信もゲート対象にする。
+  const authed = tokenEquals(req.headers['x-2aio-token'], API_TOKEN) || tokenEquals(u.searchParams.get('token'), API_TOKEN);
+  if (!authed) return send(res, 401, 'application/json', JSON.stringify({ ok: false, err: '認証トークンが必要です（起動時にコンソール出力した ?token= 付き URL を開いてください）' }));
+  if (u.pathname === '/') return send(res, 200, 'text/html; charset=utf-8', HTML.replace('__API_TOKEN__', () => API_TOKEN));
   if (u.pathname === '/api/control') return send(res, 200, 'application/json', JSON.stringify(overview()));
   if (u.pathname === '/api/debug') {
     const g = governorState();
@@ -530,7 +548,9 @@ const server = http.createServer(async (req, res) => {
     return send(res, r.ok ? 200 : 422, 'application/json', JSON.stringify(r));
   }
   if (u.pathname === '/api/intake') { // GET: 会話取得
-    const rec = loadIntake(u.searchParams.get('repo') || '');
+    const repo = u.searchParams.get('repo') || '';
+    if (!repoById(repo)) return send(res, 422, 'application/json', JSON.stringify({ ok: false, err: 'repo未登録' }));
+    const rec = loadIntake(repo);
     return send(res, 200, 'application/json', JSON.stringify(rec || { messages: [], done: false }));
   }
   if (u.pathname === '/api/intake/answer' && req.method === 'POST') {
@@ -558,7 +578,7 @@ if (isMain) {
   if (rec.interrupted.length || rec.requeued.length) {
     console.log(`[2aio-control] reconcile: interrupted=${rec.interrupted.join(',') || '-'} requeued=${rec.requeued.join(',') || '-'}`);
   }
-  server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
+  server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}/?token=${API_TOKEN}`));
   claudeUsage(); // ccusage プリウォーム
   setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
   // #7: LINEAR_API_KEY がある場合のみ Linear ポーリング開始（60秒未満は 60 秒に切り上げ）
@@ -606,7 +626,7 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
     <h2>共有トークン予算（Claude Max 5時間ブロック）</h2>
     <div id="budget" class="muted">—</div><div class="gauge"><div id="bar"></div></div>
   </div>
-  <div class="grid g4" id="kpis"></div>
+  <div class="grid g4" id="kpis"><div class="muted">読み込み中…</div></div>
   <div class="card"><h2>リポジトリ登録（HTTPS）</h2>
     <div class="form">
       <input id="url" placeholder="https://github.com/owner/name">
@@ -614,7 +634,7 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
     </div>
     <div class="muted" style="margin-top:8px">登録すると workspaces/ に clone し、<b>新規</b>なら対話ヒアリング→計画・実装、<b>既存</b>ならコード/docs/Issueを解析して改善案を出します。（private は事前に git 認証が必要）</div>
   </div>
-  <div class="card"><h2>登録repo</h2><div id="repos"></div></div>
+  <div class="card"><h2>登録repo</h2><div id="repos"><div class="muted">読み込み中…</div></div></div>
   <div class="card"><h2>ジョブ投入（既存repoの手動レーン）</h2>
     <div class="form">
       <select id="repo"></select>
@@ -624,8 +644,9 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
     </div>
     <div class="muted" style="margin-top:8px">投入後、ガバナーが枠を見て自動起動します（枠が薄い間はqueuedのまま待機→reset後に自動消化）。</div>
   </div>
-  <div class="card"><h2>キュー / 進行状況</h2><div id="jobs"></div></div>
+  <div class="card"><h2>キュー / 進行状況</h2><div id="jobs"><div class="muted">読み込み中…</div></div></div>
 </main>
+<div id="toasts" style="position:fixed;right:18px;bottom:18px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px" aria-live="polite"></div>
 <dialog id="jobdlg"><header class="dbody" style="display:flex;align-items:center"><b id="jd-title">ジョブ詳細</b><span class="spacer"></span><button onclick="document.getElementById('jobdlg').close()">閉じる</button></header>
   <div class="dbody"><div id="jd-meta" class="muted" style="margin-bottom:10px"></div>
     <div class="chat mono" id="jd-log" style="max-height:52vh;font-size:12px"></div>
@@ -637,11 +658,31 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
     <div class="muted" id="ik-note" style="margin-top:8px"></div>
   </div></dialog>
 <script>
+const __TK='__API_TOKEN__';const __F=window.fetch;window.fetch=(u,o)=>{o=o||{};if(typeof u==='string'&&u.startsWith('/api/'))o.headers={...(o.headers||{}),'x-2aio-token':__TK};return __F(u,o);};
 const $=s=>document.querySelector(s);const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf=n=>(n==null?'—':Number(n).toLocaleString());
 function resetIn(iso){if(!iso)return'';try{const m=Math.max(0,Math.round((new Date(iso)-new Date())/60000));return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分';}catch(e){return''}}
+function toast(msg,kind){
+  const col=kind==='bad'?'var(--bad)':kind==='ok'?'var(--ok)':'var(--accent)';
+  const t=document.createElement('div');
+  t.textContent=msg;t.setAttribute('role','status');
+  t.style.cssText='padding:10px 14px;border-radius:8px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-left:3px solid '+col+';box-shadow:0 6px 20px rgba(0,0,0,.45);max-width:360px;white-space:pre-wrap;font-size:13px';
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(()=>t.remove(),400);},kind==='bad'?5000:3000);
+}
+let loadFails=0;
 async function load(){
-  const o=await(await fetch('/api/control')).json();const g=o.governor;
+  let o;
+  try{
+    const res=await fetch('/api/control');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    o=await res.json();loadFails=0;
+  }catch(e){
+    loadFails++;
+    $('#gov').innerHTML='<span style="color:var(--bad)">⚠ コントロールプレーンへの接続失敗（'+esc(String(e.message))+'）・自動再試行中… ('+loadFails+')</span>';
+    return;
+  }
+  const g=o.governor;
   const pct=g.usedPct==null?null:Math.round(g.usedPct*100);
   const thr=Math.round(g.threshold*100);
   const col=pct==null?'var(--sub)':pct>=thr?'var(--bad)':pct>=70?'var(--warn)':'var(--ok)';
@@ -678,9 +719,9 @@ async function showJob(id){const r=await(await fetch('/api/job?id='+encodeURICom
     +(j.artifacts?('<br>成果物: '+(j.artifacts.deployedUrl?'<a href="'+esc(j.artifacts.deployedUrl)+'" target="_blank">'+esc(j.artifacts.deployedUrl)+'</a> ':'')+(j.artifacts.prUrl?'<a href="'+esc(j.artifacts.prUrl)+'" target="_blank">PR</a> ':'')+esc(j.artifacts.outputDir||'')):'');
   $('#jd-log').innerHTML=(r.logTail||[]).map(l=>{try{const e=JSON.parse(l);const t=e.type==='raw'?e.text:e.type==='result'?('[result] '+(typeof e.result==='string'?e.result:'')): e.type==='assistant'?((e.message&&e.message.content&&e.message.content.find(c=>c.type==='text')||{}).text||''):'';return t?'<div class="msg assistant">'+esc(t)+'</div>':'';}catch(_){return '<div class="msg assistant">'+esc(l)+'</div>';}}).join('')||'<span class="muted">ログなし</span>';
   $('#jobdlg').showModal();const c=$('#jd-log');c.scrollTop=c.scrollHeight;}
-$('#add').onclick=async()=>{const repo=$('#repo').value,kind=$('#kind').value,theme=$('#theme').value;if(!repo){alert('repoが未登録です');return;}await fetch('/api/enqueue?repo='+encodeURIComponent(repo)+'&kind='+encodeURIComponent(kind)+'&theme='+encodeURIComponent(theme),{method:'POST'});$('#theme').value='';load();};
-$('#reg').onclick=async()=>{const url=$('#url').value.trim();if(!url)return;$('#reg').disabled=true;$('#reg').textContent='登録中…';const r=await(await fetch('/api/register?url='+encodeURIComponent(url),{method:'POST'})).json();$('#reg').disabled=false;$('#reg').textContent='登録して clone';if(!r.ok){alert('登録失敗: '+(r.err||''));return;}$('#url').value='';load();};
-async function analyze(id){await fetch('/api/analyze?repo='+encodeURIComponent(id),{method:'POST'});alert('解析ジョブをキューに投入しました。進行状況は下のキューで確認できます。');load();}
+$('#add').onclick=async()=>{const repo=$('#repo').value,kind=$('#kind').value,theme=$('#theme').value;if(!repo){toast('repoが未登録です','bad');return;}await fetch('/api/enqueue?repo='+encodeURIComponent(repo)+'&kind='+encodeURIComponent(kind)+'&theme='+encodeURIComponent(theme),{method:'POST'});$('#theme').value='';load();};
+$('#reg').onclick=async()=>{const url=$('#url').value.trim();if(!url)return;$('#reg').disabled=true;$('#reg').textContent='登録中…';const r=await(await fetch('/api/register?url='+encodeURIComponent(url),{method:'POST'})).json();$('#reg').disabled=false;$('#reg').textContent='登録して clone';if(!r.ok){toast('登録失敗: '+(r.err||''),'bad');return;}$('#url').value='';load();};
+async function analyze(id){await fetch('/api/analyze?repo='+encodeURIComponent(id),{method:'POST'});toast('解析ジョブをキューに投入しました。進行状況は下のキューで確認できます。','ok');load();}
 // ── 対話ヒアリング ──
 let IKID=null;
 async function openIntake(id){IKID=id;$('#ik-title').textContent='対話ヒアリング: '+id;$('#intake').showModal();await ikLoad();}

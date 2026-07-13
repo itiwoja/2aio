@@ -2,7 +2,7 @@
 
 Contain the agent so an escaped destructive action or malicious code has bounded blast radius.
 These are deployment/runtime options — pick per risk tolerance. Sources staged at
-`dev/skills/_review/security-sandbox/`.
+`dev/skills/_review/security-sandbox/` — author's local working area, not present in a clone.
 
 | Tool | Isolation model | Best when | License |
 |---|---|---|---|

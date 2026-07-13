@@ -23,3 +23,7 @@ control/
 repos.json
 workspaces/
 eval/results/
+
+# ハーネス: skill-index は各環境の ~/.claude/skills から install 時に build-index.mjs で自動生成される
+# （個人のスキルインベントリを含むため配布物にコミットしない）
+harness/skill-router/skill-index.json

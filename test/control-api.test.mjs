@@ -17,6 +17,8 @@ fs.writeFileSync(path.join(root, 'repos.json'), JSON.stringify({
 }, null, 2));
 process.env.AIO_CONTROL_ROOT = root;
 process.env.AIO_WORKER_CMD = 'node -e setTimeout(()=>console.log(1),150)';
+// API 認証トークンを固定し、テストの正規リクエストはこれを付与する（認証ゲート自体も検証対象）。
+process.env.AIO_API_TOKEN = 'test-token';
 // Keep a real ccusage block from accidentally exercising the budget-stop path.
 process.env.AIO_TOKEN_LIMIT = '1000000000000000';
 
@@ -37,8 +39,9 @@ after(async () => {
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-async function request(route, options) {
-  return fetch(baseUrl + route, options);
+async function request(route, options = {}) {
+  const headers = { 'x-2aio-token': 'test-token', ...(options.headers || {}) };
+  return fetch(baseUrl + route, { ...options, headers });
 }
 
 async function job(id) {
@@ -61,6 +64,26 @@ async function waitFor(id, predicate, timeoutMs = 3000) {
 test('enqueue は未登録 repo を 422 で拒否する', async () => {
   const response = await request('/api/enqueue?repo=nosuch&kind=build', { method: 'POST' });
   assert.equal(response.status, 422);
+});
+
+test('API はトークン無しのリクエストを 401 で拒否する', async () => {
+  const noToken = await fetch(`${baseUrl}/api/control`);
+  assert.equal(noToken.status, 401);
+  const wrongToken = await fetch(`${baseUrl}/api/control`, { headers: { 'x-2aio-token': 'nope' } });
+  assert.equal(wrongToken.status, 401);
+  const ok = await fetch(`${baseUrl}/api/control`, { headers: { 'x-2aio-token': 'test-token' } });
+  assert.equal(ok.status, 200);
+});
+
+test('GET / もトークン必須（未認証だと埋め込みトークンが漏れないこと）', async () => {
+  const noToken = await fetch(`${baseUrl}/`);
+  assert.equal(noToken.status, 401, 'トークン無しの GET / は 401');
+  const viaQuery = await fetch(`${baseUrl}/?token=test-token`);
+  assert.equal(viaQuery.status, 200, '?token= 付きなら 200');
+  const html = await viaQuery.text();
+  assert.match(html, /__TK='test-token'/, '認証済み HTML にはトークンが埋め込まれる');
+  const viaHeader = await fetch(`${baseUrl}/`, { headers: { 'x-2aio-token': 'test-token' } });
+  assert.equal(viaHeader.status, 200, 'ヘッダ認証でも 200');
 });
 
 test('enqueue は cross-origin POST を 403 で拒否する', async () => {

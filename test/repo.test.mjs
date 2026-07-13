@@ -17,6 +17,18 @@ test('parseRepoUrl: 不正な入力は null', () => {
   for (const u of ['', 'not-a-url', 'https://github.com/only-owner', null]) assert.equal(parseRepoUrl(u), null);
 });
 
+test('parseRepoUrl: パストラバーサル（.. / バックスラッシュ）は null で弾く', () => {
+  const bs = String.fromCharCode(92); // '\'
+  const malicious = [
+    'https://github.com/owner/..',              // dest が ROOT に解決する典型
+    'https://github.com/../evil',               // owner 側 ..
+    'https://github.com/owner/.',               // 単一ドット
+    `https://github.com/owner/..${bs}..${bs}Windows${bs}Temp${bs}evil`, // Windows パス脱出
+    `https://github.com/ow${bs}ner/name`,       // owner 内バックスラッシュ
+  ];
+  for (const u of malicious) assert.equal(parseRepoUrl(u), null, `should reject: ${u}`);
+});
+
 function mk(files) {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), '2aio-repo-'));
   for (const [f, c] of Object.entries(files)) {

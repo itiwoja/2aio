@@ -12,7 +12,7 @@
 
 ## 中核の洞察: 共有サブスク枠が「キュー」を強制する
 
-サブスクは **5時間ブロック＝有限の共有枠**（`config.claudeMax5x.tokenLimit`＝220Mtok, `costLimit:0`）。
+サブスクは **5時間ブロック＝有限の共有枠**（`config.claudeMax5x.tokenLimit`＝88Mtok, `costLimit:0`）。
 API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠を食い合う**ため無制限並列は即キャップ到達で全停止する。
 
 → 司令塔の本体は「監視」ではなく **トークン予算ガバナー＝ジョブキュー**。
@@ -33,7 +33,7 @@ API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠
             │ repoA(git) │     │ repoB(git) │  ← L1: ~/.claude/skills の
             │ 明示せず2AIO│     │ 明示せず2AIO│     グローバル2AIOを自動利用
             └────────────┘     └────────────┘
-                  共有: Claude Max 5hブロック（220Mtok / costLimit:0）
+                  共有: Claude Max 5hブロック（88Mtok / costLimit:0）
 ```
 
 ### L1. アンビエント2AIO層（明示せず自動で使う）— Phase 2
@@ -68,6 +68,12 @@ API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠
 | `start` | `/2aio-start-project <theme>` |
 | `plan` | `/2aio-plan-project <prd\|latest>` |
 | `implement` | `/2aio-implement-project <plan\|latest> --auto` |
+| `analyze` | 既存repo解析（README/docs/コード/Issueを読み理解＋改善案＋2AIO強化点を出力、CLAUDE.md反映） |
+| `feature` / `fix` / `issue` | `2aio-dev` レーンへ委譲（機能追加／バグ修正／Issue起点） |
+| `test` | テストコマンドを検出して全実行、失敗は最大3往復で自己修正 |
+| `review` / `refactor` | `/code-review <target>` ／ `/refactor-clean <target>` |
+| `idd-intent` / `idd-plan` / `idd-mvp` | IDD ブリッジ（intent→plan→mvp で停止） |
+| `pr` | 秘密スキャン後に push → `gh pr create` |
 
 `prompt` を直接指定した場合はそれを優先。
 

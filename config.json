@@ -2,6 +2,7 @@
   "model": "qwen2.5:14b",
   "ollamaUrl": "http://localhost:11434",
   "auditBackend": "claude",
+  "autoApplyVault": false,
   "claudeMax5x": { "label": "Max x5", "tokenLimit": 88000000, "costLimit": 0 },
   "auditRounds": 2,
   "governor": { "tokenThreshold": 0.8, "maxConcurrency": 1, "pollMs": 5000 },

@@ -47,9 +47,10 @@ agents-observe, Claude-Code-Agent-Monitor, claude-code-otel, multi-agent-observa
 ## Self-improvement — Native
 2AIOForge (`run.mjs` + `lib/`) — collect → synthesize (local Ollama) → audit → apply/propose,
 auto-updating design/security knowledge. A multi-repo control plane (`control.mjs`, subscription
-budget governor) lives on branch `claude/repos-consolidation-ccc-5e5933` and merges in cleanly.
-See top-level `README.md` Part 5.
+budget governor) is merged into `main` and runs from the repo root. See top-level `README.md` Part 5
+and `docs/CONTROL-PLANE.md`.
 
 ## Staging
-All cloned upstream sources are staged (git-ignored) at `dev/skills/_review/<category>/<repo>/`
+All cloned upstream sources are staged (git-ignored, **author's local working area — not present in a
+clone**) at `dev/skills/_review/<category>/<repo>/`
 so any tool can be inspected, updated, or promoted from Catalogued → Wired without re-cloning.

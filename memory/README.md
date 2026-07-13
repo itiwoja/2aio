@@ -2,7 +2,8 @@
 
 Persistent, cross-session memory for the agent framework. All options are external tools
 (MCP servers / plugins / libraries) — documented and recommended here, not vendored. Sources
-staged at `dev/skills/_review/memory/` (+ `dev/skills/TencentDB-Agent-Memory/`).
+staged at `dev/skills/_review/memory/` (+ `dev/skills/TencentDB-Agent-Memory/`) — author's local
+working area, not present in a clone.
 
 | Tool | Model | Storage | Interface | Notes |
 |---|---|---|---|---|
@@ -19,8 +20,8 @@ staged at `dev/skills/_review/memory/` (+ `dev/skills/TencentDB-Agent-Memory/`).
 
 ## Recommendation for 2AIO
 - **Default (zero new infra):** **agentcairn** — it uses an Obsidian vault as the store, which
-  is exactly the format 2AIO's `state.md` / `output/` already targets (see `../state-schema.md`
-  "Obsidian vault としての扱い"). Lowest-friction, keeps memory human-readable and git-able.
+  is exactly the format 2AIO's `state.md` / `output/` already targets (Markdown を Obsidian vault
+  として扱う運用)。Lowest-friction, keeps memory human-readable and git-able.
 - **Add outcome-quality gating:** layer **presence** or **roampal-core** so the framework stops
   repeating advice that led to reverts, and success claims require test evidence — this pairs
   naturally with the QA gate in `/2aio-implement-project`.
