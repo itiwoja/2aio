@@ -3,6 +3,8 @@ description: 既存システムの UI を「作り直す」専用レーン。解
 argument-hint: <対象dir|.> [--scope=<glob|ページ名>] [--route=minimal|editorial|dense|<路線名>] [--auto] [--local]
 ---
 
+> **表記の読み替え:** 本文中の `/2aio-<name>` は旧スラッシュコマンド表記。`~/.claude/2aio/lanes/2aio-<name>.md` を Read し、後続テキストを $ARGUMENTS としてその指示に従う意味に読み替える。
+
 既存プロダクトの **UI リデザイン専用** オーケストレーター。`/2aio-build` が「ゼロから新規生成」なのに対し、本コマンドは **今あるコードを読み、監査し、既存スタックのまま段階的に高級化** する。**スクラッチで書き直さない・機能を壊さない** が絶対原則。
 
 **対象:** $ARGUMENTS

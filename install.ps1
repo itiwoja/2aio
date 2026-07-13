@@ -1,39 +1,45 @@
 #!/usr/bin/env pwsh
 Write-Host "`n=== 2AIO Installation ===" -ForegroundColor Cyan
-$claudeDir = "$env:USERPROFILE/.claude"
+$claudeDir = if ($env:CLAUDE_DIR) { $env:CLAUDE_DIR } else { Join-Path $env:USERPROFILE '.claude' }
 if (-not (Test-Path $claudeDir)) {
-    Write-Host "Claude Code not found"; exit 1
+    Write-Host "Claude Code not found: $claudeDir"
+    exit 1
 }
 $repoDir = Split-Path $MyInvocation.MyCommand.Path
-foreach ($sub in @("agents","commands","skills")) {
-    New-Item -ItemType Directory -Force "$claudeDir/$sub" | Out-Null
+@('agents', 'commands', 'skills') | ForEach-Object {
+    New-Item -ItemType Directory -Force (Join-Path $claudeDir $_) | Out-Null
 }
+$lanesDir = Join-Path $claudeDir '2aio/lanes'
+New-Item -ItemType Directory -Force $lanesDir | Out-Null
 
-Write-Host "Installing agents and commands..." -ForegroundColor Cyan
-@("agents","commands") | ForEach-Object {
-    if (Test-Path "$repoDir/$_") {
-        Copy-Item "$repoDir/$_/*.md" "$claudeDir/$_/" -Force
+# Retire only command files managed by 2AIO. A user note or any non-2aio file
+# is intentionally preserved.
+Get-ChildItem (Join-Path $claudeDir 'commands') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    if (-not (Test-Path (Join-Path $repoDir "commands/$($_.Name)"))) {
+        Remove-Item -LiteralPath $_.FullName -Force
+        Write-Host "  removed retired command: $($_.Name)"
     }
 }
 
-Write-Host "Installing skills (flattened, ECC-safe: never overwrite existing)..." -ForegroundColor Cyan
+Get-ChildItem (Join-Path $repoDir 'agents') -Filter '*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $claudeDir 'agents') -Force
+}
+Get-ChildItem (Join-Path $repoDir 'commands') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $claudeDir 'commands') -Force
+}
+Get-ChildItem (Join-Path $repoDir 'lanes') -Filter '2aio-*.md' -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination $lanesDir -Force
+}
+
+Write-Host "Installing skills (flattened; existing skills are preserved)..." -ForegroundColor Cyan
 $count = 0
-if (Test-Path "$repoDir/skills") {
-    Get-ChildItem "$repoDir/skills" -Directory | ForEach-Object {
-        Get-ChildItem $_.FullName -Directory | ForEach-Object {
-            $skill = $_
-            if (Test-Path "$($skill.FullName)/SKILL.md") {
-                $dest = "$claudeDir/skills/$($skill.Name)"
-                if (Test-Path $dest) {
-                    Write-Host "  skip (exists): $($skill.Name)"
-                } else {
-                    Copy-Item $skill.FullName $dest -Recurse -Force
-                    $count++
-                }
-            }
-        }
+Get-ChildItem (Join-Path $repoDir 'skills') -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+    Get-ChildItem $_.FullName -Directory | ForEach-Object {
+        if (-not (Test-Path (Join-Path $_.FullName 'SKILL.md'))) { return }
+        $dest = Join-Path (Join-Path $claudeDir 'skills') $_.Name
+        if (Test-Path $dest) { Write-Host "  skip (exists): $($_.Name)" }
+        else { Copy-Item -LiteralPath $_.FullName -Destination $dest -Recurse -Force; $count++ }
     }
 }
 Write-Host "  installed $count new skill(s)"
-Write-Host "`n✓ 2AIO Installation Complete (agents + commands + skills)" -ForegroundColor Green
-Write-Host "  Security / memory / observability are external tools — install per their README."
+Write-Host "2AIO installation complete (agents + commands + lanes + skills)" -ForegroundColor Green

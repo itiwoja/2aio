@@ -3,6 +3,8 @@ description: PRD を入力に 2AIO 実装計画会議(CEO方針→CTO+planner並
 argument-hint: <PRDパス|latest> [--lite] [--handoff=idd]
 ---
 
+> **表記の読み替え:** 本文中の `/2aio-<name>` は旧スラッシュコマンド表記。`~/.claude/2aio/lanes/2aio-<name>.md` を Read し、後続テキストを $ARGUMENTS としてその指示に従う意味に読み替える。
+
 以下の PRD について2AIO（AGENT ALL IN ONE）実装計画会議を開いてください。
 
 **入力 PRD ファイル:** $ARGUMENTS

@@ -3,6 +3,8 @@ description: 実装計画書(impl-plan)を入力に 2aio-engineer→2aio-qa→2a
 argument-hint: "<impl-planパス|latest|resume {project}> [--auto|--interactive]"
 ---
 
+> **表記の読み替え:** 本文中の `/2aio-<name>` は旧スラッシュコマンド表記。`~/.claude/2aio/lanes/2aio-<name>.md` を Read し、後続テキストを $ARGUMENTS としてその指示に従う意味に読み替える。
+
 以下の実装計画書を **自律実行エンジン** として実装→QA→デプロイまで通してください。
 
 **入力 実装計画ファイル:** $ARGUMENTS

@@ -243,3 +243,10 @@ See [`../adapters/README.md`](../adapters/README.md).
 The guard spawns `python` on every intercepted tool call (~100–200 ms). That is the price of a
 live guardrail. Each UserPromptSubmit advisor spawns `node` once per prompt; all four fail open. Scope is Bash/Write/Edit/MultiEdit/NotebookEdit (Read and MCP are not intercepted,
 to keep sessions fast).
+## Two-mode command surface
+
+Installers copy the ten `lanes/2aio-*.md` files to
+`~/.claude/2aio/lanes/`. Only `/2aio-create` and `/2aio-check` are copied to
+`~/.claude/commands/`; retired `2aio-*.md` command files are removed while
+non-2AIO user files are preserved. The control plane uses the installed lane
+path in every lane invocation.

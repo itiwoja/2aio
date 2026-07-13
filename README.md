@@ -6,7 +6,8 @@
 
 ```
 2AIO
-├─ agents/ commands/      … エージェント 27 体 + ワークフロー 9 コマンド（native）
+├─ agents/ commands/      … エージェント 27 体 + 入口 2 コマンド（create / check）
+├─ lanes/                 … 内部ワークフローレーン 10 本（入口・制御プレーンが自動選択）
 ├─ harness/               … ライブハーネス（guard / model・skill ルーティング / Codex委譲 / enforcer / front-door / providers）
 ├─ AGENTS.md adapters/    … クロスhost 操作モデル（Claude / Codex / 任意の OpenAI 互換 AI 共通）
 ├─ skills/                … 66 スキル（SDLC / Apple / 設計 / オーケストレーション / リサーチ）
@@ -38,7 +39,7 @@ git clone https://github.com/itiwoja/2aio.git
 cd 2aio
 bash install.sh        # macOS / Linux
 ```
-`agents/`（27 体）`commands/`（9 個）`skills/`（66 個）を `~/.claude/` に配備します（**既存スキルは上書きしません** — ECC セーフ）。
+`agents/`（27 体）`commands/`（入口 2 個）`lanes/`（内部レーン 10 本 → `~/.claude/2aio/lanes/`）`skills/`（66 個）を配備します（**既存スキルは上書きしません** — ECC セーフ）。
 セキュリティ / メモリ / 可観測性は外部ツール — 各 README に従って個別導入してください。
 
 ### 2.（任意）ライブハーネスを有効化
@@ -52,10 +53,10 @@ bash harness/install-harness.sh    # guard + 4 advisor + enforcer を settings.j
 ```bash
 /2aio-build "ポモドーロタイマー PWA" --auto   # 最短で 1 本走らせる（PRD 不要の高速レーン）
 ```
-`/2aio-` と打って補完に 9 コマンドが出れば導入成功です。本格的に使うなら:
+`/2aio-` と打って補完に **`/2aio-create` と `/2aio-check` の 2 つ**が出れば導入成功です。使うのはこの 2 つだけです:
 ```bash
-/2aio-start-project "作りたいもの"    # 取締役会 → PRD から始めるフルコース
-/2aio-delegate "<実装タスク>"         # Codex 委譲（ハーネス導入 + Codex CLI が前提）
+/2aio-create "作りたいもの"    # 一から作る（規模は自動判定）
+/2aio-check .                  # 既存プロジェクトを評価 → 承認後に修正まで
 ```
 
 ### 4.（任意）常駐レイヤーを起動
@@ -82,7 +83,7 @@ npm run control        # 制御プレーン（複数 repo 進行） → http://l
 | **front-door**（`front-door/`） | 素のプロンプトから適切な 2AIO パイプライン（harden / board / redesign / research）へ誘導 |
 | **providers**（`providers/`） | `ai-run.sh --provider <name>` で任意の OpenAI 互換 AI（openai / xai / deepseek / groq / ローカル ollama…）へ委譲。鍵は env のみ |
 
-- **委譲の起動:** `/2aio-delegate "<実装タスク>"`（計画→brief→Codex→レビュー統合）。UI タスクは自動でデザイン品質 directive を付与。
+- **委譲の起動:** 内部レーン `2aio-delegate`（計画→brief→Codex→レビュー統合）。通常は enforcer / front-door が自動誘導するので意識不要。UI タスクは自動でデザイン品質 directive を付与。
 - **クロスhost:** 操作モデルの正本は [`AGENTS.md`](./AGENTS.md)（Codex はネイティブに読む）。host 別導入は [`adapters/README.md`](./adapters/README.md)。
 - 詳細と正直な限界（全操作の自動強制は hook を持つ Claude Code のみ完全）は [`harness/README.md`](./harness/README.md)。
 
@@ -90,17 +91,39 @@ npm run control        # 制御プレーン（複数 repo 進行） → http://l
 
 ## Part 1 — マルチエージェント（native）
 
-### 使い方
+### 使い方 — 入口は 2 モードだけ
+
+**強い agent 集を意識しなくても使える**のが 2AIO のコンセプト。ユーザー向けコマンドは 2 つだけで、
+規模判定・レーン選択・エージェント編成はすべて内部で自動化されます。
+
 ```bash
-/2aio-start-project "沖縄観光 AI 案内チャットボット"   # 取締役会 → PRD
-/2aio-plan-project {prd-file}                          # 実装計画（WBS）
-/2aio-implement-project {impl-plan-file}               # 実装 → QA → デプロイ
-/2aio-build {テーマ} --auto                            # 超高速レーン（PRD 不要）
-/2aio-delegate "<実装タスク>"                          # 計画 → Codex 委譲 → レビュー統合
-/2aio-harden [--dimensions=...]                        # 既存システムを全次元で自律強化（loop-until-clean）
-/2aio-redesign {対象}                                  # 既存 UI の作り直し専用レーン
-/2aio-autorun-batch {テーマ1} {テーマ2} ...            # バッチ実行
+/2aio-create "沖縄観光 AI 案内チャットボット"   # ① 一から作る — 小規模なら即実装、大テーマなら取締役会→PRD→計画→実装まで自動
+/2aio-check .                                   # ② 既存プロジェクトの評価 — 多観点監査→スコア付きレポート→承認後に修正まで
 ```
+
+- `/2aio-create` は `--quick`（即実装を強制）/ `--full`（PRD からのフルコースを強制）で判定を上書き可。
+- `/2aio-check` は `--report-only` で評価レポートのみ（コードに触らない）。
+
+<details>
+<summary>内部レーン一覧（上級者向け）</summary>
+
+入口コマンド・制御プレーン・Issue 駆動が自動選択する 10 レーン。`~/.claude/2aio/lanes/` に配備される。
+直接使う場合は「`~/.claude/2aio/lanes/<name>.md` を Read し、引数を $ARGUMENTS としてその指示に従って」と指示する。
+
+| レーン | 役割 |
+|---|---|
+| `2aio-build` | 高速レーン: spec→実装→QA→公開を最短で |
+| `2aio-start-project` | 取締役会（CEO/CMO/CTO/CSO/CFO）→ PRD |
+| `2aio-plan-project` | PRD → 実装計画書（WBS） |
+| `2aio-implement-project` | 実装 → QA → デプロイの自律実行 |
+| `2aio-dev` | 既存 repo への 1 機能追加 / バグ修正 |
+| `2aio-delegate` | 計画 → Codex 委譲 → レビュー統合 |
+| `2aio-harden` | 既存システムを全次元で自律強化（loop-until-clean） |
+| `2aio-redesign` | 既存 UI の作り直し専用 |
+| `2aio-issue` | Linear / GitHub Issue を読んで適切なレーンへルーティング |
+| `2aio-autorun-batch` | 複数テーマのバッチ実行 |
+
+</details>
 
 ### エージェント（27 体）
 **取締役会 + 計画・実装 11 体:** CEO(opus) / CMO / CTO / CSO / CFO / Planner / Architect / PRD / Engineer / QA / DevOps。
