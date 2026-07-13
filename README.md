@@ -26,7 +26,7 @@
 ### 前提
 - **Claude Code** 導入済み（`~/.claude/` が存在すること — インストーラが確認します）
 - **git**、および Forge / 制御プレーンを使う場合は **Node.js 20+**
-- 任意: **Codex CLI**（`/2aio-delegate` の委譲先）、**Ollama**（2AIOForge のローカルLLM）
+- 任意: **Codex CLI**（実装委譲の実行先）、**Ollama**（2AIOForge のローカルLLM）
 
 ### 1. clone してインストール
 ```powershell
@@ -50,13 +50,10 @@ bash harness/install-harness.sh    # guard + 4 advisor + enforcer を settings.j
 
 ### 3. Claude Code を再起動して動作確認
 新しいセッションを開き、コマンドとエージェントが認識されているか確認します:
-```bash
-/2aio-build "ポモドーロタイマー PWA" --auto   # 最短で 1 本走らせる（PRD 不要の高速レーン）
-```
 `/2aio-` と打って補完に **`/2aio-create` と `/2aio-check` の 2 つ**が出れば導入成功です。使うのはこの 2 つだけです:
 ```bash
-/2aio-create "作りたいもの"    # 一から作る（規模は自動判定）
-/2aio-check .                  # 既存プロジェクトを評価 → 承認後に修正まで
+/2aio-create "ポモドーロタイマー PWA" --quick   # 一から作る（--quick で最短 1 本、省略時は規模を自動判定）
+/2aio-check .                                   # 既存プロジェクトを評価 → 承認後に修正まで
 ```
 
 ### 4.（任意）常駐レイヤーを起動
@@ -67,6 +64,24 @@ npm run control        # 制御プレーン（複数 repo 進行） → http://l
 詳細はそれぞれ Part 5 / Part 6 を参照。
 
 ---
+
+## 🔄 更新方法
+
+```bash
+cd 2aio
+git pull
+./install.ps1 --update             # または bash install.sh --update
+bash harness/install-harness.sh    # ハーネスを入れている場合（冪等・設定は保持）
+```
+
+| レイヤー | `--update` 時の挙動 |
+|---|---|
+| agents / commands / lanes | 常に最新へ上書き（repo から消えた旧 2aio-* コマンドは自動掃除） |
+| skills | **2AIO が配備したものだけ**（`~/.claude/.2aio-manifest` 記載分）を上書き。ユーザー独自スキルには触らない |
+| ハーネス | コード本体は更新、設定（security-rules.json / enforce-rules.json）はカスタマイズを保持 |
+
+マニフェスト導入前（旧版）からのユーザーは、初回のみ `--adopt-all --update` を実行すると
+同梱スキルがマニフェストに登録され、以後の更新が届くようになります。
 
 ## ⚙️ ライブハーネス（最重要 — Claude 司令塔 → Codex 実装）
 
