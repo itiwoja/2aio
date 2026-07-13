@@ -1,0 +1,51 @@
+---
+description: Issue駆動入口レーン。Linear Issue ID（BIZ-12 等）または GitHub Issue URL/番号を入力に、内容を読んで種別を決定的に分類し、既存レーン（/2aio-build・/2aio-implement-project・/2aio-dev）へルーティングする。control.mjs の自動ポーリング（#7）の対話版。
+argument-hint: <Linear ID | GitHub Issue URL | Issue番号> [--auto]
+---
+
+Issue から始まる作業の**対話側の入口**。自動投入（control.mjs の Linear ポーリング）と同じ
+決定的マッピング規約を使い、LLM の推測で repo / レーンを選ばない。
+
+**対象:** $ARGUMENTS
+
+## 入力の解決
+
+| 入力形式 | 取得方法 |
+|---|---|
+| Linear ID（`BIZ-12` / `LIFE-3` 等） | `lib/linear.mjs` の GraphQL（`LINEAR_API_KEY` は env）で issue 本文・ラベルを取得 |
+| GitHub Issue URL / `#N` | `gh issue view {N} --json title,body,labels --comments` |
+
+取得できなければその旨を報告して停止する（推測で進めない）。
+
+## 分類規約（決定的 — control.mjs #7 と同一）
+
+1. **repo**: ラベル `repo:<slug>`（repos.json の id と一致）。無ければ**現在の cwd が対象 repo か**をユーザーに確認。
+2. **kind**: ラベル `kind:build|start|plan|implement|analyze` があればそれに従う。
+3. kind ラベルが無い場合のみ、本文から次の**表引き**でレーンを決める（新しい kind は作らない）:
+
+| Issue の内容 | ルーティング先 |
+|---|---|
+| バグ報告（再現手順・エラーログがある） | `/2aio-dev . --fix "{要約}"` |
+| 既存 repo への機能追加（1機能） | `/2aio-dev . "{要約}"` |
+| 新規プロダクト・大きなテーマ | `/2aio-build "{要約}"`（急ぎ）または `/2aio-start-project "{要約}"`（取締役会） |
+| 実装計画済み（impl-plan あり） | `/2aio-implement-project latest` |
+| 調査・解析のみ | analyze 相当（repo を読んで報告） |
+
+表のどれにも当てはまらない場合は分類候補を提示してユーザーに選ばせる（推測実行しない）。
+
+## 実行
+
+1. Issue 内容を 1 行に要約し、決定したルーティングを提示。
+2. `--auto` 指定時はそのまま該当レーンを実行。未指定時はユーザーの確認を待ってから実行。
+3. レーン完了後の Linear 遷移:
+   - **このコマンド経由（対話）** では、完了確認（completion-report.md / state.md の `phase: completed`）が
+     取れた場合のみ `lib/linear.mjs` の `moveIssueState` で Done + 要約コメント。
+     確認できなければ「実行完了・要確認」コメントに留める（control.mjs #7 の finalizeAction と同じ規約）。
+   - 失敗時は失敗コメント + Todo 戻し。
+
+## 絶対制約
+
+- repo / kind のマッピングに LLM 推測を使わない（上の決定的規約のみ。曖昧なら聞く）。
+- `LINEAR_API_KEY` が無い状態で Linear 側の遷移・コメントを試みない（報告のみで終える）。
+- control.mjs のポーリングが既に同じ Issue を投入済み（Issue コメントに `[2aio-control job:...]` がある）なら、
+  二重着手せずその旨を報告して停止する。

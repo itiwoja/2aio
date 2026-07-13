@@ -15,6 +15,7 @@ import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
 import { buildInterview, validateInterview, briefToPlanPrompt, IMPLEMENT_CHAIN_PROMPT } from './lib/intake.mjs';
 import { parseApprovalMarker, budgetStopEvent, jobEvent, sendNotification } from './lib/notify.mjs';
+import { mapIssueToJob, filterUnseen, finalizeAction, detectCompletion, loadSeen, saveSeen, fetchAutoIssues, moveIssueState, commentOnIssue } from './lib/linear.mjs';
 
 // #22: ROOT/上限は env で注入可能（統合テストが一時ディレクトリで実レジストリを汚染しないため）。
 // import 時の副作用（listen / setInterval / プリウォーム / reconcile）は末尾の main ガード内のみ。
@@ -22,6 +23,9 @@ const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z
 const ROOT = process.env.AIO_CONTROL_ROOT || HERE;
 const CFG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
 const GOV = { tokenThreshold: 0.8, maxConcurrency: 1, pollMs: 5000, ...(CFG.governor || {}) };
+// #7: Linear Issue駆動入口。tick(5s) とは別 interval（60s 以上を強制 — Linear API レート節約）。
+const LINEAR = { pollMs: 60000, label: '2aio-auto', ...(CFG.linear || {}) };
+const LINEAR_KEY = process.env.LINEAR_API_KEY || '';
 const TOKEN_LIMIT = Number(process.env.AIO_TOKEN_LIMIT ?? (CFG.claudeMax5x?.tokenLimit || 0));
 const PORT = process.env.AIO_CONTROL_PORT || 7900;
 const CLAUDE = process.env.AIO_CLAUDE_BIN || process.env.CLAUDE_BIN || 'claude';
@@ -128,7 +132,12 @@ function memoryPreamble(repo) {
 // kind → 実行プロンプト(2AIOの入口レーンへ委譲)。prompt指定があればそれを優先。
 function buildPrompt(job, repo = null) {
   const pre = memoryPreamble(repo);
-  const wrap = (p) => (p ? `${p}\n\n---\n${pre}` : p);
+  // #7 修正条件1: Done 遷移の責務はコントロールプレーンに一本化。Linear 起点ジョブでは
+  // レーン内（2aio-implement-project 等）の Linear Done 遷移をスキップさせて二重遷移を防ぐ。
+  const linearNote = job.args?.linearIssueId
+    ? `\nこのジョブは Linear Issue ${job.args.linearIdentifier || job.args.linearIssueId} 起点で投入された。Linear への状態遷移・コメントはコントロールプレーンが行うため、レーン内の Linear 遷移手順（set-state 等）は実行しないこと。`
+    : '';
+  const wrap = (p) => (p ? `${p}\n\n---\n${pre}${linearNote}` : p);
   if (job.prompt) return wrap(job.prompt);
   const a = job.args || {};
   return wrap(corePrompt(job, a));
@@ -354,8 +363,56 @@ function startJob(job) {
       artifacts: collectArtifacts(repo.path),
     });
     if (nextState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
+    // #7: Linear 起点ジョブは終端状態(done/failed)でのみ Linear 側へ反映（非同期・失敗しても運用を壊さない）
+    if (nextState === 'done' || nextState === 'failed') finalizeLinear(job, repo, code, failReason);
     tick(); // 1つ空いたので次を検討
   });
+}
+
+// ─── #7 Linear Issue駆動入口: 2aio-auto ラベル付き未着手 Issue をキューへ投入する ───
+// ガバナーが入場判定を一元化しているため、ここは「キューに積むだけ」で安全に共存する。
+// マップ不能 Issue（repo:/kind: ラベル不足）はスキップ＋案内コメント。案内はプロセス内で
+// 1回に抑えるが linear-seen.json には記録しない — ラベルを直せば次の tick で拾われる。
+const guidanceCommented = new Set();
+let linearTicking = false;
+async function linearTick() {
+  if (linearTicking || !LINEAR_KEY) return; linearTicking = true;
+  try {
+    const r = await fetchAutoIssues(LINEAR_KEY, LINEAR.label);
+    if (!r.ok) { console.error('[2aio-control] linear取得失敗: ' + r.err); return; }
+    const seen = loadSeen(ROOT);
+    for (const issue of filterUnseen(r.issues, seen)) {
+      const m = mapIssueToJob(issue, loadRepos());
+      if (!m.ok) {
+        if (!guidanceCommented.has(issue.id)) {
+          guidanceCommented.add(issue.id);
+          await commentOnIssue(LINEAR_KEY, issue.id, m.comment);
+        }
+        continue; // seen に入れない（ラベル修正後に再評価させる）
+      }
+      const job = enqueue(ROOT, { repo: m.job.repo, kind: m.job.kind, args: m.job.args });
+      seen.ids.push(issue.id); saveSeen(ROOT, seen);
+      await moveIssueState(LINEAR_KEY, issue.id, 'In Progress');
+      await commentOnIssue(LINEAR_KEY, issue.id, `[2aio-control job:${job.id}] キューに投入しました（repo=${m.job.repo} / kind=${m.job.kind}）。進行状況: http://localhost:${PORT}`);
+    }
+    tick();
+  } catch (e) { console.error('[2aio-control] linearTick失敗: ' + e.message); }
+  finally { linearTicking = false; }
+}
+
+// #7 修正条件1: ジョブ終了時の Linear 遷移。exit code だけで Done にせず、
+// completion-report.md / state.md の phase: completed を確認できた場合のみ Done+要約。
+// 確認できなければ「実行完了・要確認」コメントに留める。失敗は失敗コメント＋Todo 戻し。
+async function finalizeLinear(job, repo, exit, failReason) {
+  const issueId = job?.args?.linearIssueId;
+  if (!issueId || !LINEAR_KEY) return;
+  try {
+    // 開始時刻より古い成果物は完了根拠にしない（過去プロジェクトの report で誤 Done しない）
+    const completion = exit === 0 ? detectCompletion(repo.path, job.startedAt || null) : null;
+    const act = finalizeAction({ exit, failReason, jobId: job.id, completion });
+    await commentOnIssue(LINEAR_KEY, issueId, act.comment);
+    if (act.state) await moveIssueState(LINEAR_KEY, issueId, act.state);
+  } catch (e) { console.error('[2aio-control] linear完了処理失敗: ' + e.message); }
 }
 
 let ticking = false;
@@ -504,6 +561,11 @@ if (isMain) {
   server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-control] http://localhost:${PORT}`));
   claudeUsage(); // ccusage プリウォーム
   setInterval(tick, GOV.pollMs); // reset後などに自動で消化再開
+  // #7: LINEAR_API_KEY がある場合のみ Linear ポーリング開始（60秒未満は 60 秒に切り上げ）
+  if (LINEAR_KEY) {
+    setInterval(linearTick, Math.max(60000, Number(LINEAR.pollMs) || 60000));
+    console.log(`[2aio-control] linear polling: label=${LINEAR.label}`);
+  }
 }
 
 const HTML = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
