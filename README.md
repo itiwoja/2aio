@@ -20,21 +20,50 @@
 
 ---
 
-## 🚀 クイックスタート
+## 🚀 クイックスタート — 入れてから使うまで
 
+### 前提
+- **Claude Code** 導入済み（`~/.claude/` が存在すること — インストーラが確認します）
+- **git**、および Forge / 制御プレーンを使う場合は **Node.js 20+**
+- 任意: **Codex CLI**（`/2aio-delegate` の委譲先）、**Ollama**（2AIOForge のローカルLLM）
+
+### 1. clone してインストール
 ```powershell
+git clone https://github.com/itiwoja/2aio.git
+cd 2aio
 ./install.ps1          # Windows (PowerShell)
 ```
 ```bash
+git clone https://github.com/itiwoja/2aio.git
+cd 2aio
 bash install.sh        # macOS / Linux
 ```
-`agents/` `commands/` `skills/` を `~/.claude/` に配備します（**既存スキルは上書きしません** — ECC セーフ）。
+`agents/`（27 体）`commands/`（9 個）`skills/`（66 個）を `~/.claude/` に配備します（**既存スキルは上書きしません** — ECC セーフ）。
 セキュリティ / メモリ / 可観測性は外部ツール — 各 README に従って個別導入してください。
 
-さらにライブハーネス（毎セッションを 2AIO の作法で走らせる稼働レイヤー）を有効化する場合:
+### 2.（任意）ライブハーネスを有効化
+毎セッションを 2AIO の作法（guard / ルーティング / Codex 委譲 / enforcer）で走らせる場合:
 ```bash
 bash harness/install-harness.sh    # guard + 4 advisor + enforcer を settings.json に非破壊マージ
 ```
+
+### 3. Claude Code を再起動して動作確認
+新しいセッションを開き、コマンドとエージェントが認識されているか確認します:
+```bash
+/2aio-build "ポモドーロタイマー PWA" --auto   # 最短で 1 本走らせる（PRD 不要の高速レーン）
+```
+`/2aio-` と打って補完に 9 コマンドが出れば導入成功です。本格的に使うなら:
+```bash
+/2aio-start-project "作りたいもの"    # 取締役会 → PRD から始めるフルコース
+/2aio-delegate "<実装タスク>"         # Codex 委譲（ハーネス導入 + Codex CLI が前提）
+```
+
+### 4.（任意）常駐レイヤーを起動
+```bash
+node dashboard.mjs     # 2AIOForge ダッシュボード → http://localhost:7878
+npm run control        # 制御プレーン（複数 repo 進行） → http://localhost:7900
+```
+詳細はそれぞれ Part 5 / Part 6 を参照。
 
 ---
 
