@@ -7,9 +7,16 @@ import os from 'node:os';
 import { decideAction } from '../lib/policy.mjs';
 import { within, resolvePaths } from '../lib/paths.mjs';
 
-test('vault × low × 監査PASS × dryでない → 自動適用', () => {
-  const r = decideAction({ targetType: 'vault', risk: 'low', auditPass: true, dry: false });
+test('vault × low × 監査PASS × dryでない × autoApplyVault → 自動適用', () => {
+  const r = decideAction({ targetType: 'vault', risk: 'low', auditPass: true, dry: false, autoApplyVault: true });
   assert.equal(r.action, 'apply');
+});
+
+test('autoApplyVault 無効(既定)なら全条件成立でも提案のみ', () => {
+  for (const flag of [undefined, false, null, 'true']) {
+    const r = decideAction({ targetType: 'vault', risk: 'low', auditPass: true, dry: false, autoApplyVault: flag });
+    assert.equal(r.action, 'propose', `autoApplyVault=${String(flag)}`);
+  }
 });
 
 test('skill は監査PASSでも絶対に自動適用されない', () => {

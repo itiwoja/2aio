@@ -2,7 +2,7 @@
 
 See what the agents are actually doing — tool calls, subagent trees, token/cost per session.
 External tools; documented and recommended here, not vendored. Sources staged at
-`dev/skills/_review/observability/`.
+`dev/skills/_review/observability/` — author's local working area, not present in a clone.
 
 | Tool | Stack | Surfaces | Notes |
 |---|---|---|---|

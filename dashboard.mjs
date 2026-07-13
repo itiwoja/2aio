@@ -10,9 +10,12 @@ import { aggregateUsage } from './lib/usage.mjs';
 import { claudeUsage } from './lib/ccusage.mjs';
 import { resolvePaths } from './lib/paths.mjs';
 import { approveProposal, archiveProposal } from './lib/proposals.mjs';
+import { getApiToken, tokenEquals } from './lib/token.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
+// API 認証トークン: control.mjs と共有（同一 root の control/.token）。全 /api/* に要求。
+const API_TOKEN = getApiToken(ROOT);
 CFG.paths = resolvePaths(ROOT, CFG.paths);
 const OLLAMA = CFG.ollamaUrl || 'http://localhost:11434';
 const PORT = process.env.AIOFORGE_PORT || 7878;
@@ -97,7 +100,11 @@ function csrfBlocked(req) {
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   if (csrfBlocked(req)) return send(res, 403, 'application/json', JSON.stringify({ ok: false, err: 'cross-origin POST拒否' }));
-  if (u.pathname === '/') return send(res, 200, 'text/html; charset=utf-8', HTML);
+  // 認証: / も /api/* もトークン必須（ヘッダ x-2aio-token か ?token=）。
+  // / を未認証にすると埋め込みトークンが漏れる（curl で窃取可能）ため、HTML 配信もゲート対象にする。
+  const authed = tokenEquals(req.headers['x-2aio-token'], API_TOKEN) || tokenEquals(u.searchParams.get('token'), API_TOKEN);
+  if (!authed) return send(res, 401, 'application/json', JSON.stringify({ ok: false, err: '認証トークンが必要です（起動時にコンソール出力した ?token= 付き URL を開いてください）' }));
+  if (u.pathname === '/') return send(res, 200, 'text/html; charset=utf-8', HTML.replace('__API_TOKEN__', () => API_TOKEN));
   if (u.pathname === '/api/overview') {
     const o = overview(); o.ollama = await ollama();
     o.claudeMax5x = { ...(CFG.claudeMax5x || {}), ...claudeUsage() };
@@ -138,7 +145,7 @@ const server = http.createServer(async (req, res) => {
   send(res, 404, 'text/plain', 'not found');
 });
 // 承認APIがファイル書き込みを伴うため、ローカル限定でバインド
-server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-dashboard] http://localhost:${PORT}`));
+server.listen(PORT, '127.0.0.1', () => console.log(`[2aio-dashboard] http://localhost:${PORT}/?token=${API_TOKEN}`));
 claudeUsage(); // ccusage(初回は数十秒)のプリウォーム。初回ページ表示を待たせない
 
 const HTML = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -194,33 +201,55 @@ dialog header{position:static;background:none;border-bottom:1px solid var(--line
 <header>
   <span class="dot off" id="oll-dot"></span>
   <h1><b>2AIOForge</b> モニター</h1>
-  <span class="muted" id="sub"></span>
+  <span class="muted" id="sub" aria-live="polite"></span>
   <span class="spacer"></span>
   <select id="topic" style="background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px"></select>
   <button id="runBtn">▶ 今すぐ実行</button>
 </header>
 <main>
-  <div class="grid g4" id="kpis"></div>
+  <div class="grid g4" id="kpis"><div class="muted">読み込み中…</div></div>
   <div class="grid g2">
-    <div class="card"><h2>実行履歴（runs）</h2><div id="runs"></div></div>
+    <div class="card"><h2>実行履歴（runs）</h2><div id="runs"><div class="muted">読み込み中…</div></div></div>
     <div class="card">
-      <h2>ローカルLLM（Ollama）</h2><div id="ollama"></div>
-      <h2 style="margin-top:16px">実行ログ（live）</h2><div class="live" id="live">—</div>
+      <h2>ローカルLLM（Ollama）</h2><div id="ollama"><div class="muted">読み込み中…</div></div>
+      <h2 style="margin-top:16px">実行ログ（live）</h2><div class="live" id="live" aria-live="polite">—</div>
     </div>
   </div>
-  <div class="card"><h2>提案（承認待ち）</h2><div id="proposals"></div></div>
-  <div class="card"><h2>LLM使用量（トークン / コスト）</h2><div id="usage"></div></div>
-  <div class="card"><h2>変更履歴（自動適用・元に戻せます）</h2><div id="history"></div></div>
-  <div class="card"><h2>監視トピック</h2><div id="topics"></div></div>
+  <div class="card"><h2>提案（承認待ち）</h2><div id="proposals"><div class="muted">読み込み中…</div></div></div>
+  <div class="card"><h2>LLM使用量（トークン / コスト）</h2><div id="usage"><div class="muted">読み込み中…</div></div></div>
+  <div class="card"><h2>変更履歴（自動適用・元に戻せます）</h2><div id="history"><div class="muted">読み込み中…</div></div></div>
+  <div class="card"><h2>監視トピック</h2><div id="topics"><div class="muted">読み込み中…</div></div></div>
 </main>
+<div id="toasts" style="position:fixed;right:18px;bottom:18px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px" aria-live="polite"></div>
 <dialog id="dlg"><header><b id="dlg-t"></b> <span class="spacer"></span><button onclick="dlg.close()">閉じる</button></header><div class="body"><div id="dlg-c" class="md"></div></div></dialog>
 <script>
+const __TK='__API_TOKEN__';const __F=window.fetch;window.fetch=(u,o)=>{o=o||{};if(typeof u==='string'&&u.startsWith('/api/'))o.headers={...(o.headers||{}),'x-2aio-token':__TK};return __F(u,o);};
 const $=s=>document.querySelector(s); const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtSize=b=>b?(b/1e9).toFixed(1)+'GB':''; const ago=ms=>{if(!ms)return'';const s=(Date.now()-ms)/1000;if(s<60)return Math.round(s)+'秒前';if(s<3600)return Math.round(s/60)+'分前';if(s<86400)return Math.round(s/3600)+'時間前';return Math.round(s/86400)+'日前';};
 const sBadge=st=>{const m={applied:'applied',proposed:'proposed'};const c=m[st]||(/issue|error|failed|no-/.test(st)?'bad':'low');return '<span class="badge '+c+'">'+esc(st)+'</span>';};
 let dlg=$('#dlg');
+function toast(msg,kind){
+  const col=kind==='bad'?'var(--bad)':kind==='ok'?'var(--ok)':'var(--accent)';
+  const t=document.createElement('div');
+  t.textContent=msg; t.setAttribute('role','status');
+  t.style.cssText='padding:10px 14px;border-radius:8px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-left:3px solid '+col+';box-shadow:0 6px 20px rgba(0,0,0,.45);max-width:360px;white-space:pre-wrap;font-size:13px';
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(()=>t.remove(),400);},kind==='bad'?5000:3000);
+}
+let loadFails=0;
 async function load(){
-  const o=await (await fetch('/api/overview')).json();
+  let o;
+  try{
+    const res=await fetch('/api/overview');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    o=await res.json();
+    loadFails=0;
+  }catch(e){
+    loadFails++;
+    $('#oll-dot').className='dot off';
+    $('#sub').innerHTML='<span style="color:var(--bad)">⚠ 接続失敗（'+esc(String(e.message))+'）・自動再試行中… ('+loadFails+')</span>';
+    return;
+  }
   // ollama
   const oll=o.ollama; $('#oll-dot').className='dot '+(oll.reachable?'on':'off');
   $('#sub').textContent=(oll.reachable?'Ollama稼働':'Ollama停止')+' / '+o.config.model+' / 最終:'+(o.stats.lastRun||'—');
@@ -303,7 +332,7 @@ function md(src){
 async function openProp(f){const t=await (await fetch('/api/proposal?file='+encodeURIComponent(f))).text();$('#dlg-t').textContent=f;$('#dlg-c').innerHTML=md(t);dlg.showModal();}
 async function openHist(id){
   const j=await (await fetch('/api/history-item?id='+encodeURIComponent(id))).json();
-  if(!j||!j.rec){alert('履歴が見つかりません');return;}
+  if(!j||!j.rec){toast('履歴が見つかりません','bad');return;}
   $('#dlg-t').textContent='差分: '+(j.rec.targetDisplay||j.rec.targetPath);
   $('#dlg-c').innerHTML='<h2 class="mh">適用後（現在）</h2><pre class="code">'+esc((j.current||'').slice(0,9000))+'</pre><h2 class="mh">適用前（バックアップ）</h2><pre class="code">'+esc((j.before||'(空＝新規作成)').slice(0,9000))+'</pre>';
   dlg.showModal();
@@ -311,15 +340,15 @@ async function openHist(id){
 async function doRollback(id){
   if(!confirm('この変更を元に戻します（バックアップから復元）。よろしいですか？'))return;
   const r=await (await fetch('/api/rollback?id='+encodeURIComponent(id),{method:'POST'})).json();
-  if(!r.ok){alert('失敗: '+(r.err||''));return;}
-  alert('元に戻しました'); load();
+  if(!r.ok){toast('失敗: '+(r.err||''),'bad');return;}
+  toast('元に戻しました','ok'); load();
 }
 async function act(kind,file){
   const msg=(kind==='approve'?'承認して対象ファイルに反映します（上書き前にバックアップを取ります）':'却下してアーカイブします');
   if(!confirm(msg+':\\n'+file))return;
   const r=await (await fetch('/api/'+kind+'?file='+encodeURIComponent(file),{method:'POST'})).json();
-  if(!r.ok){alert('失敗: '+(r.err||''));return;}
-  if(kind==='approve')alert('反映しました:\\n'+r.applied);
+  if(!r.ok){toast('失敗: '+(r.err||''),'bad');return;}
+  if(kind==='approve')toast('反映しました:\\n'+r.applied,'ok');
   load();
 }
 $('#runBtn').onclick=async()=>{const t=$('#topic').value;await fetch('/api/run'+(t?'?topic='+encodeURIComponent(t):''),{method:'POST'});load();};
