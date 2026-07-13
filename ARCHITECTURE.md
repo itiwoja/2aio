@@ -31,7 +31,7 @@ ECC agents are referenced read-only — never modified (principle: idd-guardrail
 - Others: session inherit
 
 ### 5. Canonical Output Directory: `2aio-output/`
-All 2AIO outputs go to `C:\Users\1kkim\projects\2aio-output\` or equivalent.
+All 2AIO outputs go to the directory named by the `TWOAIO_OUTPUT_DIR` environment variable when set; otherwise to `output/` under the target project.
 
 ### 6. Table Schema is 2aio-planner.md (Single Source of Truth)
 The WBS table format in `2aio-planner.md` is canonical. All other files must match.

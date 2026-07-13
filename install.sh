@@ -22,7 +22,7 @@ if command -v cygpath >/dev/null 2>&1 && [[ "$CLAUDE_DIR" == *\\* ]]; then
   CLAUDE_DIR="$(cygpath -u "$CLAUDE_DIR")"
 fi
 [ -d "$CLAUDE_DIR" ] || { echo "Claude Code not found: $CLAUDE_DIR"; exit 1; }
-mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/2aio/lanes"
+mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/2aio/lanes" "$CLAUDE_DIR/2aio/scripts"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$CLAUDE_DIR/.2aio-manifest"
 MANIFEST_WORK="$(mktemp)"
@@ -69,6 +69,11 @@ done
 if [ -d "$SCRIPT_DIR/lanes" ]; then
   for source in "$SCRIPT_DIR/lanes"/2aio-*.md; do
     [ -e "$source" ] && cp "$source" "$CLAUDE_DIR/2aio/lanes/"
+  done
+fi
+if [ -d "$SCRIPT_DIR/scripts" ]; then
+  for source in "$SCRIPT_DIR/scripts"/*.mjs; do
+    [ -e "$source" ] && cp "$source" "$CLAUDE_DIR/2aio/scripts/"
   done
 fi
 

@@ -109,7 +109,7 @@ model: sonnet
 - ルート URL に GET → 200 応答（必須条件）
 - 静的アセット（CSS / JS / 画像）の読み込み → 200 応答（必須条件）
 - 主要ページ（PRD のユーザーストーリーから 2〜3 件）→ 200 応答。SPA のサブルートは 404 fallback 構成（GitHub Pages 等）を考慮して警告扱い（単独ではロールバック発動条件にしない）
-- **ブラウザ実機検証（UI 成果物の場合）**: `node C:/Users/1kkim/projects/dev/skills/2aio/scripts/ui-smoke.mjs {本番URL} --out {output}/{project}/screenshots` を実行（Playwright headless。合格条件は未捕捉例外0件＋主要要素 visible。console error は警告記録のみ）。スクリーンショット（320/1440px）のパスを deploy-report.md に記録。
+- **ブラウザ実機検証（UI 成果物の場合）**: `node ~/.claude/2aio/scripts/ui-smoke.mjs {本番URL} --out {output}/{project}/screenshots` を実行（Playwright headless。合格条件は未捕捉例外0件＋主要要素 visible。console error は警告記録のみ）。スクリーンショット（320/1440px）のパスを deploy-report.md に記録。
   - Playwright 未導入（exit 3）: `[TOOL_MISSING]` を記録し、従来の curl スモークのみで **degraded 続行**（初回セットアップ: `npm i -D playwright && npx playwright install chromium`）
   - **ブラウザ検証 Fail は degraded 記録のみ** — auto の自動ロールバック発動条件は従来どおり「ルート URL 200 以外」に限定する（誤ロールバック防止）
 
@@ -151,9 +151,9 @@ git push origin {直前のgh-pagesコミットhash}:gh-pages --force-with-lease
 
 ### Step 2.5: 公開前セキュリティゲート（必須・auto でも省略不可）
 
-1. 秘密情報スキャン（git 履歴込み）: `"C:/Users/1kkim/projects/tools/gitleaks/gitleaks.exe" detect --no-banner --redact`
+1. 秘密情報スキャン（git 履歴込み）: `gitleaks detect --no-banner --redact`（PATH に無ければ環境変数 `GITLEAKS_BIN` のパスを使用）
    - gitleaks 未導入時のフォールバック: `git grep -iE "(api[_-]?key|secret|token|password)\s*[:=]" $(git rev-list --all)` 相当の履歴 grep で代替し、deploy-report.md に「フォールバック: grep（gitleaks 未導入）」と明記。Vercel / Firebase（リポジトリ非公開のホスティング）は working tree のみのスキャンで可。GitHub Pages（git push で履歴公開）は履歴込み必須で、gitleaks 未導入なら `[TOOL_MISSING]` で停止
-2. SAST: `node C:/Users/1kkim/projects/scripts/security-scan.mjs {project}`
+2. SAST: 環境変数 `SECURITY_SCAN_MJS` が設定されていれば `node $SECURITY_SCAN_MJS {project}` を実行（未設定ならスキップし、gitleaks とレビューで代替）
 3. npm audit（条件付き）: `package-lock.json` が存在する npm プロジェクトのみ `npm audit --audit-level=critical` を実行。critical 検出はブロック条件に含める。audit 実行自体の失敗も auto では下記 fail-closed 規則に従う
 4. CSP / クリックジャッキング対策の確認（外部公開時）
 

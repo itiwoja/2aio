@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 **入力:** $ARGUMENTS
 
-**出力先:** `output/` の正本は `C:/Users/1kkim/projects/2aio-output/` に固定（cwd に依存しない）
+**出力先:** `output/` の正本は環境変数 `TWOAIO_OUTPUT_DIR`（設定時のみ）。未設定なら対象プロジェクト直下の `output/`
 
 ## 引数フォーマット
 

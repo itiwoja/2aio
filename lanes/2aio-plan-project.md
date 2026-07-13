@@ -9,7 +9,7 @@ argument-hint: <PRDパス|latest> [--lite] [--handoff=idd]
 
 **入力 PRD ファイル:** $ARGUMENTS
 
-> `output/` は 2AIO ワークスペース `C:/Users/1kkim/projects/2aio-output/` を正本とする（カレントディレクトリ相対にしない）。
+> `output/` の正本は環境変数 `TWOAIO_OUTPUT_DIR`（設定時のみ）。未設定なら対象プロジェクト直下の `output/` を使う。
 
 引数が空または「latest」の場合は、`output/` ディレクトリ内で最新の `prd-*.md` ファイルを自動検出して使用してください。PRD ファイルが見つからない場合は処理を中止し、ユーザーに「先に `/2aio-start-project {テーマ}` を実行して PRD を生成してください」と案内してください。
 

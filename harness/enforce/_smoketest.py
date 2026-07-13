@@ -20,7 +20,7 @@ cases = [
     ("ALLOW small .js (10 lines)", 0,
      {"tool_name":"Write","tool_input":{"file_path":"C:/tmp/util.js","content":SMALL}}),
     ("ALLOW big file inside 2AIO repo", 0,
-     {"tool_name":"Write","tool_input":{"file_path":"C:/Users/1kkim/projects/dev/skills/2aio/harness/x/new.mjs","content":BIG}}),
+     {"tool_name":"Write","tool_input":{"file_path":"C:/tmp/2aio-smoketest/harness/x/new.mjs","content":BIG}}),
     ("ALLOW big test file", 0,
      {"tool_name":"Write","tool_input":{"file_path":"C:/tmp/app.test.js","content":BIG}}),
     ("ALLOW big .json config", 0,

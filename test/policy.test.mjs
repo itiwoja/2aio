@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import os from 'node:os';
 import { decideAction } from '../lib/policy.mjs';
 import { within, resolvePaths } from '../lib/paths.mjs';
 
@@ -54,4 +55,9 @@ test('resolvePaths: 相対はroot基準・絶対はそのまま', () => {
   const r = resolvePaths(root, { proposals: 'proposals', vault: abs });
   assert.equal(path.normalize(r.proposals), path.join(root, 'proposals'));
   assert.equal(path.normalize(r.vault), path.normalize(abs));
+});
+
+test('resolvePaths: 先頭の ~ はホームディレクトリに展開される', () => {
+  const r = resolvePaths(path.resolve('/repo'), { skills: '~/.claude/skills' });
+  assert.equal(path.normalize(r.skills), path.join(os.homedir(), '.claude', 'skills'));
 });
