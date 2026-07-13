@@ -63,6 +63,17 @@ for installed in "$CLAUDE_DIR/commands"/2aio-*.md; do
   fi
 done
 
+# Retire only agents managed by 2AIO. User-defined agents are intentionally
+# preserved, while a removed shipped agent must not survive an update.
+for installed in "$CLAUDE_DIR/agents"/2aio-*.md; do
+  [ -e "$installed" ] || continue
+  name="$(basename "$installed")"
+  if [ ! -e "$SCRIPT_DIR/agents/$name" ]; then
+    rm -f "$installed"
+    echo "  removed retired agent: $name"
+  fi
+done
+
 # Agents + entry commands + internal lanes (always overwritten)
 [ -d "$SCRIPT_DIR/agents" ] && cp "$SCRIPT_DIR/agents"/*.md "$CLAUDE_DIR/agents/"
 [ -d "$SCRIPT_DIR/commands" ] && cp "$SCRIPT_DIR/commands"/*.md "$CLAUDE_DIR/commands/"

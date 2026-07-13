@@ -53,7 +53,7 @@ template.
 | Tier | Agents | Rationale |
 |---|---|---|
 | **opus** | `2aio-ceo`, `2aio-cto` | Final judgment / architecture & tech decisions |
-| **sonnet** | `2aio-cfo`, `2aio-cmo`, `2aio-cso`, `2aio-planner`, `2aio-prd`, `2aio-engineer`, `2aio-qa`, `2aio-devops` | Analysis, planning, main implementation |
+| **sonnet** | `2aio-cmo`, `2aio-planner`, `2aio-prd`, `2aio-engineer`, `2aio-qa`, `2aio-devops` | Analysis, planning, main implementation |
 | **haiku** | `2aio-researcher` + 6 search specialists (`2aio-r-*`) | High-frequency, context-isolated lookups (3× cheaper) |
 
 Set in each agent's `model:` frontmatter; `install.sh` deploys them. Matches the cost policy in
@@ -181,7 +181,7 @@ engages from a plain prompt instead of an ad-hoc answer.
 | Lane | Trigger (JP+EN, tunable in `routes.json`) | Directs to |
 |---|---|---|
 | **harden** | 全面強化 / 堅牢化 / 総点検 / harden / audit and fix | `/2aio-harden` (autonomous cross-dimension strengthen, loop-until-clean) |
-| **board** | business idea / viability / revenue / 稼ぐ / 事業 / マネタイズ | `/2aio-start-project` (取締役会: CEO/CFO/CMO/CTO/CSO → PRD) |
+| **board** | business idea / viability / revenue / 稼ぐ / 事業 / マネタイズ | `/2aio-start-project` (取締役会: CEO/CMO/CTO → PRD) |
 | **redesign** | 作り直し / リデザイン / modernize the UI / restyle | `/2aio-redesign` (audit & improve existing UI in place) |
 | **research** | 競合調査 / 市場調査 / competitive analysis / research the… | `2aio-researcher` + `2aio-r-*` specialists |
 

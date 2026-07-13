@@ -30,4 +30,4 @@ staged at `dev/skills/_review/memory/` (+ `dev/skills/TencentDB-Agent-Memory/`).
 ## How it plugs in
 2AIO already persists run state to `output/{project}/state.md`. The memory layer adds
 *cross-project* recall: what worked, what was reverted, and reusable learnings — feeding the
-IDD Closeout phase (`idd-closeout-collector`) and the board's CSO/CTO context.
+IDD Closeout phase (`idd-closeout-collector`) and the board's CMO/CTO context.

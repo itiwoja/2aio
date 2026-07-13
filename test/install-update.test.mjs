@@ -36,6 +36,7 @@ function fixture() {
   fs.mkdirSync(claudeDir, { recursive: true });
   fs.copyFileSync(sourceInstaller, path.join(repo, "install.sh"));
   write(path.join(repo, "agents", "a.md"), "agent\n");
+  write(path.join(repo, "agents", "2aio-keep.md"), "keep\n");
   write(path.join(repo, "commands", "2aio-create.md"), "create\n");
   write(path.join(repo, "commands", "2aio-check.md"), "check\n");
   write(path.join(repo, "lanes", "2aio-build.md"), "build lane\n");
@@ -168,5 +169,20 @@ test("lanes は再実行で常に repo 版へ上書きされる", () => {
     write(path.join(env.repo, "lanes", "2aio-build.md"), "build lane v2\n");
     assert.equal(run(env).status, 0);
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "lanes", "2aio-build.md"), "utf8"), "build lane v2\n");
+  } finally { cleanup(env); }
+});
+
+test("廃止された 2aio エージェントだけを削除する", () => {
+  const env = fixture();
+  const retired = `2aio-${["c", "f", "o"].join("")}.md`;
+  try {
+    write(path.join(env.claudeDir, "agents", retired), "retired\n");
+    write(path.join(env.claudeDir, "agents", "my-agent.md"), "preserve\n");
+    const result = run(env);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.existsSync(path.join(env.claudeDir, "agents", retired)), false);
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "agents", "my-agent.md"), "utf8"), "preserve\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "agents", "2aio-keep.md"), "utf8"), "keep\n");
+    assert.ok(result.stdout.includes(`removed retired agent: ${retired}`));
   } finally { cleanup(env); }
 });
