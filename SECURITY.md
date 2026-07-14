@@ -37,6 +37,10 @@
   - `control/queue.json` に残るプロンプト・ログプレビュー・失敗理由（`control.mjs`）
 - 墨消しは**既知の高確度パターンのみ**（ベンダ鍵接頭辞・JWT・Bearer/Authorization・秘密キーの key=value・PEM 秘密鍵・接続文字列のパスワード）。
   未知形状の秘密や、ワーカーの全文ログ `control/logs/*.ndjson`（ローカル専用・未墨消し）は対象外。ログを外部共有する際は自分で確認すること。
+- **env スクラブ: worker 子プロセスへの秘密継承を止める**（`lib/redact.mjs` の `scrubEnv`、`control.mjs` の spawn）。
+  control plane が持つ無関係な秘密（`LINEAR_API_KEY` 等）を worker（claude/codex）に渡さない。denylist 方式で
+  非秘密（`PATH`/`HOME` 等）は素通しし、worker 自身の認証（`ANTHROPIC_*`/`CLAUDE_*`）は保持する。
+  worker が別の秘密 env を必要とする場合（例: `gh` 用 `GITHUB_TOKEN`）は `config.json` の `worker.envKeep`（正規表現）で明示的に許可する。
 - 露出した秘密は速やかにローテーションする。
 
 ## 4. 依存関係のポスチャ（なぜ自前の依存監査が無いか）

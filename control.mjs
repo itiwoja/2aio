@@ -11,7 +11,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
 import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips, breakerDecision } from './lib/queue.mjs';
-import { redactSecrets } from './lib/redact.mjs';
+import { redactSecrets, scrubEnv } from './lib/redact.mjs';
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
 import { within } from './lib/paths.mjs';
@@ -297,8 +297,12 @@ function startJob(job) {
     model: WK.model || 'sonnet',
   });
 
+  // env スクラブ: control plane が持つ無関係な秘密(LINEAR_API_KEY 等)を worker に継承させない。
+  // worker 認証(ANTHROPIC_*/CLAUDE_*)と非秘密は保持。config.worker.envKeep で keep パターン上書き可。
+  const workerEnv = scrubEnv(process.env, WK.envKeep ? { keep: new RegExp(WK.envKeep, 'i') } : undefined);
+
   let child;
-  try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true }); }
+  try { child = spawn(cmd, args, { cwd: repo.path, windowsHide: true, env: workerEnv }); }
   catch (e) { updateJob(ROOT, job.id, { state: 'failed', endedAt: new Date().toISOString(), exit: -1, log: [String(e.message)] }); return; }
   procs.set(job.id, child);
 

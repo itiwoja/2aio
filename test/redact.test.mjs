@@ -2,7 +2,7 @@
 // 実行: node --test test/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { redactSecrets, redactObject, isSensitiveKey, MASK } from '../lib/redact.mjs';
+import { redactSecrets, redactObject, isSensitiveKey, isSecretEnvKey, scrubEnv, MASK } from '../lib/redact.mjs';
 
 const gone = (out, secret) => assert.ok(!out.includes(secret), `秘密が残っている: ${out}`);
 
@@ -111,4 +111,41 @@ test('非文字列はそのまま返す', () => {
   assert.equal(redactSecrets(42), 42);
   assert.equal(redactSecrets(null), null);
   assert.equal(redactSecrets(undefined), undefined);
+});
+
+// ── env スクラブ（worker への秘密継承を止める） ──
+
+test('isSecretEnvKey: 秘密 env は true・OS/非秘密は false', () => {
+  for (const k of ['LINEAR_API_KEY', 'GITHUB_TOKEN', 'GH_TOKEN', 'SLACK_TOKEN', 'AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'DB_PASSWORD', 'MY_APP_SECRET', 'GPG_KEY', 'OPENAI_API_KEY']) {
+    assert.equal(isSecretEnvKey(k), true, `秘密 env が見逃された: ${k}`);
+  }
+  for (const k of ['PATH', 'HOME', 'USERPROFILE', 'TEMP', 'LANG', 'SSH_AUTH_SOCK', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'ANTHROPIC_BASE_URL']) {
+    assert.equal(isSecretEnvKey(k), false, `非秘密 env が秘密扱いされた: ${k}`);
+  }
+});
+
+test('scrubEnv: 無関係な秘密を落とし、非秘密と worker 認証は保持する', () => {
+  const env = {
+    PATH: '/usr/bin', HOME: '/home/ikki',
+    LINEAR_API_KEY: 'lin_api_shouldbe_dropped',
+    GITHUB_TOKEN: 'ghp_shouldbe_dropped',
+    ANTHROPIC_API_KEY: 'sk-ant-keep-for-worker',       // keep で保持
+    CLAUDE_CODE_OAUTH_TOKEN: 'oauth-keep-for-worker',  // keep で保持
+  };
+  const out = scrubEnv(env);
+  assert.equal(out.PATH, '/usr/bin');
+  assert.equal(out.HOME, '/home/ikki');
+  assert.ok(!('LINEAR_API_KEY' in out), 'LINEAR_API_KEY が漏れている');
+  assert.ok(!('GITHUB_TOKEN' in out), 'GITHUB_TOKEN が漏れている');
+  assert.equal(out.ANTHROPIC_API_KEY, 'sk-ant-keep-for-worker');
+  assert.equal(out.CLAUDE_CODE_OAUTH_TOKEN, 'oauth-keep-for-worker');
+  // 非破壊
+  assert.equal(env.LINEAR_API_KEY, 'lin_api_shouldbe_dropped');
+});
+
+test('scrubEnv: keep パターンを上書きすると対象秘密を残せる（gh 用 GITHUB_TOKEN 等）', () => {
+  const env = { GITHUB_TOKEN: 'ghp_needed', LINEAR_API_KEY: 'lin_drop' };
+  const out = scrubEnv(env, { keep: /^GITHUB_/i });
+  assert.equal(out.GITHUB_TOKEN, 'ghp_needed');
+  assert.ok(!('LINEAR_API_KEY' in out));
 });
