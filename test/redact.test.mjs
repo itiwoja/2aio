@@ -2,7 +2,13 @@
 // 実行: node --test test/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { redactSecrets, redactObject, isSensitiveKey, isSecretEnvKey, scrubEnv, MASK } from '../lib/redact.mjs';
+
+test('Google API key fixture is not embedded as a contiguous source literal', () => {
+  const source = readFileSync(new URL(import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /AIza[0-9A-Za-z_-]{35}/);
+});
 
 const gone = (out, secret) => assert.ok(!out.includes(secret), `秘密が残っている: ${out}`);
 
@@ -15,7 +21,7 @@ test('ベンダのキー接頭辞を墨消しする', () => {
     'xai-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     'gsk_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     'AKIAIOSFODNN7EXAMPLE',
-    'AIza012345678901234567890123456789abcde',
+    ['AI', 'za012345678901234567890123456789abcde'].join(''),
     'hf_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     'xoxb-' + '123456789012-ABCDEFGHIJKLMNOP',
   ];
