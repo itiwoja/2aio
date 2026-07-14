@@ -26,7 +26,8 @@
 ### 前提
 - **Claude Code** 導入済み（`~/.claude/` が存在すること — インストーラが確認します）
 - **git**、および Forge / 制御プレーンを使う場合は **Node.js 20+**
-- 任意: **Codex CLI**（実装委譲の実行先）、**Ollama**（2AIOForge のローカルLLM）
+- 任意: **Codex CLI**（実装委譲の実行先。`~/.codex` があればインストーラが自動検出し、Codex 自体からの
+  2AIO 呼び出しも有効になる — 詳細は [`adapters/README.md`](./adapters/README.md)）、**Ollama**（2AIOForge のローカルLLM）
 
 ### 1. clone してインストール
 ```powershell
@@ -39,8 +40,9 @@ git clone https://github.com/itiwoja/2aio.git
 cd 2aio
 bash install.sh        # macOS / Linux
 ```
-`agents/`（25 体）`commands/`（入口 2 個）`lanes/`（内部レーン 10 本 → `~/.claude/2aio/lanes/`）`skills/`（66 個）を配備します（**既存スキルは上書きしません** — ECC セーフ）。
-セキュリティ / メモリ / 可観測性は外部ツール — 各 README に従って個別導入してください。
+`agents/`（25 体）`commands/`（入口 2 個）`lanes/`（内部レーン 10 本 → `~/.claude/2aio/lanes/`）`skills/`（66 個 + 入口2個の Skill 版）を配備します（**既存スキルは上書きしません** — ECC セーフ）。
+**`~/.codex` が既に存在する場合は `skills/` を `~/.codex/skills/` にも同時配備**します（Codex 側からの
+呼び出しは Part 3 参照）。セキュリティ / メモリ / 可観測性は外部ツール — 各 README に従って個別導入してください。
 
 ### 2.（任意）ライブハーネスを有効化
 毎セッションを 2AIO の作法（guard / ルーティング / Codex 委譲 / enforcer）で走らせる場合:
@@ -55,6 +57,10 @@ bash harness/install-harness.sh    # guard + 4 advisor + enforcer を settings.j
 /2aio-create "ポモドーロタイマー PWA" --quick   # 一から作る（--quick で最短 1 本、省略時は規模を自動判定）
 /2aio-check .                                   # 既存プロジェクトを評価 → 承認後に修正まで
 ```
+
+**Codex App/CLI からも同じ2つを呼べます**（`~/.codex` がある状態でインストール済みなら）:
+`/skills` メニューまたは `$2aio-create` / `$2aio-check` で明示呼び出し。詳細と host 差分は
+[`AGENTS.md`](./AGENTS.md) の「Codex から 2AIO を起動する」節を参照。
 
 ### 4.（任意）常駐レイヤーを起動
 ```bash

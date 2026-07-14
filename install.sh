@@ -17,11 +17,16 @@ done
 
 echo "=== 2AIO Installation ==="
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
-# PowerShell may pass a Windows path into Git Bash through CLAUDE_DIR.
+# PowerShell may pass a Windows path into Git Bash through CLAUDE_DIR / CODEX_DIR.
 if command -v cygpath >/dev/null 2>&1 && [[ "$CLAUDE_DIR" == *\\* ]]; then
   CLAUDE_DIR="$(cygpath -u "$CLAUDE_DIR")"
 fi
 [ -d "$CLAUDE_DIR" ] || { echo "Claude Code not found: $CLAUDE_DIR"; exit 1; }
+# Codex is optional: only mirror skills there if ~/.codex already exists (Codex CLI/App installed).
+CODEX_DIR="${CODEX_DIR:-$HOME/.codex}"
+if command -v cygpath >/dev/null 2>&1 && [[ "$CODEX_DIR" == *\\* ]]; then
+  CODEX_DIR="$(cygpath -u "$CODEX_DIR")"
+fi
 mkdir -p "$CLAUDE_DIR/agents" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/skills" "$CLAUDE_DIR/2aio/lanes" "$CLAUDE_DIR/2aio/scripts"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$CLAUDE_DIR/.2aio-manifest"
@@ -133,6 +138,33 @@ if [ -d "$SCRIPT_DIR/skills" ]; then
   done
   echo "  installed $count new skill(s)"
   [ "$UPDATE" -eq 1 ] && echo "  updated $updated managed skill(s)"
+fi
+
+# Codex: same skills, second destination. SKILL.md is a cross-agent standard
+# (identical format Codex/Claude/OpenClaw read), so no content changes are needed —
+# only skip if Codex isn't installed on this machine. Shares the Claude manifest
+# (skill names are host-agnostic) and never overwrites an unmanaged skill.
+if [ -d "$CODEX_DIR" ] && [ -d "$SCRIPT_DIR/skills" ]; then
+  mkdir -p "$CODEX_DIR/skills"
+  codex_count=0
+  codex_updated=0
+  for d in "$SCRIPT_DIR/skills"/*/*/; do
+    [ -f "$d/SKILL.md" ] || continue
+    name="$(basename "$d")"
+    dest="$CODEX_DIR/skills/$name"
+    if [ -e "$dest" ]; then
+      if [ "$UPDATE" -eq 1 ] && manifest_contains "$name"; then
+        rm -rf "$dest"
+        cp -r "$d" "$dest"
+        codex_updated=$((codex_updated+1))
+      fi
+      continue   # never overwrite an unmanaged skill (ECC-safe)
+    fi
+    cp -r "$d" "$dest"
+    codex_count=$((codex_count+1))
+  done
+  echo "  codex: installed $codex_count new skill(s)"
+  [ "$UPDATE" -eq 1 ] && echo "  codex: updated $codex_updated managed skill(s)"
 fi
 
 if [ "$MANIFEST_DIRTY" -eq 1 ]; then

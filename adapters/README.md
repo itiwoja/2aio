@@ -9,8 +9,12 @@
 | host | 操作モデルの読ませ方 | 強制の強さ | インストール |
 |---|---|---|---|
 | **Claude Code** | `~/.claude/CLAUDE.md` + hooks（PreToolUse/UserPromptSubmit） | ✅ 強（guard/enforcer/advisor が自動発火） | `bash harness/install-harness.sh` |
-| **Codex** | `AGENTS.md`（repo ルート & `~/.codex/AGENTS.md`）+ `~/.codex/config.toml`（approval/sandbox）+ notify hook | ⚠️ 中（常時指示＋sandbox。guard/router はスクリプトとして呼ぶ） | `cp AGENTS.md ~/.codex/AGENTS.md` |
+| **Codex** | `AGENTS.md`（repo ルート & `~/.codex/AGENTS.md`）+ `~/.codex/config.toml`（approval/sandbox）+ notify hook | ⚠️ 中（常時指示＋sandbox。guard/router はスクリプトとして呼ぶ） | `~/.codex` が存在すれば自動: `bash install.sh` / `./install.ps1` が `~/.codex/skills/`（entry skill `2aio-create`/`2aio-check` 含む全skill）を、`bash harness/install-harness.sh` が `~/.codex/AGENTS.md` を配備する。手動導入のみなら `cp AGENTS.md ~/.codex/AGENTS.md` |
 | **その他 CLI（Grok 等）** | その CLI が読む instructions ファイルに `AGENTS.md` を置く。無ければ API 委譲先として使う | ⚠️ CLI 次第（hook が無ければ指示ベースの弱い強制） | `harness/providers/ai-run.sh --provider <name>`（OpenAI互換 API） |
+
+Codex 側では `/skills` メニューまたは `$2aio-create` / `$2aio-check` で 2AIO の入口 2 個を明示呼び出しできる
+（Claude Code の `/2aio-create` / `/2aio-check` と同じ内容。SKILL.md はホスト共通の Skill 標準なので
+`skills/` の中身自体は Claude/Codex で書き換えていない）。
 
 ## provider を跨ぐモデル自動切替
 

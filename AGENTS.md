@@ -67,3 +67,45 @@ quick (`2aio-build`) or full (start, plan, implement) mode; the latter audits
 before asking the user to select remediation. The ten detailed workflows live
 in `lanes/` and are installed under `~/.claude/2aio/lanes/`. Do not copy lane
 contents back into public command files.
+
+## Codex から 2AIO を起動する（入口の host 差分）
+
+Claude Code の slash command（`/2aio-create` / `/2aio-check`）は frontmatter 解釈に
+依存するため Codex ではそのまま動かない（`/2aio-create` と打っても出てこない）。
+
+**正規の入口: Skill（`install.sh` / `install.ps1` を実行済みなら使える）**
+`skills/2aio/2aio-create/` と `skills/2aio/2aio-check/` は Codex/Claude 共通の
+SKILL.md 形式（`name` + `description` frontmatter）で書かれており、インストーラが
+`~/.claude/skills/` と `~/.codex/skills/`（Codex が既に入っている場合のみ）の両方に
+配備する。Codex 側では `/skills` メニューまたは `$2aio-create` / `$2aio-check` で
+明示呼び出しできる。自然文で「アプリを作りたい」等と伝えた場合も description
+マッチで暗黙起動しうる。**未インストール／未 update の場合はまず
+`bash install.sh --update` または `pwsh install.ps1 -update` を実行する。**
+
+**フォールバック（Skill が未配備でも動く）**: **コマンドファイルを直接 Read し、
+その手順を自分の指示として実行する**ことで同じ入口を再現できる:
+
+- 「一から作る」: `~/.claude/commands/2aio-create.md`（無ければリポジトリ直下の
+  `commands/2aio-create.md`）を Read し、$ARGUMENTS を
+  「<作りたいもの> [--quick|--full] [--auto]」として、その手順（規模判定 → レーン選択 →
+  レーン実行）に厳密に従う。
+- 「既存プロジェクトの評価」: 同様に `2aio-check.md` を Read し、$ARGUMENTS を
+  「[path] [--report-only] [--dimensions=...]」として従う。
+- 手順文中の `~/.claude/2aio/lanes/` はグローバル配備先（Claude Code 専用ではない、
+  ただのファイルパス）。Codex もそのまま Read してよい（内容は同一。lane 側には既に
+  「`/2aio-<name>` は旧スラッシュコマンド表記 → レーンファイルを Read して読み替える」
+  という注記がある）。
+
+### host 差分の読み替え（Codex 実行時に自動で適用する）
+
+- **並列 Task 起動**（例: `2aio-check` の4観点並列監査、`2aio-start-project` の CMO/CTO 同時起動）:
+  Codex に並列サブエージェント起動手段は無い。指示された各エージェント役割を1つずつ
+  `agents/<name>.md` として Read し、順番に自分で実行する（結果は同等、所要時間のみ延びる）。
+- **AskUserQuestion tool**: Codex にはこの tool が無い。会話内でユーザーに直接質問し、
+  回答を待てばよい（選択肢の提示も地の文でよい）。
+- **サブエージェント起動（Task 単体）**: `agents/<name>.md` を Read し、本文の役割・手順・
+  制約を自分のロール指示として採用してタスクを遂行する。frontmatter の `model:` / `tools:` は
+  Claude Code 専用のモデル階層・権限設定なので無視してよい（かわりにこのファイル冒頭の
+  provider/モデルルーティング表に従う）。
+- この節が host 差分の正本。`lanes/` / `agents/` / `commands/` は Claude Code の実挙動を
+  変えないため書き換えない。

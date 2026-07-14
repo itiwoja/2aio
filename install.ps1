@@ -17,6 +17,8 @@ $claudeDir = if ($env:CLAUDE_DIR) { $env:CLAUDE_DIR } else { Join-Path $env:USER
 if (-not (Test-Path $claudeDir)) {
     Write-Host "Claude Code not found: $claudeDir"; exit 1
 }
+# Codex is optional: only mirror skills there if it's already installed.
+$codexDir = if ($env:CODEX_DIR) { $env:CODEX_DIR } else { Join-Path $env:USERPROFILE '.codex' }
 $repoDir = Split-Path $MyInvocation.MyCommand.Path
 foreach ($sub in @("agents", "commands", "skills")) {
     New-Item -ItemType Directory -Force (Join-Path $claudeDir $sub) | Out-Null
@@ -124,6 +126,31 @@ foreach ($skill in $repoSkills) {
 }
 Write-Host "  installed $count new skill(s)"
 if ($update) { Write-Host "  updated $updated managed skill(s)" }
+
+# Codex: same skills, second destination. SKILL.md is a cross-agent standard
+# (identical format Codex/Claude/OpenClaw read), so no content changes are needed —
+# only skip if Codex isn't installed on this machine. Shares the Claude manifest
+# (skill names are host-agnostic) and never overwrites an unmanaged skill.
+if ((Test-Path $codexDir) -and $repoSkills.Count -gt 0) {
+    New-Item -ItemType Directory -Force (Join-Path $codexDir "skills") | Out-Null
+    $codexCount = 0
+    $codexUpdated = 0
+    foreach ($skill in $repoSkills) {
+        $dest = "$codexDir/skills/$($skill.Name)"
+        if (Test-Path $dest) {
+            if ($update -and $manifestEntries.ContainsKey($skill.Name)) {
+                Remove-Item -LiteralPath $dest -Recurse -Force
+                Copy-Item -LiteralPath $skill.FullName -Destination $dest -Recurse -Force
+                $codexUpdated++
+            }
+            continue   # never overwrite an unmanaged skill (ECC-safe)
+        }
+        Copy-Item -LiteralPath $skill.FullName -Destination $dest -Recurse -Force
+        $codexCount++
+    }
+    Write-Host "  codex: installed $codexCount new skill(s)"
+    if ($update) { Write-Host "  codex: updated $codexUpdated managed skill(s)" }
+}
 
 if ($manifestDirty) {
     $manifestEntries.Keys | Sort-Object | Set-Content -LiteralPath $manifestPath -Encoding utf8
