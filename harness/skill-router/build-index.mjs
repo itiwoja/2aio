@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { lintSkill, DESC_MAX } from "./lint.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const skillsRoot = process.argv[2] || path.join(process.env.HOME || process.env.USERPROFILE || ".", ".claude", "skills");
@@ -69,13 +70,19 @@ function collectSkillDirs(root) {
 }
 
 const index = [];
+const warnings = [];
 for (const dir of collectSkillDirs(skillsRoot)) {
   const fm = parseFrontmatter(fs.readFileSync(path.join(dir, "SKILL.md"), "utf8"));
   const name = fm.name || path.basename(dir);
   const desc = fm.description || "";
+  warnings.push(...lintSkill(name, desc)); // AUTHORING.md 基準の軽量チェック（警告のみ・失敗させない）
   if (!desc) continue;
-  index.push({ name, description: desc.slice(0, 240), keywords: keywordsFor(name, desc) });
+  index.push({ name, description: desc.slice(0, DESC_MAX), keywords: keywordsFor(name, desc) });
 }
 index.sort((a, b) => a.name.localeCompare(b.name));
 fs.writeFileSync(outFile, JSON.stringify({ generatedFrom: skillsRoot, count: index.length, skills: index }, null, 2));
 console.log(`skill-index: ${index.length} skills -> ${outFile}`);
+if (warnings.length) {
+  console.warn(`\n[lint] ${warnings.length} 件の著作基準の警告（skills/2aio/AUTHORING.md 参照）:`);
+  for (const w of warnings) console.warn(`  - ${w}`);
+}
