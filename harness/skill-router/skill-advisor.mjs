@@ -6,6 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { match, loadIndex, loadSynonyms } from "./matcher.mjs";
+import { recordMatches } from "./usage.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +31,7 @@ try {
   const syn = loadSynonyms(path.join(HERE, "synonyms.json"));
   const hits = match(prompt, index, { topN: 3, minScore: 2, synonyms: syn });
   if (!hits.length) process.exit(0);
+  recordMatches(hits.map((h) => h.name)); // 使用テレメトリ（fail-open。死んでいるスキルの可視化用）
 
   const list = hits.map((h) => `${h.name}`).join(", ");
   const ctx =

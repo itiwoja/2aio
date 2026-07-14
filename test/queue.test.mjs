@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { enqueue, loadQueue, nextQueued, updateJob, countRunning, cancel, reconcile, propagateSkips } from '../lib/queue.mjs';
+import { enqueue, loadQueue, nextQueued, updateJob, countRunning, cancel, reconcile, propagateSkips, repoFailureStreak, breakerDecision, isRateLimited } from '../lib/queue.mjs';
 
 function tmpRoot() {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), '2aio-queue-'));
@@ -152,4 +152,69 @@ test('reconcile: 生きているプロセスのジョブは触らない', () => 
   const r = reconcile(root, (id) => id === j.id);
   assert.deepEqual(r, { interrupted: [], requeued: [] });
   assert.equal(loadQueue(root).find(x => x.id === j.id).state, 'running');
+});
+
+// ── 失敗サーキットブレーカ ──
+
+const failed = (repo, endedAt, failReason = 'exit 1', state = 'failed') =>
+  ({ id: `${repo}-${endedAt}`, repo, state, endedAt, failReason });
+
+test('repoFailureStreak: 連続失敗を新しい順に数え、done で打ち切る', () => {
+  const jobs = [
+    failed('r1', '2026-07-14T03:00:00.000Z'),
+    failed('r1', '2026-07-14T02:00:00.000Z', 'exit 1', 'interrupted'),
+    { id: 'ok', repo: 'r1', state: 'done', endedAt: '2026-07-14T01:00:00.000Z' },
+    failed('r1', '2026-07-14T00:00:00.000Z'), // done より前なので数えない
+  ];
+  assert.equal(repoFailureStreak(jobs, 'r1'), 2);
+});
+
+test('repoFailureStreak: rate-limit 由来の失敗は数えない、他 repo は無関係', () => {
+  const jobs = [
+    failed('r1', '2026-07-14T03:00:00.000Z', 'HTTP 429 rate limit exceeded'),
+    failed('r1', '2026-07-14T02:00:00.000Z', 'exit 1'),
+    failed('r2', '2026-07-14T02:30:00.000Z', 'exit 1'),
+  ];
+  assert.equal(repoFailureStreak(jobs, 'r1'), 1); // 429 は無視、残る1件のみ
+  assert.equal(repoFailureStreak(jobs, 'r2'), 1);
+});
+
+test('breakerDecision: 上限(3)到達でブロック・未満では通す', () => {
+  const two = [failed('r1', '2026-07-14T02:00:00.000Z'), failed('r1', '2026-07-14T01:00:00.000Z')];
+  const cur = { id: 'now', repo: 'r1' };
+  const d1 = breakerDecision(two, cur, { code: 1, failReason: 'exit 1' });
+  assert.equal(d1.block, true);          // 過去2 + 今回1 = 3 = limit
+  assert.match(d1.reason, /3回連続失敗/);
+
+  const one = [failed('r1', '2026-07-14T01:00:00.000Z')];
+  const d2 = breakerDecision(one, cur, { code: 1, failReason: 'exit 1' });
+  assert.equal(d2.block, false);         // 過去1 + 今回1 = 2 < 3
+});
+
+test('breakerDecision: 成功(code 0)と rate-limit はブロックしない', () => {
+  const three = [
+    failed('r1', '2026-07-14T03:00:00.000Z'),
+    failed('r1', '2026-07-14T02:00:00.000Z'),
+    failed('r1', '2026-07-14T01:00:00.000Z'),
+  ];
+  const cur = { id: 'now', repo: 'r1' };
+  assert.equal(breakerDecision(three, cur, { code: 0 }).block, false);
+  assert.equal(breakerDecision(three, cur, { code: 1, failReason: 'rate limit hit (429)' }).block, false);
+});
+
+test('breakerDecision: 判定中の当該ジョブ自身は streak に数えない(excludeId)', () => {
+  const jobs = [
+    { id: 'now', repo: 'r1', state: 'running', endedAt: null }, // まだ終わってない
+    failed('r1', '2026-07-14T01:00:00.000Z'),
+  ];
+  const d = breakerDecision(jobs, { id: 'now', repo: 'r1' }, { code: 1, failReason: 'exit 1' });
+  assert.equal(d.streak, 2); // 過去1 + 今回1（running の自分は除外）
+  assert.equal(d.block, false);
+});
+
+test('isRateLimited: 代表的な文言を検出する', () => {
+  for (const s of ['rate limit', 'HTTP 429', 'quota exceeded', 'model overloaded', 'Too Many Requests'])
+    assert.equal(isRateLimited(s), true, s);
+  assert.equal(isRateLimited('exit 1'), false);
+  assert.equal(isRateLimited(null), false);
 });

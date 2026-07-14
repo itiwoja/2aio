@@ -248,6 +248,7 @@ npm run control    # → http://localhost:7900（127.0.0.1 限定バインド）
 - **ガバナー**（`lib/governor.mjs`）: 使用率が閾値（既定 80%）以上なら新規投入を停止 → reset 後に自動再開。同時実行は既定 1。
 - **キュー**（`lib/queue.mjs`）: 投入ジョブを `control/queue.json` に永続化。`build`/`start`/`plan`/`implement`/`analyze` を各 repo へ委譲。
 - 設定は `config.json` の `governor: { tokenThreshold, maxConcurrency, pollMs }`。`claude` バイナリは `AIO_CLAUDE_BIN`（正本。`CLAUDE_BIN` にもフォールバックするが `AIO_CLAUDE_BIN` が優先）で指定可。worker のモデル/権限設定は `config.json` の `worker` を参照。
+- worker 認証の環境変数と webhook（public HTTPS / exact loopback opt-in）の境界は [Webhook security policy](./docs/WEBHOOK-SECURITY.md) を参照。
 
 ---
 
