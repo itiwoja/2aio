@@ -146,6 +146,9 @@ function corePrompt(job, a) {
     case 'implement': return laneInvocation('2aio-implement-project', `${a.plan || 'latest'} ${a.flags || '--auto'}`.trim());
     case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。最後に、解析結果の要点（構成理解・主要コマンド・注意点）を CLAUDE.md に反映してください（無ければ作成。次回以降のジョブが自動ロードして使う）。`;
     // ── 開発 kind (#9)。feature/fix/issue は 2aio-dev レーン(#1)へ委譲 ──
+    // #55: headless の issue 分類はここが正本（bug/feature→2aio-dev限定の縮退実装）。
+    // 新規プロダクト/impl-plan済み/調査依頼などの広い分類は lanes/2aio-issue.md（会話専用）側の
+    // 決定表が正本であり、ここには反映しない（headless は「曖昧なら人に確認」を実行できないため）。
     case 'issue': return `gh issue view ${a.issue || a.target || a.theme} をコメント込みで読み、内容を1行に要約したうえで、バグ報告なら ${laneInvocation('2aio-dev', '. --fix "{要約}" --auto')} 機能要望なら ${laneInvocation('2aio-dev', '. "{要約}" --auto')}`;
     case 'feature': return laneInvocation('2aio-dev', `. ${a.theme || ''} ${a.flags || '--auto'}`.trim());
     case 'fix': return laneInvocation('2aio-dev', `. --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim());
