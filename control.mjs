@@ -239,9 +239,13 @@ export function resolveNextState(currentState, code, kind) {
 
 // ワーカー起動コマンドの組み立て（純関数）。--allowedTools は可変長のため末尾、プロンプトは先頭の
 // 位置引数にする（後ろだと allowedTools が飲み込み「Input must be provided」になる既知バグ。eval 実走で発覚）。
-export function buildWorkerArgs({ workerCmd, claudeBin, prompt, permissionMode, allowedTools }) {
+export function buildWorkerArgs({ workerCmd, claudeBin, prompt, permissionMode, allowedTools, model }) {
   if (workerCmd) { const parts = workerCmd.split(' '); return { cmd: parts[0], args: [...parts.slice(1), prompt] }; }
-  return { cmd: claudeBin, args: ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', permissionMode, '--allowedTools', allowedTools] };
+  const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', permissionMode, '--allowedTools', allowedTools];
+  // ワーカーのモデルはユーザーグローバル設定（~/.claude/settings.json の model）を継承させず固定する。
+  // グローバル側が router 前提のエイリアス等だと headless spawn では解決できず即失敗するため
+  if (model) args.push('--model', model);
+  return { cmd: claudeBin, args };
 }
 
 function startJob(job) {
@@ -288,6 +292,7 @@ function startJob(job) {
     permissionMode: WK.permissionMode || 'acceptEdits',
     allowedTools: WK.allowedTools
       || 'Read,Write,Edit,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(mkdir:*),Bash(curl:*),Bash(vercel:*),Bash(firebase:*)',
+    model: WK.model || 'sonnet',
   });
 
   let child;

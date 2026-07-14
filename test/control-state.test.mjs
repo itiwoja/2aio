@@ -38,6 +38,16 @@ test('buildWorkerArgs: 既定は claude -p、プロンプトが先頭・allowedT
   assert.ok(args.indexOf('PROMPT') < ap, 'プロンプトは --allowedTools より前');
 });
 
+test('buildWorkerArgs: model 指定時は --model を付け、未指定なら付けない', () => {
+  const base = { workerCmd: '', claudeBin: 'claude', prompt: 'P', permissionMode: 'acceptEdits', allowedTools: 'Read' };
+  const withModel = buildWorkerArgs({ ...base, model: 'sonnet' });
+  const mp = withModel.args.indexOf('--model');
+  assert.ok(mp > 0 && withModel.args[mp + 1] === 'sonnet');
+  assert.ok(withModel.args.indexOf('P') < mp, 'プロンプトは --model より前');
+  const without = buildWorkerArgs(base);
+  assert.equal(without.args.indexOf('--model'), -1);
+});
+
 test('buildWorkerArgs: WORKER_CMD 指定時はそれを分解しプロンプトを末尾に付ける', () => {
   const { cmd, args } = buildWorkerArgs({
     workerCmd: 'node -e run', claudeBin: 'claude', prompt: 'P',
