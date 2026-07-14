@@ -168,7 +168,7 @@ echo "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces relev
 echo "  - Auto-delegate advisor (UserPromptSubmit): detects implementation tasks & directs Claude→Codex."
 echo "  - Front-door advisor (UserPromptSubmit): auto-routes business/redesign/research to the right 2AIO pipeline."
 echo "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
-echo "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — see /2aio-delegate."
+echo "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — auto-guided by enforcer/front-door; manual use: Read ~/.claude/2aio/lanes/2aio-delegate.md."
 echo "  Re-run this after adding skills to refresh the skill index."
 # cross-host: deploy the portable operating model to Codex if present
 if [ -d "$HOME/.codex" ] && [ -f "$HARNESS_DIR/../AGENTS.md" ]; then
