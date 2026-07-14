@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { budgetStopEvent, formatMessage, jobEvent, parseApprovalMarker, sendNotification } from '../lib/notify.mjs';
+import { budgetStopEvent, formatMessage, jobEvent, parseApprovalMarker, sendNotification, validateWebhookUrl } from '../lib/notify.mjs';
 
 test('parseApprovalMarker recognizes an approval marker only', () => {
   assert.deepEqual(parseApprovalMarker('[APPROVAL_WAITING] my-app'), { project: 'my-app' });
@@ -63,4 +63,27 @@ test('sendNotification redacts secrets in the webhook payload (機外に漏ら�
   assert.equal(received.length, 1);
   assert.ok(!received[0].includes(secret), `秘密が webhook に漏れた: ${received[0]}`);
   assert.ok(received[0].includes('[REDACTED]'));
+});
+
+test('validateWebhookUrl: 内部/メタデータ/不正 scheme を拒否し、通常 URL とループバックは許可', () => {
+  // 許可（自前リレー用途でループバック/プライベートは通す）
+  for (const ok of ['https://hooks.example.com/x', 'http://127.0.0.1:8080/hook', 'http://192.168.1.10/n']) {
+    assert.equal(validateWebhookUrl(ok).ok, true, `許可されるべき: ${ok}`);
+  }
+  // 拒否（クラウドメタデータ・リンクローカル・非 http scheme・不正）
+  for (const bad of ['http://169.254.169.254/latest/meta-data/', 'http://metadata.google.internal/x', 'file:///etc/passwd', 'gopher://x/', 'not a url']) {
+    assert.equal(validateWebhookUrl(bad).ok, false, `拒否されるべき: ${bad}`);
+  }
+});
+
+test('sendNotification: ブロック対象 URL には送信しない（fetch を試みない）', async () => {
+  const originalFetch = globalThis.fetch;
+  let called = 0;
+  globalThis.fetch = async () => { called += 1; return { ok: true }; };
+  try {
+    await sendNotification({ webhookUrl: 'http://169.254.169.254/exfil', toast: false }, { type: 'done', repo: 'app', kind: 'build' });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.equal(called, 0, 'ブロック対象 URL に fetch してしまった');
 });
