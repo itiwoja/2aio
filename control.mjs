@@ -310,6 +310,10 @@ function startJob(job) {
   let lineBuf = '';           // チャンク境界で JSON 行が割れるため行バッファリング必須
   let finalResult = null;     // stream-json の type:'result' イベント(usage/total_cost_usd/is_error)
   const preview = [];
+  // #57: プレビューログのupdateJobはqueue.json全体read→再シリアライズ→全書換を伴うため、
+  // チャンク毎の同期書込みをやめ250msデバウンス（close時に必ず最終フラッシュ — 下記参照）。
+  let logFlushTimer = null;
+  let logDirty = false;
   const handleLine = (line) => {
     if (!line.trim()) return;
     let ev = null;
@@ -323,9 +327,17 @@ function startJob(job) {
       : ev.type === 'assistant' ? (ev.message?.content?.find?.((c) => c.type === 'text')?.text || '').slice(0, 200)
       : null;
     if (text) {
-      preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] });
+      preview.push(text); while (preview.length > 20) preview.shift();
+      logDirty = true;
+      if (!logFlushTimer) {
+        logFlushTimer = setTimeout(() => {
+          logFlushTimer = null;
+          if (logDirty) { logDirty = false; updateJob(ROOT, job.id, { log: [...preview] }); }
+        }, 250);
+      }
       // #15: 承認待ちマーカー検知 → waiting_approval 遷移＋通知（exit 0 でも done に上書きしない）。
-      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。
+      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。承認待ちは即時可視化が要るため
+      // ログプレビューとは異なりデバウンスしない。
       const marker = text.split('\n').map(parseApprovalMarker).find(Boolean);
       if (marker) {
         const j = updateJob(ROOT, job.id, { state: 'waiting_approval', waitingProject: marker.project });
@@ -350,6 +362,8 @@ function startJob(job) {
   child.on('close', (code) => {
     clearTimeout(killer);
     if (lineBuf.trim()) handleLine(lineBuf); // 残りバッファのフラッシュ
+    // #57: デバウンス中のログプレビューを最終確定書込みへ合流させ、保留分の消失を防ぐ
+    clearTimeout(logFlushTimer); logFlushTimer = null; logDirty = false;
     procs.delete(job.id);
     const { active: after } = governorState();
     const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
@@ -374,6 +388,7 @@ function startJob(job) {
       commitAfter: head && head.code === 0 ? head.out : null,
       usage, costUSD: finalResult?.total_cost_usd ?? null, failReason,
       artifacts: collectArtifacts(repo.path),
+      log: [...preview], // #57: デバウンス中に保留していた分もこの単一書込みに合流
     });
     if (nextState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
     tick(); // 1つ空いたので次を検討
