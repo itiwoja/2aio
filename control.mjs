@@ -312,7 +312,8 @@ function startJob(job) {
     let ev = null;
     try { ev = JSON.parse(line); } catch { /* not JSON */ }
     if (!ev) ev = { type: 'raw', text: line };
-    fs.appendFileSync(ndjsonPath, JSON.stringify(ev) + '\n');
+    // #51: ndjson追記は単発I/Oエラー(ENOSPC/fd枯渇等)で常駐司令塔全体を落とさない — notifyと同方針で握り潰し続行
+    try { fs.appendFileSync(ndjsonPath, JSON.stringify(ev) + '\n'); } catch { /* ログ書き込み失敗は無視・続行 */ }
     if (ev.type === 'result') finalResult = ev;
     // プレビュー: テキストを持つイベントだけ拾う
     const text = ev.type === 'raw' ? ev.text
@@ -320,13 +321,20 @@ function startJob(job) {
       : ev.type === 'assistant' ? (ev.message?.content?.find?.((c) => c.type === 'text')?.text || '').slice(0, 200)
       : null;
     if (text) {
-      preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] });
+      preview.push(text); while (preview.length > 20) preview.shift();
+      // #51: プレビューログ更新失敗は無視・続行（高頻度・非本質的な更新のため）
+      try { updateJob(ROOT, job.id, { log: [...preview] }); } catch { /* ログ更新失敗は無視・続行 */ }
       // #15: 承認待ちマーカー検知 → waiting_approval 遷移＋通知（exit 0 でも done に上書きしない）。
       // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。
       const marker = text.split('\n').map(parseApprovalMarker).find(Boolean);
       if (marker) {
-        const j = updateJob(ROOT, job.id, { state: 'waiting_approval', waitingProject: marker.project });
-        notifyJob(j);
+        // #51: 状態遷移は無視すると承認待ちが消えるため、失敗はログして続行（握り潰さない）
+        try {
+          const j = updateJob(ROOT, job.id, { state: 'waiting_approval', waitingProject: marker.project });
+          notifyJob(j);
+        } catch (e) {
+          console.error(`[2aio-control] job ${job.id}: waiting_approval への状態遷移に失敗（続行）: ${e.message}`);
+        }
       }
     }
   };
@@ -520,6 +528,14 @@ export { server, tick };
 // main ガード: 直接実行時のみ副作用を開始する（import 時はサーバ生成のみで listen しない）
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(HERE, 'control.mjs');
 if (isMain) {
+  // #51: 最終防波堤。handleLine等の局所try/catchで拾いきれない未知の同期例外/rejectionで
+  // 常駐司令塔プロセスが即死し全repoが凍結する事態を防ぐ（プロセスは殺さない・再書込みして二次throwしない）。
+  process.on('uncaughtException', (err) => {
+    console.error('[2aio-control] uncaughtException（最終防波堤・プロセス継続）:', err?.stack || err);
+  });
+  process.on('unhandledRejection', (reason) => {
+    console.error('[2aio-control] unhandledRejection（最終防波堤・プロセス継続）:', reason);
+  });
   // 起動時リコンシリエーション (#10): 前回プロセスの running 残骸を回収
   // (孤児1件で maxConcurrency=1 が永久に塞がるデッドロックの復旧。軽量kindのみ自動再キュー)
   const rec = reconcile(ROOT, (id) => procs.has(id));
