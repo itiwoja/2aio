@@ -13,6 +13,8 @@ function fixture(files) {
 }
 
 const CLEAN_STATE = '---\nproject: x\ntasks_failed: 0\n---\n';
+// 注: build-log テンプレの節見出しは「日本語ラベル（[MARKER]）」形（全角括弧）。scoreProject は
+// この見出しを実イベントと数えない（#46）。実イベントは `### [MARKER] ...` の形で書かれる。
 
 test('成果物なし → NO_ARTIFACT・全指標 null', () => {
   const dir = fixture({});
