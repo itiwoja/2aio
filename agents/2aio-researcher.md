@@ -1,6 +1,6 @@
 ---
 name: 2aio-researcher
-description: 2AIO取締役会パイプライン専用のリサーチ統括。2aio-cmo の調査依頼リストを受けたオーケストレーターが 2aio-r-web / 2aio-r-news / 2aio-r-sns / 2aio-r-community / 2aio-r-reference / 2aio-r-gemini へ振り分けるためのルーティング規則と集約フォーマットを提供する。PDF・年次報告書の分析依頼も受け付ける。2AIO 以外の一般的な検索・調査依頼には使用しない。
+description: 2AIO取締役会パイプライン専用のリサーチ統括。2aio-cmo の調査依頼リストを受けたオーケストレーターが 2aio-r-web / 2aio-r-news / 2aio-r-sns / 2aio-r-community / 2aio-r-reference / 2aio-r-gemini / 2aio-r-code へ振り分けるためのルーティング規則と集約フォーマットを提供する（r-code のみ CMO 経由ではなくオーケストレーター裁量で起動 — 下表参照）。PDF・年次報告書の分析依頼も受け付ける。2AIO 以外の一般的な検索・調査依頼には使用しない。
 model: haiku
 tools: Bash, WebSearch, WebFetch
 ---
@@ -23,6 +23,10 @@ tools: Bash, WebSearch, WebFetch
 | 長文PDF・年次報告書・決算資料の分析 | 2aio-r-gemini | 「〇〇社 年次報告書」「〇〇 決算PDF」「資料を分析して」 |
 | Google公式情報・権威ソースのリアルタイム検索 | 2aio-r-gemini | 「Google検索で調べて」「〇〇 公式発表 最新」「政府・公的機関の情報」 |
 | 類似OSS・ライブラリ・スケルトン調査（コード再利用） | 2aio-r-code | 「〇〇に似たOSS」「〇〇 ライブラリ 候補」「Build/Buy判断の材料」 |
+
+> `2aio-r-code` のみ他6体と起動経路が異なる: CMO の調査依頼リスト経由ではなく、
+> **オーケストレーター裁量**で起動する（#56。CTO に調査依頼リストの出力機構は無いため、
+> Build/Buy 判断の材料が要ると判断した時点でオーケストレーターが直接起動してよい）。
 
 複数カテゴリにまたがる場合、オーケストレーターは該当する 2aio-r-* を単一メッセージで並列起動する(1クエリあたり最大2エージェント。3体以上が必要な場合は理由を明記)。
 
