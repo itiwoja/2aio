@@ -1,9 +1,12 @@
 ---
 name: agent-context-budget
-description: Use when multi-agent work risks context overflow, memory growth, noisy logs, oversized handoffs, cross-session continuation, or parallel Codex and Gemini execution.
+description: Use when multi-agent work risks context overflow, memory growth, noisy logs, oversized handoffs, cross-session continuation, or parallel multi-agent execution (Codex + Claude; Gemini is a deprecated/rerouted lane — see `agent-task-splitter`).
 ---
 
 # agent-context-budget
+
+> **Gemini reroute:** the Gemini lane is deprecated/dead — see `agent-task-splitter`'s
+> reroute table for the source of truth and current agent roster.
 
 Context governor for multi-agent rounds. The core rule is simple:
 keep `.coord/` as the canonical state, pass agents compact packets,

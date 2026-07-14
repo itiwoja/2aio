@@ -9,8 +9,8 @@ Everything 2AIO integrates, by domain. Three integration tiers:
   default install (see [`security-tools.md`](security-tools.md) for the external-tool universe).
 
 ## Agents (native 2AIO) — Vendored
-17 board + engineering agents (`agents/`) and 5 workflow commands (`commands/`). See top-level
-`README.md`.
+25 board + engineering agents (`agents/`), 2 public entry commands (`commands/`), and 10 internal
+lanes (`lanes/`, auto-selected — not directly invokable). See top-level `README.md`.
 
 ## Skills — Vendored (66)
 | Domain | Count | Dir | Source |
@@ -51,6 +51,6 @@ budget governor) is merged into `main` and runs from the repo root. See top-leve
 and `docs/CONTROL-PLANE.md`.
 
 ## Staging
-All cloned upstream sources are staged (git-ignored, **author's local working area — not present in a
-clone**) at `dev/skills/_review/<category>/<repo>/`
-so any tool can be inspected, updated, or promoted from Catalogued → Wired without re-cloning.
+All cloned upstream sources are vetted from their own clones during evaluation (maintainer-only
+staging, not part of this distribution) so any tool can be inspected, updated, or promoted from
+Catalogued → Wired without re-cloning.

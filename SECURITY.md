@@ -39,8 +39,10 @@
   未知形状の秘密や、ワーカーの全文ログ `control/logs/*.ndjson`（ローカル専用・未墨消し）は対象外。ログを外部共有する際は自分で確認すること。
 - **env スクラブ: worker 子プロセスへの秘密継承を止める**（`lib/redact.mjs` の `scrubEnv`、`control.mjs` の spawn）。
   control plane が持つ無関係な秘密（`LINEAR_API_KEY` 等）を worker（claude/codex）に渡さない。denylist 方式で
-  非秘密（`PATH`/`HOME` 等）は素通しし、worker 自身の認証（`ANTHROPIC_*`/`CLAUDE_*`）は保持する。
-  worker が別の秘密 env を必要とする場合（例: `gh` 用 `GITHUB_TOKEN`）は `config.json` の `worker.envKeep`（正規表現）で明示的に許可する。
+  非秘密（`PATH`/`HOME`/`USERPROFILE` 等）は素通しする。解決済み実行ファイルが Claude なら
+  `ANTHROPIC_*`/`CLAUDE_*`、Codex なら `CODEX_API_KEY`/`CODEX_ACCESS_TOKEN` だけを既定で保持する。
+  worker が別の秘密 env を必要とする場合（例: `gh` 用 `GITHUB_TOKEN`）は `config.json` の
+  `worker.envKeep`（正規表現）で**追加**許可する。不正な型・正規表現は worker 起動前に fail closed となる。
 - 露出した秘密は速やかにローテーションする。
 
 ## 4. 依存関係のポスチャ（なぜ自前の依存監査が無いか）
@@ -56,12 +58,11 @@
 
 - `control.mjs`（:7900）と `dashboard.mjs`（:7878）は **`127.0.0.1` のみにバインド**し、共有トークン（`control/.token`、`lib/token.mjs`）で認証、CSRF もチェックする。
 - これらを外部公開する設計変更を行う場合、認証・レート制限・オリジン検証を**必ず**追加すること（現状はローカル前提）。
-- **webhook 送信の SSRF ガード**（`lib/notify.mjs` の `validateWebhookUrl`）: 通知 webhook は
-  http/https のみ許可し、リンクローカル（`169.254/16` = AWS/GCP/Azure メタデータ・IPv6 `fe80::`）と
-  メタデータ hostname を拒否、redirect は追従しない（`redirect: 'error'` で public→内部のピボットを防ぐ）。
-  ループバック/プライベート宛は自前リレー用途で**許可**する（ペイロードは墨消し済み）。
-  **限界**: DNS 解決はせず host リテラルのみ検査するため、内部 IP に解決される公開ホスト名や DNS リバインディングは防げない。
-  攻撃面が config 由来で限定的なための割り切り。より強い保証が要るなら解決後 IP でのピン留めを追加すること。
+- **webhook 送信の SSRF ガード**（`lib/notify.mjs`）: 通常の通知先は、userinfo/fragment のない public HTTPS のみ。
+  全 A/AAAA 応答を一度だけ解決して検査し、global-unicast 以外が1件でもあれば拒否する。接続は検査済み IP に固定し、
+  環境 proxy・既存 pooled socket・redirect を使わず、10秒で timeout する。
+  自前ローカルリレーは、親プロセスの `AIO_LOCAL_WEBHOOK_URL` と完全一致する literal `127.0.0.1` / `::1` のみ opt-in で許可する。
+  RFC1918/LAN や hostname ベースのローカル宛は許可しない。設定例と詳細は [`docs/WEBHOOK-SECURITY.md`](docs/WEBHOOK-SECURITY.md) を参照。
 
 ## 6. スコープ
 

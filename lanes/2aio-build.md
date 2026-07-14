@@ -181,6 +181,7 @@ tags: [2aio, build, {略称}]
 - それ以外: 2aio-devops で `--platform` にデプロイ（セキュリティゲートは devops の Step 2.5 が実行）。
   - **外部公開は安全線**: interactive はユーザー承認必須 / auto は `auto_approve: true` のとき実行。
   - interactive の承認、および auto かつ `auto_approve` が true 以外の場合の承認は、メインスレッド（本コマンド）がデプロイ計画を提示して取得し、state.md に `deploy_approved: true` / `deploy_approved_at` を記録してから 2aio-devops を起動する（devops 内での対話承認は不可）。
+  - **ヘッドレス実行時（対話でユーザーに承認を求められない場合）**: 承認待ちで return する直前に、標準出力へ機械可読マーカー **`[APPROVAL_WAITING] {project}`** を1行出力する（control plane がこれを検知して `waiting_approval` 状態＋通知に変換する。マーカーなしの正常終了は「完了」と区別できない — #15。`2aio-implement-project` Phase 5 と逐語同一の契約）。
   - DEGRADED 完走時は deploy-report に未達の受け入れ条件を明記した上で公開可（fail/stuck はデプロイ不可）。
   - 公開＝外向きアクションのため、auto でも秘密検出時は停止。
   - 公開リポは `.gitignore` で `output/`・`.env`・バックアップJSON を除外。

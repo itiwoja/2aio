@@ -111,6 +111,20 @@ test('dependsOn: 前段が done になるまで nextQueued に出てこない', 
   assert.equal(nextQueued(root).id, b.id);
 });
 
+test('dependsOn: 前段が waiting_review で停止すると後続は永久 queued（起動もskipもされない）', () => {
+  // #63: waiting_* は「依存を充足しない終端的ポーズ」。done ではないので nextQueued は起動しない。
+  // failed/canceled/interrupted/skipped の DEAD にも含まれないので propagateSkips も skip しない。
+  // waiting_* になりうる kind（idd-mvp/implement等）を dependsOn 対象にしない運用を前提とする不変条件。
+  const root = tmpRoot();
+  const a = enqueue(root, { repo: 'r1', kind: 'implement' });
+  const b = enqueue(root, { repo: 'r1', kind: 'implement', dependsOn: a.id });
+  updateJob(root, a.id, { state: 'waiting_review' });
+  assert.equal(nextQueued(root), null);
+  const skipped = propagateSkips(root);
+  assert.deepEqual(skipped, []);
+  assert.equal(loadQueue(root).find((j) => j.id === b.id).state, 'queued');
+});
+
 test('propagateSkips: 前段 failed で後続が skipped に落ち、連鎖的に伝播する', () => {
   const root = tmpRoot();
   const a = enqueue(root, { repo: 'r1', kind: 'plan' });

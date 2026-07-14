@@ -54,56 +54,16 @@ destructive/outward-facing ops are never auto-delegated.
 
 ---
 
-## Usage Lanes
+## Internal Lanes
 
-### Full Board (フル取締役会)
-```bash
-/2aio-start-project "テーマ"
-```
-→ Takes 30-60 min, outputs PRD + board meeting report
-
-### Lightweight (軽量モード)
-```bash
-/2aio-start-project "テーマ" --lite
-```
-→ Takes 10 min, CTO + CEO only, no research
-
-### Implementation
-```bash
-/2aio-implement-project {impl-plan-file}
-```
-→ Executes sprints, outputs code + deployment URL
-
-### Fast Build (高速レーン)
-```bash
-/2aio-build "テーマ" --auto
-```
-→ spec → design → code → publish in ~2 hours
-
-### Batch Automation
-```bash
-/2aio-autorun-batch テーマ1 テーマ2 テーマ3
-```
-→ Unattended: board → plan → implement → deploy
-
-### Delegate (司令塔 → Codex 実装)
-```bash
-/2aio-delegate "<実装タスク>"
-```
-→ Claude plans + writes a brief → Codex implements → Claude reviews & integrates (see Principle 7)
-
-### Harden (既存システムの自律強化)
-```bash
-/2aio-harden [--dimensions=security,a11y,...]
-```
-→ Audit → parallel multi-dimension review → fix CRITICAL/HIGH via Codex (test-green verified) →
-re-audit, loop until clean
-
-### Redesign (既存 UI の作り直し)
-```bash
-/2aio-redesign
-```
-→ Audit & improve an existing UI in place with the design-quality skills
+2AIO's implementation workflows live as internal lanes
+(`~/.claude/2aio/lanes/2aio-*.md`, 10 files: `build` / `start-project` /
+`plan-project` / `implement-project` / `dev` / `delegate` / `harden` /
+`redesign` / `issue` / `autorun-batch`). They are **not** runnable as
+`/2aio-*` slash commands — the public entry commands and the control plane
+select them automatically (see "Public commands and installed lanes" below
+for the public interface; this file does not duplicate the full lane-by-lane
+table — README.md's internal-lane table is the single source of truth).
 
 ---
 

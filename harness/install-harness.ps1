@@ -54,7 +54,7 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
         Copy-Item "$harnessDir/codex-router/$f" "$claudeDir/codex-router/$f" -Force
     }
     $env:CODEX_ADVISOR_ABS = (& $py -c "import pathlib,os;print(pathlib.Path(os.path.expanduser('~/.claude/codex-router/codex-advisor.mjs')).as_posix())")
-    Write-Host "  codex-router deployed (auto-delegate advisor + default Terra; see /2aio-delegate)"
+    Write-Host "  codex-router deployed (auto-delegate advisor + default Terra; delegation is auto-guided by enforcer/front-door, manual use: Read ~/.claude/2aio/lanes/2aio-delegate.md)"
 
     New-Item -ItemType Directory -Force "$claudeDir/providers" | Out-Null
     foreach ($f in @("ai-run.sh", "providers.json")) {
@@ -154,7 +154,7 @@ Write-Host "  - Skill-router advisor (UserPromptSubmit): auto-detects & surfaces
 Write-Host "  - Auto-delegate advisor (UserPromptSubmit): detects implementation tasks & directs Claude->Codex."
 Write-Host "  - Front-door advisor (UserPromptSubmit): auto-routes business/redesign/research to the right 2AIO pipeline."
 Write-Host "  - Launcher: model-router/2aio-run.sh picks --model automatically at launch."
-Write-Host "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — see /2aio-delegate."
+Write-Host "  - Codex delegation: ~/.claude/codex-router/codex-run.sh (default Terra) — auto-guided by enforcer/front-door; manual use: Read ~/.claude/2aio/lanes/2aio-delegate.md."
 Write-Host "  Re-run this after adding skills to refresh the skill index."
 
 $codexDir = "$env:USERPROFILE/.codex"

@@ -5,6 +5,9 @@ description: Use when a consequential decision needs adversarial review, opposin
 
 # agent-debate
 
+> **Gemini reroute:** the Gemini lane is deprecated/dead — see `agent-task-splitter`'s
+> reroute table for the source of truth. This file no longer routes any turn to Gemini.
+
 Anti-consensus tool. Most LLM output collapses to a single
 "reasonable-sounding" answer that hides real trade-offs. For
 **consequential decisions** (you'll regret picking the wrong
@@ -71,8 +74,8 @@ Default heuristic:
 |---|---|
 | "We should ship the simpler / less-surface option" | Claude (judgment-heavy, conservative bias) |
 | "We should optimize for X performance / scale dimension" | Codex (concrete with numbers) |
-| "We should consider edge cases X / Y / Z that the obvious answer misses" | Gemini (long-context, edge-case catching) |
-| "We should follow the convention from <reference codebase or paper>" | Gemini (synthesizing from external sources) |
+| "We should consider edge cases X / Y / Z that the obvious answer misses" | Claude (語感/judgment-heavy — catching what a mechanical pass misses) |
+| "We should follow the convention from <reference codebase or paper>" | Codex (機械照合 — grep/diff against the reference is a mechanical match) |
 
 If the user explicitly assigns sides, use those. Otherwise propose
 the assignment and confirm.
@@ -85,7 +88,7 @@ the assignment and confirm.
 **Decision:** <one-line A vs B framing>
 **Rounds:** 2
 **Side A** (argued by Codex): <position A>
-**Side B** (argued by Gemini): <position B>
+**Side B** (argued by Claude): <position B>
 **Started:** 2026-04-28T...
 
 ---
@@ -150,9 +153,11 @@ previous rounds in the debate file as input.
 
 ### 5. Run the rounds
 
-Hand off to `codex-delegate` / `gemini-delegate` to execute each
-agent's turn. They write into the debate file directly (the task
-file says where to append).
+Hand off Codex-argued turns to `codex-delegate`, which writes into
+the debate file directly (the task file says where to append).
+Claude-argued turns run inline in the main session — judgment stays
+with the orchestrator, per `agent-task-splitter`'s reroute table —
+and are appended to the debate file directly by Claude.
 
 ### 6. Synthesize
 
