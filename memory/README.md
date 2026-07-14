@@ -1,9 +1,9 @@
 # 2AIO Memory Layer
 
 Persistent, cross-session memory for the agent framework. All options are external tools
-(MCP servers / plugins / libraries) — documented and recommended here, not vendored. Sources
-staged at `dev/skills/_review/memory/` (+ `dev/skills/TencentDB-Agent-Memory/`) — author's local
-working area, not present in a clone.
+(MCP servers / plugins / libraries) — documented and recommended here, not vendored. Sources are
+vetted from their own upstream clones during evaluation — that staging step is maintainer-only
+and not part of this distribution.
 
 | Tool | Model | Storage | Interface | Notes |
 |---|---|---|---|---|

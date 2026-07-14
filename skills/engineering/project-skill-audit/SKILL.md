@@ -179,4 +179,4 @@ Return a compact audit with:
 
 ## Follow-up
 
-If the user asks to actually create or update one of the recommended skills, switch to [$skill-creator](/Users/dimillian/.codex/skills/.system/skill-creator/SKILL.md) and implement the chosen skill rather than continuing the audit.
+If the user asks to actually create or update one of the recommended skills, switch to the host's skill-creation flow (or confirm with the user how they want the skill authored) and implement the chosen skill rather than continuing the audit.
