@@ -210,8 +210,9 @@ async function run(options) {
   const repoId = `eval-${theme.id}-${ts}`;
   updateRepos({ id: repoId, url: '', slug: 'eval', path: workspace, branch: 'main', mode: 'existing', state: 'ready', defaultLane: 'build' });
 
-  const prompt = `/2aio-build ${theme.theme} eval-${ts} --auto --local --stack=${theme.stack}`;
-  const enqueued = await control(baseUrl, `/api/enqueue?repo=${encodeURIComponent(repoId)}&kind=build&prompt=${encodeURIComponent(prompt)}`, { method: 'POST' });
+  // 旧 /2aio-build スラッシュコマンドは 2 モード化（PR #41）で内部レーン化され Unknown command になる。
+  // プロンプトを直書きせず control.mjs の kind:'build' → laneInvocation 解決に委ねる（レーン移動への追従を一元化）
+  const enqueued = await control(baseUrl, `/api/enqueue?repo=${encodeURIComponent(repoId)}&kind=build&theme=${encodeURIComponent(`${theme.theme} eval-${ts}`)}&flags=${encodeURIComponent(`--auto --local --stack=${theme.stack}`)}`, { method: 'POST' });
   if (!enqueued.ok || !enqueued.job?.id) throw new Error('control plane did not return an enqueued job id');
   const job = await waitForJob(baseUrl, enqueued.job.id, options.timeoutMin);
   const scored = scoreProject(workspace, job);
