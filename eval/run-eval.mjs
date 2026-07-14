@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { getApiToken } from '../lib/token.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_GITLEAKS = process.env.GITLEAKS_BIN || 'gitleaks';
@@ -39,6 +40,26 @@ function readJson(file) {
 
 function countMatches(text, marker) {
   return (text.match(new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+}
+
+// build-log のイベントマーカー出現数を数える。テンプレの節見出し「日本語ラベル（[MARKER]）」は
+// 実イベントが無くても常に存在するため、全角開き括弧「（」直後の [MARKER] は見出しとみなして除外する。
+// 実イベントは `### [ESCALATION] T-001` や `- [FAIL_FORWARD] ...` の形で括弧に包まれない（#46 実走で誤検知が発覚）。
+function countMarkers(text, marker) {
+  const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (text.match(new RegExp(`(?<!（)${escaped}`, 'g')) || []).length;
+}
+
+// QA 達成率。qa-report の ✅/❌ 個数を優先し、記号を使わず overall_judgment フロントマターのみの
+// テンプレ版（#46 で観測）では pass→1.0 / fail→0.0 にフォールバックする（#25 修正条件2 の信号を失わない）。
+function computeQaPassRate(qa) {
+  if (!qa) return null;
+  const passed = countMatches(qa, '✅');
+  const failed = countMatches(qa, '❌');
+  if (passed + failed > 0) return passed / (passed + failed);
+  const judgment = qa.match(/^\s*overall_judgment\s*:\s*(pass|fail)\b/mi);
+  if (judgment) return judgment[1].toLowerCase() === 'pass' ? 1 : 0;
+  return null;
 }
 
 function findStateFiles(dir) {
@@ -100,14 +121,12 @@ export function scoreProject(projectDir, job = null) {
   const qaFile = path.join(artifactDir, 'qa-report.md');
   const log = fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8') : null;
   const qa = fs.existsSync(qaFile) ? fs.readFileSync(qaFile, 'utf8') : null;
-  const passed = qa ? countMatches(qa, '✅') : 0;
-  const failed = qa ? countMatches(qa, '❌') : 0;
   const metrics = {
     gitleaksLeaks: gitleaksLeaks(artifactDir),
-    failForward: log === null ? null : countMatches(log, '[FAIL_FORWARD]'),
-    escalation: log === null ? null : countMatches(log, '[ESCALATION]'),
-    skippedDep: log === null ? null : countMatches(log, '[SKIPPED_DEP]'),
-    qaPassRate: passed + failed === 0 ? null : passed / (passed + failed),
+    failForward: log === null ? null : countMarkers(log, '[FAIL_FORWARD]'),
+    escalation: log === null ? null : countMarkers(log, '[ESCALATION]'),
+    skippedDep: log === null ? null : countMarkers(log, '[SKIPPED_DEP]'),
+    qaPassRate: computeQaPassRate(qa),
     tasksFailed: readTasksFailed(state),
     // 5h ブロック境界を跨ぐと after < before の負値になり得るため null 扱い（Issue #25 修正条件4）
     tokensUsed: Number.isFinite(job?.tokensBefore) && Number.isFinite(job?.tokensAfter)
@@ -135,9 +154,11 @@ function updateRepos(record) {
   fs.writeFileSync(file, `${JSON.stringify(existing, null, 2)}\n`);
 }
 
-async function control(baseUrl, pathname, init) {
+async function control(baseUrl, pathname, init = {}) {
+  // control plane は全 /api/* にトークン認証を要求する（lib/token.mjs と同じ解決順で共有）
+  const headers = { ...(init.headers || {}), 'x-2aio-token': getApiToken(ROOT) };
   let response;
-  try { response = await fetch(new URL(pathname, baseUrl), init); }
+  try { response = await fetch(new URL(pathname, baseUrl), { ...init, headers }); }
   catch (error) { throw new Error(`control plane is not running at ${baseUrl} (start: node control.mjs): ${error.message}`); }
   if (!response.ok) throw new Error(`control plane returned HTTP ${response.status} for ${pathname}`);
   try { return await response.json(); }
@@ -207,8 +228,9 @@ async function run(options) {
   const repoId = `eval-${theme.id}-${ts}`;
   updateRepos({ id: repoId, url: '', slug: 'eval', path: workspace, branch: 'main', mode: 'existing', state: 'ready', defaultLane: 'build' });
 
-  const prompt = `/2aio-build ${theme.theme} eval-${ts} --auto --local --stack=${theme.stack}`;
-  const enqueued = await control(baseUrl, `/api/enqueue?repo=${encodeURIComponent(repoId)}&kind=build&prompt=${encodeURIComponent(prompt)}`, { method: 'POST' });
+  // 旧 /2aio-build スラッシュコマンドは 2 モード化（PR #41）で内部レーン化され Unknown command になる。
+  // プロンプトを直書きせず control.mjs の kind:'build' → laneInvocation 解決に委ねる（レーン移動への追従を一元化）
+  const enqueued = await control(baseUrl, `/api/enqueue?repo=${encodeURIComponent(repoId)}&kind=build&theme=${encodeURIComponent(`${theme.theme} eval-${ts}`)}&flags=${encodeURIComponent(`--auto --local --stack=${theme.stack}`)}`, { method: 'POST' });
   if (!enqueued.ok || !enqueued.job?.id) throw new Error('control plane did not return an enqueued job id');
   const job = await waitForJob(baseUrl, enqueued.job.id, options.timeoutMin);
   const scored = scoreProject(workspace, job);
