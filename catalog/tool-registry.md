@@ -9,8 +9,8 @@ Everything 2AIO integrates, by domain. Three integration tiers:
   default install (see [`security-tools.md`](security-tools.md) for the external-tool universe).
 
 ## Agents (native 2AIO) — Vendored
-17 board + engineering agents (`agents/`) and 5 workflow commands (`commands/`). See top-level
-`README.md`.
+25 board + engineering agents (`agents/`), 2 public entry commands (`commands/`), and 10 internal
+lanes (`lanes/`, auto-selected — not directly invokable). See top-level `README.md`.
 
 ## Skills — Vendored (66)
 | Domain | Count | Dir | Source |
