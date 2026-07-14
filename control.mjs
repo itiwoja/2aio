@@ -10,7 +10,8 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsage, ccusageDebug } from './lib/ccusage.mjs';
 import { admitJob } from './lib/governor.mjs';
-import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips } from './lib/queue.mjs';
+import { loadQueue, enqueue, updateJob, nextQueued, countRunning, cancel, reconcile, propagateSkips, breakerDecision } from './lib/queue.mjs';
+import { redactSecrets } from './lib/redact.mjs';
 import { claudeJSON } from './lib/claude.mjs';
 import { parseRepoUrl, classifyRepo } from './lib/repo.mjs';
 import { within } from './lib/paths.mjs';
@@ -275,7 +276,8 @@ function startJob(job) {
 
   const prompt = buildPrompt(job, repo);
   const { active } = governorState();
-  updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: prompt });
+  // resolvedPrompt は queue.json に残り UI にも出るため墨消し版を保存する（spawn には素の prompt を渡す）。
+  updateJob(ROOT, job.id, { state: 'running', startedAt: new Date().toISOString(), tokensBefore: active?.tokens ?? null, commitBefore, resolvedPrompt: redactSecrets(prompt) });
 
   // #14: stream-json ワーカー(-p 併用時 --verbose 必須)。WORKER_CMD 差替え時は素の出力が来るが、
   // 下の行パーサが JSON でない行を {type:'raw'} として扱うフォールバックで吸収する。
@@ -320,10 +322,9 @@ function startJob(job) {
       : ev.type === 'assistant' ? (ev.message?.content?.find?.((c) => c.type === 'text')?.text || '').slice(0, 200)
       : null;
     if (text) {
-      preview.push(text); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] });
-      // #15: 承認待ちマーカー検知 → waiting_approval 遷移＋通知（exit 0 でも done に上書きしない）。
-      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。
+      // マーカー判定は素の text で行い(墨消しで [APPROVAL_WAITING] 等を壊さない)、保存/表示は墨消し版。
       const marker = text.split('\n').map(parseApprovalMarker).find(Boolean);
+      preview.push(redactSecrets(text)); while (preview.length > 20) preview.shift(); updateJob(ROOT, job.id, { log: [...preview] });
       if (marker) {
         const j = updateJob(ROOT, job.id, { state: 'waiting_approval', waitingProject: marker.project });
         notifyJob(j);
@@ -355,24 +356,32 @@ function startJob(job) {
       ? { input: finalResult.usage.input_tokens ?? null, output: finalResult.usage.output_tokens ?? null,
           cacheRead: finalResult.usage.cache_read_input_tokens ?? null, cacheCreate: finalResult.usage.cache_creation_input_tokens ?? null }
       : null;
-    const failReason = code !== 0
+    const rawFailReason = code !== 0
       ? (finalResult?.is_error
         ? String(typeof finalResult.result === 'string' && finalResult.result ? finalResult.result : (finalResult.subtype || 'error')).slice(0, 160)
         : `exit ${code}`)
       : null;
+    const failReason = rawFailReason ? redactSecrets(rawFailReason) : null; // failReason は UI/通知に出るため墨消し
     // #15: waiting_approval に遷移済みなら exit 0 でも done に上書きしない
     // #23: idd-mvp 完了は done でなく waiting_review（ikki の /idd-review 4軸レビュー待ちを可視化。
     //      後続の自動投入はしない — 削軸レビューは対話必須）
     const current = loadQueue(ROOT).find((x) => x.id === job.id);
-    const nextState = resolveNextState(current?.state, code, job.kind);
+    let finalState = resolveNextState(current?.state, code, job.kind);
+    let finalReason = failReason;
+    // 失敗サーキットブレーカ: 同一 repo で失敗が連続したら 'blocked' に落とし、無駄な再投入スピンを止める
+    // （rate-limit 由来はカウント外。excludeId で判定中の当該ジョブ自身は streak に数えない）。
+    if (finalState === 'failed') {
+      const brk = breakerDecision(loadQueue(ROOT), job, { code, failReason });
+      if (brk.block) { finalState = 'blocked'; finalReason = redactSecrets(brk.reason); }
+    }
     const updated = updateJob(ROOT, job.id, {
-      state: nextState, exit: code,
+      state: finalState, exit: code,
       endedAt: new Date().toISOString(), tokensAfter: after?.tokens ?? null,
       commitAfter: head && head.code === 0 ? head.out : null,
-      usage, costUSD: finalResult?.total_cost_usd ?? null, failReason,
+      usage, costUSD: finalResult?.total_cost_usd ?? null, failReason: finalReason,
       artifacts: collectArtifacts(repo.path),
     });
-    if (nextState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
+    if (finalState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
     tick(); // 1つ空いたので次を検討
   });
 }
@@ -547,7 +556,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .mono{font-family:var(--mono)}
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .badge.queued{background:rgba(93,176,255,.14);color:var(--accent)}.badge.running{background:rgba(210,162,58,.16);color:var(--warn)}
-.badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error{background:rgba(240,98,111,.16);color:var(--bad)}
+.badge.done{background:rgba(63,185,80,.16);color:var(--ok)}.badge.failed,.badge.canceled,.badge.error,.badge.blocked{background:rgba(240,98,111,.16);color:var(--bad)}
 .badge.interrupted,.badge.waiting_approval,.badge.waiting_review{background:rgba(210,162,58,.16);color:var(--warn)}
 .badge.skipped{background:rgba(154,167,180,.16);color:var(--sub)}
 .badge.new{background:rgba(93,176,255,.14);color:var(--accent)}.badge.existing{background:rgba(63,185,80,.16);color:var(--ok)}.badge.cloning{background:rgba(210,162,58,.16);color:var(--warn)}

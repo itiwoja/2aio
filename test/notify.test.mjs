@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { budgetStopEvent, formatMessage, jobEvent, parseApprovalMarker } from '../lib/notify.mjs';
+import http from 'node:http';
+import { budgetStopEvent, formatMessage, jobEvent, parseApprovalMarker, sendNotification } from '../lib/notify.mjs';
 
 test('parseApprovalMarker recognizes an approval marker only', () => {
   assert.deepEqual(parseApprovalMarker('[APPROVAL_WAITING] my-app'), { project: 'my-app' });
@@ -37,4 +38,29 @@ test('jobEvent maps terminal and approval-waiting states', () => {
 test('formatMessage tells an approval-waiting project how to resume', () => {
   const message = formatMessage({ type: 'approval_waiting', jobId: 'job-1', repo: 'my-app', kind: 'implement' });
   assert.match(message.body, /resume my-app/);
+});
+
+test('jobEvent / formatMessage handle the blocked state', () => {
+  const ev = jobEvent({ id: 'j2', repo: 'app', kind: 'build', state: 'blocked', failReason: '3回連続失敗のため blocked' });
+  assert.deepEqual(ev, { type: 'blocked', jobId: 'j2', repo: 'app', kind: 'build', failReason: '3回連続失敗のため blocked' });
+  assert.match(formatMessage(ev).title, /blocked/i);
+});
+
+test('sendNotification redacts secrets in the webhook payload (機外に漏らさない)', async () => {
+  const received = [];
+  const server = http.createServer((req, res) => {
+    let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { received.push(b); res.end('ok'); });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address();
+  const secret = 'sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789';
+  const event = { type: 'failed', jobId: 'j', repo: 'app', kind: 'build', failReason: `boom leaked ${secret}` };
+  try {
+    await sendNotification({ webhookUrl: `http://127.0.0.1:${port}/hook`, toast: false }, event);
+  } finally {
+    await new Promise((r) => server.close(r));
+  }
+  assert.equal(received.length, 1);
+  assert.ok(!received[0].includes(secret), `秘密が webhook に漏れた: ${received[0]}`);
+  assert.ok(received[0].includes('[REDACTED]'));
 });
