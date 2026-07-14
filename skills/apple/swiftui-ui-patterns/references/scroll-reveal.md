@@ -129,5 +129,6 @@ This keeps the motion coherent and avoids duplicate-hit-target bugs.
 
 ## Concrete example
 
-- Pool iOS tile detail reveal: `/Users/dimillian/Documents/Dev/Pool/pool-ios/Pool/Sources/Features/Tile/Detail/TileDetailView.swift`
-- Secondary content anchor example: `/Users/dimillian/Documents/Dev/Pool/pool-ios/Pool/Sources/Features/Tile/Detail/TileDetailIntentListView.swift`
+- Pattern reference: the Pool iOS (Dimillian) tile detail reveal — a secondary content section that
+  fades/slides in as the user scrolls past a primary tile, driven by measured scroll progress rather
+  than a hard-coded divisor (see the "Pitfalls" section above for the underlying technique).

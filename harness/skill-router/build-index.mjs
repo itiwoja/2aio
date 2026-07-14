@@ -71,7 +71,11 @@ function collectSkillDirs(root) {
 const index = [];
 for (const dir of collectSkillDirs(skillsRoot)) {
   const fm = parseFrontmatter(fs.readFileSync(path.join(dir, "SKILL.md"), "utf8"));
-  const name = fm.name || path.basename(dir);
+  // #61: invokable ID is always the directory name (runtime registration ID), never
+  // frontmatter `name` — some vendored SKILL.md files keep an unmodified upstream name
+  // that differs from the dir they're installed under (SOURCE.md declares them
+  // unmodified/upstream-SoT, so we fix the consumer here instead of rewriting 9+ files).
+  const name = path.basename(dir);
   const desc = fm.description || "";
   if (!desc) continue;
   index.push({ name, description: desc.slice(0, 240), keywords: keywordsFor(name, desc) });

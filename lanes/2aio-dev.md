@@ -5,7 +5,7 @@ argument-hint: <repoパス> <機能記述 | --fix バグ報告/Issue文> [--auto
 
 > **表記の読み替え:** 本文中の `/2aio-<name>` は旧スラッシュコマンド表記。`~/.claude/2aio/lanes/2aio-<name>.md` を Read し、後続テキストを $ARGUMENTS としてその指示に従う意味に読み替える。
 
-既存リポジトリに **1機能足す / バグを直す** ための第3レーン。ゼロから作って公開する既存5レーンと違い、
+既存リポジトリに **1機能足す / バグを直す** ための開発レーン。ゼロから作って公開する新規生成レーン群と違い、
 対象 repo の規約・スタック・テスト構成に**合わせて**最小差分で作業する。
 
 **対象:** $ARGUMENTS
@@ -27,7 +27,7 @@ argument-hint: <repoパス> <機能記述 | --fix バグ報告/Issue文> [--auto
 - **対象 repo の規約が正本**: 2AIO の流儀ではなく、解析で抽出した conventions.md（既存規約・スタック・テスト構成）に従う。
 - **push / PR は外向きアクション**（原則2を類推適用）: interactive は承認必須。state.md に
   `push_approved: true` / `push_approved_at` を記録してから実行。auto も `--pr` 明示がない限り push しない。
-- **control.mjs の queue kind への 'dev' 追加は本レーンのスコープ外（v2）。**
+- **control.mjs は feature/fix/issue kind として本レーンへ委譲する（統合済。単一 dev kind は設けず Issue/機能/バグの3経路で起動）。**
 
 ## モード仕様
 
