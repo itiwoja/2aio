@@ -42,6 +42,26 @@ function countMatches(text, marker) {
   return (text.match(new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
 }
 
+// build-log のイベントマーカー出現数を数える。テンプレの節見出し「日本語ラベル（[MARKER]）」は
+// 実イベントが無くても常に存在するため、全角開き括弧「（」直後の [MARKER] は見出しとみなして除外する。
+// 実イベントは `### [ESCALATION] T-001` や `- [FAIL_FORWARD] ...` の形で括弧に包まれない（#46 実走で誤検知が発覚）。
+function countMarkers(text, marker) {
+  const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (text.match(new RegExp(`(?<!（)${escaped}`, 'g')) || []).length;
+}
+
+// QA 達成率。qa-report の ✅/❌ 個数を優先し、記号を使わず overall_judgment フロントマターのみの
+// テンプレ版（#46 で観測）では pass→1.0 / fail→0.0 にフォールバックする（#25 修正条件2 の信号を失わない）。
+function computeQaPassRate(qa) {
+  if (!qa) return null;
+  const passed = countMatches(qa, '✅');
+  const failed = countMatches(qa, '❌');
+  if (passed + failed > 0) return passed / (passed + failed);
+  const judgment = qa.match(/^\s*overall_judgment\s*:\s*(pass|fail)\b/mi);
+  if (judgment) return judgment[1].toLowerCase() === 'pass' ? 1 : 0;
+  return null;
+}
+
 function findStateFiles(dir) {
   const found = [];
   const visit = (current) => {
@@ -101,14 +121,12 @@ export function scoreProject(projectDir, job = null) {
   const qaFile = path.join(artifactDir, 'qa-report.md');
   const log = fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8') : null;
   const qa = fs.existsSync(qaFile) ? fs.readFileSync(qaFile, 'utf8') : null;
-  const passed = qa ? countMatches(qa, '✅') : 0;
-  const failed = qa ? countMatches(qa, '❌') : 0;
   const metrics = {
     gitleaksLeaks: gitleaksLeaks(artifactDir),
-    failForward: log === null ? null : countMatches(log, '[FAIL_FORWARD]'),
-    escalation: log === null ? null : countMatches(log, '[ESCALATION]'),
-    skippedDep: log === null ? null : countMatches(log, '[SKIPPED_DEP]'),
-    qaPassRate: passed + failed === 0 ? null : passed / (passed + failed),
+    failForward: log === null ? null : countMarkers(log, '[FAIL_FORWARD]'),
+    escalation: log === null ? null : countMarkers(log, '[ESCALATION]'),
+    skippedDep: log === null ? null : countMarkers(log, '[SKIPPED_DEP]'),
+    qaPassRate: computeQaPassRate(qa),
     tasksFailed: readTasksFailed(state),
     // 5h ブロック境界を跨ぐと after < before の負値になり得るため null 扱い（Issue #25 修正条件4）
     tokensUsed: Number.isFinite(job?.tokensBefore) && Number.isFinite(job?.tokensAfter)

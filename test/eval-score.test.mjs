@@ -37,6 +37,42 @@ test('ESCALATION 1件 → pass=false', () => {
   assert.equal(scoreProject(dir).pass, false);
 });
 
+test('テンプレ節見出し（[ESCALATION]）は実イベントと数えない → pass=true（#46 誤検知回帰）', () => {
+  // build-log テンプレの見出し。実エスカレーションは無いので escalation=0・pass=true であるべき
+  const dir = fixture({
+    'state.md': CLEAN_STATE,
+    'build-log.md': '## エスカレーション（[ESCALATION]）\n\nなし\n\n## 新規依存追加（[NEW_DEP]）\n\nなし\n',
+    'qa-report.md': '| a | ✅ |\n',
+  });
+  const r = scoreProject(dir);
+  assert.equal(r.metrics.escalation, 0, '見出しの [ESCALATION] は 0 件');
+  assert.equal(r.pass, true);
+});
+
+test('見出しと実イベントが混在 → 実イベントのみ数える', () => {
+  const dir = fixture({
+    'state.md': CLEAN_STATE,
+    'build-log.md': '## エスカレーション（[ESCALATION]）\n\n### [ESCALATION] T-007 承認待ちで停止\n',
+  });
+  assert.equal(scoreProject(dir).metrics.escalation, 1);
+});
+
+test('qaPassRate: ✅/❌ 記号が無くても overall_judgment: pass → 1.0（#46 形式ドリフト回帰）', () => {
+  const dir = fixture({
+    'state.md': CLEAN_STATE,
+    'qa-report.md': '---\ntype: qa-report\noverall_judgment: pass\n---\n\n**総合判定:** Pass\nPass: 11 件 / Fail: 0 件\n',
+  });
+  assert.equal(scoreProject(dir).metrics.qaPassRate, 1);
+});
+
+test('qaPassRate: overall_judgment: fail → 0.0', () => {
+  const dir = fixture({
+    'state.md': CLEAN_STATE,
+    'qa-report.md': '---\noverall_judgment: fail\n---\n',
+  });
+  assert.equal(scoreProject(dir).metrics.qaPassRate, 0);
+});
+
 test('qa-report に ✅/❌ なし → qaPassRate=null（0除算しない）', () => {
   const dir = fixture({ 'state.md': CLEAN_STATE, 'qa-report.md': 'まだ検証していない\n' });
   assert.equal(scoreProject(dir).metrics.qaPassRate, null);
