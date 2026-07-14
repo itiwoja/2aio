@@ -127,7 +127,7 @@ Stagger example:
 .item:nth-child(3) { animation-delay: 100ms; }
 ```
 
-For multi-stage storyboards with named timing + config objects + stage-driven sequencing, see `../examples/animation-storyboard.md`.
+For multi-stage storyboards with named timing + config objects + stage-driven sequencing: define named timing constants, a per-stage config object, and drive playback by iterating stages in order (upstream's `examples/animation-storyboard.md` is not vendored in this repo — this file's own patterns above already cover per-property sequencing and stagger).
 
 ---
 
@@ -385,7 +385,6 @@ Map the project's animation library to the token names, not raw values — when 
 - `stack.md` — Motion / GSAP / Three.js library specifics (opt-in during Discovery).
 - `modern-css.md` — `@starting-style` for enter-on-mount, View Transitions API.
 - `accessibility.md` — reduced-motion + full interaction rules (keyboard, focus, touch).
-- `../examples/animation-storyboard.md` — multi-stage sequenced animations pattern.
 
 ---
 
