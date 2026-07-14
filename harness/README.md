@@ -180,9 +180,9 @@ engages from a plain prompt instead of an ad-hoc answer.
 
 | Lane | Trigger (JP+EN, tunable in `routes.json`) | Directs to |
 |---|---|---|
-| **harden** | 全面強化 / 堅牢化 / 総点検 / harden / audit and fix | `/2aio-harden` (autonomous cross-dimension strengthen, loop-until-clean) |
-| **board** | business idea / viability / revenue / 稼ぐ / 事業 / マネタイズ | `/2aio-start-project` (取締役会: CEO/CMO/CTO → PRD) |
-| **redesign** | 作り直し / リデザイン / modernize the UI / restyle | `/2aio-redesign` (audit & improve existing UI in place) |
+| **harden** | 全面強化 / 堅牢化 / 総点検 / harden / audit and fix | `/2aio-check` (audits, then — after approval — runs the internal harden lane: autonomous cross-dimension strengthen, loop-until-clean) |
+| **board** | business idea / viability / revenue / 稼ぐ / 事業 / マネタイズ | `/2aio-create` in full mode (取締役会: CEO/CMO/CTO → PRD → plan → implement) |
+| **redesign** | 作り直し / リデザイン / modernize the UI / restyle | `/2aio-check` (audits the current UI, then — after approval — runs the internal redesign lane in place) |
 | **research** | 競合調査 / 市場調査 / competitive analysis / research the… | `2aio-researcher` + `2aio-r-*` specialists |
 
 `2aio-advisor.mjs` (UserPromptSubmit) picks at most one lane (priority = file order) and injects a

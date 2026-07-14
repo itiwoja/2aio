@@ -56,24 +56,26 @@ API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠
   - **existing（コード有り）**: `POST /api/analyze` で `analyze` ジョブ（README/docs/コード/Issueを読み、理解＋改善案＋2AIO強化点を出力）。
 - `lib/queue.mjs`: ジョブを `control/queue.json` に永続化（既存の runs/・history/ と同じ記録思想）。
 - ジョブ全文ログ (#14): `control/logs/<jobId>.ndjson`（stream-json イベント追記。queue.json の log[] は最新20行プレビューのみ）。**`control/logs/` はルートの `history/`（2AIOForge の vault 変更履歴）とは別物。**
-- ワーカー: ガバナー許可がある限り `queued` を古い順に起動 → `spawn('claude', ['-p', '--output-format', 'stream-json', '--verbose', prompt], { cwd: repo.path })`。終了時に result イベントから usage / total_cost_usd / 失敗理由を抽出し、成果物リンクは `output/*/state.md`（正本）から拾う。
-- API: `GET /api/control`／`GET /api/job?id=`（詳細+ログ末尾）／`POST /api/register`／`GET,POST /api/intake[/answer]`／`POST /api/analyze`／`POST /api/enqueue`／`POST /api/cancel`（実行中はツリーkill）／`GET /api/debug`（ccusage生診断）。CSRF対策（Origin検査）は dashboard.mjs と同一。
+- ワーカー: ガバナー許可がある限り `queued` を古い順に起動 → `spawn(claudeBin, ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', permissionMode, '--allowedTools', allowedTools, ...(model ? ['--model', model] : [])], { cwd: repo.path })`（`buildWorkerArgs()` が正本。既定 `permissionMode: 'acceptEdits'` / `model: 'sonnet'` 固定、`allowedTools` 既定値と個別上書きは `config.json` の `worker` を正本参照 — 転記しない）。終了時に result イベントから usage / total_cost_usd / 失敗理由を抽出し、成果物リンクは `output/*/state.md`（正本）から拾う。
+- API: `GET /api/control`／`GET /api/job?id=`（詳細+ログ末尾）／`POST /api/register`／`GET,POST /api/intake[/answer]`／`POST /api/analyze`／`POST /api/enqueue`／`POST /api/cancel`（実行中はツリーkill）／`GET /api/debug`（ccusage生診断）。CSRF対策（Origin検査）は dashboard.mjs と同一。**全 `/api/*` は `x-2aio-token` ヘッダ必須（同一マシンのローカルトークン認証。未認証401 — 既に実装済み、Phase 1 から必須。下記「Phase 3」は LAN/リモート向けのネットワーク認証であり、このローカルトークンとは別物）。**
 - テスト/カバレッジ (#22): CI ゲートは「テスト全パス」必須。カバレッジ 80% 閾値はテスト済みコアモジュール（governor/queue/policy/proposals/intake/repo）に限定して適用。外部プロセスラッパー（claude/ccusage/search/ollama/usage/history）は当面除外 — **lib 全体 80% は将来目標**（Node のカバレッジはロードされたファイルのみ報告するため、真に課すとモック大量作成でスコープが膨張する）。
 - **対話ヒアリングの方式**: 「ダッシュボード上でAI対話」を採用。headless `claude -p` は非対話だが、UIが1ターンずつ回答を集め、各ターンで `claude -p` に次の質問を生成させることで**Webで完結する真の対話**を実現（サブスク枠を使用）。
 
-## kind → プロンプト対応（control.mjs `buildPrompt`）
-| kind | 実行プロンプト |
+## kind → 委譲先レーン/コマンド（control.mjs `buildPrompt`）
+| kind | 実行方法 |
 |------|--------------|
-| `build` | `/2aio-build <theme> --auto` |
-| `start` | `/2aio-start-project <theme>` |
-| `plan` | `/2aio-plan-project <prd\|latest>` |
-| `implement` | `/2aio-implement-project <plan\|latest> --auto` |
+| `build` | `2aio-build` レーンへ委譲 |
+| `start` | `2aio-start-project` レーンへ委譲 |
+| `plan` | `2aio-plan-project` レーンへ委譲（`<prd\|latest>`） |
+| `implement` | `2aio-implement-project` レーンへ委譲（`<plan\|latest> --auto`） |
 | `analyze` | 既存repo解析（README/docs/コード/Issueを読み理解＋改善案＋2AIO強化点を出力、CLAUDE.md反映） |
 | `feature` / `fix` / `issue` | `2aio-dev` レーンへ委譲（機能追加／バグ修正／Issue起点） |
 | `test` | テストコマンドを検出して全実行、失敗は最大3往復で自己修正 |
-| `review` / `refactor` | `/code-review <target>` ／ `/refactor-clean <target>` |
-| `idd-intent` / `idd-plan` / `idd-mvp` | IDD ブリッジ（intent→plan→mvp で停止） |
+| `review` / `refactor` | `/code-review <target>` ／ `/refactor-clean <target>`（実スラッシュコマンドをそのまま emit — 下記レーン委譲とは異なりレーン化しない） |
+| `idd-intent` / `idd-plan` / `idd-mvp` | IDD ブリッジ（intent→plan→mvp で停止）。`idd-intent` は `/idd-intent <theme>` を実スラッシュコマンドとして emit |
 | `pr` | 秘密スキャン後に push → `gh pr create` |
+
+「レーンへ委譲」の実体は `laneInvocation()`（`lib/intake.mjs` が単一正本）: レーンファイルの絶対パス（`~/.claude/2aio/lanes/<name>.md`）を埋め込み、「Read し、その指示に $ARGUMENTS を『...』として厳密に従って実行してください」という指示文を生成する。旧スラッシュコマンド（`/2aio-build` 等）をそのまま emit するわけではない — `review`/`refactor`/`idd-intent` の実スラッシュ emit とは異なる契約（#58）。
 
 `prompt` を直接指定した場合はそれを優先。
 
@@ -81,13 +83,13 @@ API従量なら各repoを自由に並列できるが、**全repoが1つのMax枠
 
 1. **自動2AIOの暴発リスク**: 完全アンビエント化は些細な依頼で重い取締役会を起動し共有枠を溶かす。→ **段階ルーティング必須**（`些末=直接実装 / 機能=2aio-build(lite) / 新規事業=取締役会フル`）。判定表はL1のCLAUDE.mdに置き、L2ガバナーが最終ゲート。
 2. **並列 vs サブスク**: 真の同時並列は1サブスクでは物理的に困難。「複数repo進行」は**同時実行**でなく**1キューで滑らかに回す**（承認待ち時間に別repoを進める）と解釈。2アカウント以上あれば `AIO_CLAUDE_BIN`/プロファイルでワーカーを増やせる。
-3. **LAN公開はしない（Phase 1）**: 書き込み（spawn）を伴うため 127.0.0.1 限定。複数ホストのforgeノード集約（プル型ハブ）とLAN公開＋トークン認証は Phase 3 で扱う。
+3. **LAN公開はしない（Phase 1）**: 書き込み（spawn）を伴うため 127.0.0.1 限定。同一マシンのローカルトークン認証（`x-2aio-token`）は既に必須実装済み — ここでいう Phase 3 の「LAN公開＋トークン認証」は**LAN/リモート向けのネットワーク認証**（別物）で、複数ホストのforgeノード集約（プル型ハブ）と併せて Phase 3 で扱う。
 
 ## 段階導入
 
 - **Phase 1 ✅（本コミット）**: ガバナー＋キューの制御プレーン（`control.mjs` / `lib/governor.mjs` / `lib/queue.mjs` / `repos.example.json` / テスト）。複数repoを1画面・1トークン枠で直列進行。
 - **Phase 2**: アンビエント2AIO（`~/.claude/skills/` 3入口＋グローバルCLAUDE.mdルーティング）。各repoで `/2aio-*` を打たず2AIO始動。
-- **Phase 3**: 自律ループ（reset後の自動消化・枠の厚い時間帯への重ジョブ自動投入／cron連携）＋複数ホスト集約（LAN・トークン認証）。
+- **Phase 3**: 自律ループ（reset後の自動消化・枠の厚い時間帯への重ジョブ自動投入／cron連携）＋複数ホスト集約（LAN・**LAN/リモート向けのネットワーク認証** — 同一マシンのローカルトークン認証はPhase 1から既に必須）。
 
 ## 起動
 ```bash

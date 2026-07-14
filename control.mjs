@@ -146,6 +146,9 @@ function corePrompt(job, a) {
     case 'implement': return laneInvocation('2aio-implement-project', `${a.plan || 'latest'} ${a.flags || '--auto'}`.trim());
     case 'analyze': return `このリポジトリを解析してください。README・docs・主要なソースコードを読み、（gh コマンドが使えれば未解決 Issue も）確認したうえで、日本語で次を出力: ①アプリの目的と全体構成の理解、②具体的な改善案（優先度付き）、③2AIOエージェント（取締役会/planner/engineer/QA）で強化できる点。最後に、解析結果の要点（構成理解・主要コマンド・注意点）を CLAUDE.md に反映してください（無ければ作成。次回以降のジョブが自動ロードして使う）。`;
     // ── 開発 kind (#9)。feature/fix/issue は 2aio-dev レーン(#1)へ委譲 ──
+    // #55: headless の issue 分類はここが正本（bug/feature→2aio-dev限定の縮退実装）。
+    // 新規プロダクト/impl-plan済み/調査依頼などの広い分類は lanes/2aio-issue.md（会話専用）側の
+    // 決定表が正本であり、ここには反映しない（headless は「曖昧なら人に確認」を実行できないため）。
     case 'issue': return `gh issue view ${a.issue || a.target || a.theme} をコメント込みで読み、内容を1行に要約したうえで、バグ報告なら ${laneInvocation('2aio-dev', '. --fix "{要約}" --auto')} 機能要望なら ${laneInvocation('2aio-dev', '. "{要約}" --auto')}`;
     case 'feature': return laneInvocation('2aio-dev', `. ${a.theme || ''} ${a.flags || '--auto'}`.trim());
     case 'fix': return laneInvocation('2aio-dev', `. --fix ${a.theme || ''} ${a.flags || '--auto'}`.trim());
@@ -307,6 +310,10 @@ function startJob(job) {
   let lineBuf = '';           // チャンク境界で JSON 行が割れるため行バッファリング必須
   let finalResult = null;     // stream-json の type:'result' イベント(usage/total_cost_usd/is_error)
   const preview = [];
+  // #57: プレビューログのupdateJobはqueue.json全体read→再シリアライズ→全書換を伴うため、
+  // チャンク毎の同期書込みをやめ250msデバウンス（close時に必ず最終フラッシュ — 下記参照）。
+  let logFlushTimer = null;
+  let logDirty = false;
   const handleLine = (line) => {
     if (!line.trim()) return;
     let ev = null;
@@ -322,10 +329,20 @@ function startJob(job) {
       : null;
     if (text) {
       preview.push(text); while (preview.length > 20) preview.shift();
-      // #51: プレビューログ更新失敗は無視・続行（高頻度・非本質的な更新のため）
-      try { updateJob(ROOT, job.id, { log: [...preview] }); } catch { /* ログ更新失敗は無視・続行 */ }
+      logDirty = true;
+      if (!logFlushTimer) {
+        logFlushTimer = setTimeout(() => {
+          logFlushTimer = null;
+          if (logDirty) {
+            logDirty = false;
+            // #51: プレビューログ更新失敗は無視・続行（高頻度・非本質的な更新のため）
+            try { updateJob(ROOT, job.id, { log: [...preview] }); } catch { /* ログ更新失敗は無視・続行 */ }
+          }
+        }, 250);
+      }
       // #15: 承認待ちマーカー検知 → waiting_approval 遷移＋通知（exit 0 でも done に上書きしない）。
-      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。
+      // マーカーはメッセージ途中の行にも現れうるため行単位で判定する。承認待ちは即時可視化が要るため
+      // ログプレビューとは異なりデバウンスしない。
       const marker = text.split('\n').map(parseApprovalMarker).find(Boolean);
       if (marker) {
         // #51: 状態遷移は無視すると承認待ちが消えるため、失敗はログして続行（握り潰さない）
@@ -355,6 +372,8 @@ function startJob(job) {
   child.on('close', (code) => {
     clearTimeout(killer);
     if (lineBuf.trim()) handleLine(lineBuf); // 残りバッファのフラッシュ
+    // #57: デバウンス中のログプレビューを最終確定書込みへ合流させ、保留分の消失を防ぐ
+    clearTimeout(logFlushTimer); logFlushTimer = null; logDirty = false;
     procs.delete(job.id);
     const { active: after } = governorState();
     const head = fs.existsSync(path.join(repo.path, '.git')) ? git(repo.path, 'rev-parse', 'HEAD') : null;
@@ -379,6 +398,7 @@ function startJob(job) {
       commitAfter: head && head.code === 0 ? head.out : null,
       usage, costUSD: finalResult?.total_cost_usd ?? null, failReason,
       artifacts: collectArtifacts(repo.path),
+      log: [...preview], // #57: デバウンス中に保留していた分もこの単一書込みに合流
     });
     if (nextState !== 'waiting_approval') notifyJob(updated, ndjsonPath); // 承認待ちはマーカー時点で通知済み
     tick(); // 1つ空いたので次を検討
