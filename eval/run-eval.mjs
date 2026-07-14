@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { getApiToken } from '../lib/token.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_GITLEAKS = process.env.GITLEAKS_BIN || 'gitleaks';
@@ -135,9 +136,11 @@ function updateRepos(record) {
   fs.writeFileSync(file, `${JSON.stringify(existing, null, 2)}\n`);
 }
 
-async function control(baseUrl, pathname, init) {
+async function control(baseUrl, pathname, init = {}) {
+  // control plane は全 /api/* にトークン認証を要求する（lib/token.mjs と同じ解決順で共有）
+  const headers = { ...(init.headers || {}), 'x-2aio-token': getApiToken(ROOT) };
   let response;
-  try { response = await fetch(new URL(pathname, baseUrl), init); }
+  try { response = await fetch(new URL(pathname, baseUrl), { ...init, headers }); }
   catch (error) { throw new Error(`control plane is not running at ${baseUrl} (start: node control.mjs): ${error.message}`); }
   if (!response.ok) throw new Error(`control plane returned HTTP ${response.status} for ${pathname}`);
   try { return await response.json(); }
