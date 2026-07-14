@@ -55,7 +55,7 @@ The rules that make the biggest difference between "AI-generated" and "designed 
 | Adding/fixing animations | **Animate** — [motion.md](references/motion.md) |
 | Reviewing existing UI | **Review** — [review.md](references/review.md) |
 | Polishing existing UI | **Polish** — this file + [review.md](references/review.md) Polish Pass |
-| Multi-stage animations | [animation-storyboard.md](../../examples/animation-storyboard.md) |
+| Multi-stage animations | see [motion.md](references/motion.md) (upstream's `examples/animation-storyboard.md` is not vendored in this repo) |
 | Layout / spacing | [layout.md](references/layout.md) |
 | Typography (focused pass: `/typeset`) | [typography.md](references/typography.md) |
 | Color / theming / dark mode (focused pass: `/colorize`) | [color.md](references/color.md) |

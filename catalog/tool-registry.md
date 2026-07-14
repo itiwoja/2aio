@@ -51,6 +51,6 @@ budget governor) is merged into `main` and runs from the repo root. See top-leve
 and `docs/CONTROL-PLANE.md`.
 
 ## Staging
-All cloned upstream sources are staged (git-ignored, **author's local working area — not present in a
-clone**) at `dev/skills/_review/<category>/<repo>/`
-so any tool can be inspected, updated, or promoted from Catalogued → Wired without re-cloning.
+All cloned upstream sources are vetted from their own clones during evaluation (maintainer-only
+staging, not part of this distribution) so any tool can be inspected, updated, or promoted from
+Catalogued → Wired without re-cloning.

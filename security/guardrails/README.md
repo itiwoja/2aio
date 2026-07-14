@@ -22,8 +22,8 @@ For a policy engine with an audit trail, use **GouvernAI** instead of hand-rolle
 classifies each action into auto-approve / gate / block (T1–T3 tiers).
 
 ## Install (see each upstream repo for exact steps)
-The cloned sources are staged at `dev/skills/_review/security-guardrail/<tool>/` (author's local
-working area, not present in a clone). Each is a
+The cloned sources are vetted from their own upstream clones during evaluation (maintainer-only
+staging, not part of this distribution). Each is a
 Claude Code plugin/hook — most install by adding a `PreToolUse` entry to `~/.claude/settings.json`
 or via their `install` script. Do **not** wire these to remote one-off package execution;
 prefer the repo-local hook script.

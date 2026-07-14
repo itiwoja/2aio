@@ -1,6 +1,6 @@
 ---
 name: agent-task-splitter
-description: Use when the user asks to split a goal across Claude, Codex, or Gemini (gemini requests are rerouted - lane deprecated); plan a multi-agent run; break work into parallel agent tasks; or decompose a large task that needs bounded context handoffs. This is the **generic** multi-agent task splitter — writes `.coord/plan.yml` (a DAG) plus per-agent task files. NOT for research-domain routing that touches `.research/`, `.paper/`, or Zotero/Obsidian/NotebookLM ingest pipelines — for those, use `research-hub-multi-ai` instead (different artifact `.coord/multi_ai_plan.md`, research-hub-aware reconciliation).
+description: Use when the user asks to split a goal across Claude, Codex, or Gemini (gemini requests are rerouted - lane deprecated); plan a multi-agent run; break work into parallel agent tasks; or decompose a large task that needs bounded context handoffs. This is the **generic** multi-agent task splitter — writes `.coord/plan.yml` (a DAG) plus per-agent task files. NOT for research-domain routing that touches `.research/`, `.paper/`, or Zotero/Obsidian/NotebookLM ingest pipelines — that domain is out of scope for this skill (this repo does not vendor a dedicated research-multi-agent skill; treat it as ordinary multi-agent work via the DAG above, or scope a new skill if the need is recurring).
 ---
 
 # agent-task-splitter
