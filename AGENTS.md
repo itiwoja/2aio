@@ -71,16 +71,28 @@ contents back into public command files.
 ## Codex から 2AIO を起動する（入口の host 差分）
 
 Claude Code の slash command（`/2aio-create` / `/2aio-check`）は frontmatter 解釈に
-依存するため Codex では動かない。Codex では代わりに **コマンドファイルを直接 Read し、
-その手順を自分の指示として実行する**ことで同じ入口を再現する:
+依存するため Codex ではそのまま動かない（`/2aio-create` と打っても出てこない）。
 
-- 「一から作る」: `commands/2aio-create.md` を Read し、$ARGUMENTS を
+**正規の入口: Skill（`install.sh` / `install.ps1` を実行済みなら使える）**
+`skills/2aio/2aio-create/` と `skills/2aio/2aio-check/` は Codex/Claude 共通の
+SKILL.md 形式（`name` + `description` frontmatter）で書かれており、インストーラが
+`~/.claude/skills/` と `~/.codex/skills/`（Codex が既に入っている場合のみ）の両方に
+配備する。Codex 側では `/skills` メニューまたは `$2aio-create` / `$2aio-check` で
+明示呼び出しできる。自然文で「アプリを作りたい」等と伝えた場合も description
+マッチで暗黙起動しうる。**未インストール／未 update の場合はまず
+`bash install.sh --update` または `pwsh install.ps1 -update` を実行する。**
+
+**フォールバック（Skill が未配備でも動く）**: **コマンドファイルを直接 Read し、
+その手順を自分の指示として実行する**ことで同じ入口を再現できる:
+
+- 「一から作る」: `~/.claude/commands/2aio-create.md`（無ければリポジトリ直下の
+  `commands/2aio-create.md`）を Read し、$ARGUMENTS を
   「<作りたいもの> [--quick|--full] [--auto]」として、その手順（規模判定 → レーン選択 →
   レーン実行）に厳密に従う。
-- 「既存プロジェクトの評価」: `commands/2aio-check.md` を Read し、$ARGUMENTS を
-  「[path] [--report-only] [--dimensions=...]」として同様に従う。
-- 手順文中の `~/.claude/2aio/lanes/` は Claude Code 側の配備先。Codex はリポジトリ直下の
-  `lanes/*.md` / `agents/*.md` を直接 Read すればよい（内容は同一。lane 側には既に
+- 「既存プロジェクトの評価」: 同様に `2aio-check.md` を Read し、$ARGUMENTS を
+  「[path] [--report-only] [--dimensions=...]」として従う。
+- 手順文中の `~/.claude/2aio/lanes/` はグローバル配備先（Claude Code 専用ではない、
+  ただのファイルパス）。Codex もそのまま Read してよい（内容は同一。lane 側には既に
   「`/2aio-<name>` は旧スラッシュコマンド表記 → レーンファイルを Read して読み替える」
   という注記がある）。
 

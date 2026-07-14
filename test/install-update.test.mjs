@@ -32,6 +32,10 @@ function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "2aio-install-"));
   const repo = path.join(root, "repo");
   const claudeDir = path.join(root, "claude");
+  // codexDir is intentionally NOT created here — the installer must treat a missing
+  // Codex install as "skip", and tests must never touch the real ~/.codex on the
+  // machine running them (CODEX_DIR is always pinned below, in or out of fixture dir).
+  const codexDir = path.join(root, "codex");
   fs.mkdirSync(repo, { recursive: true });
   fs.mkdirSync(claudeDir, { recursive: true });
   fs.copyFileSync(sourceInstaller, path.join(repo, "install.sh"));
@@ -43,13 +47,13 @@ function fixture() {
   write(path.join(repo, "scripts", "ui-smoke.mjs"), "// smoke\n");
   write(path.join(repo, "skills", "cat", "skill-a", "SKILL.md"), "repo skill-a\n");
   write(path.join(repo, "skills", "cat", "skill-b", "SKILL.md"), "repo skill-b\n");
-  return { root, repo, claudeDir };
+  return { root, repo, claudeDir, codexDir };
 }
 
-function run({ repo, claudeDir }, ...args) {
+function run({ repo, claudeDir, codexDir }, ...args) {
   return spawnSync(BASH, ["install.sh", ...args], {
     cwd: repo,
-    env: { ...process.env, CLAUDE_DIR: gitBashPath(claudeDir) },
+    env: { ...process.env, CLAUDE_DIR: gitBashPath(claudeDir), CODEX_DIR: gitBashPath(codexDir) },
     encoding: "utf8",
   });
 }
@@ -184,5 +188,36 @@ test("廃止された 2aio エージェントだけを削除する", () => {
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "agents", "my-agent.md"), "utf8"), "preserve\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "agents", "2aio-keep.md"), "utf8"), "keep\n");
     assert.ok(result.stdout.includes(`removed retired agent: ${retired}`));
+  } finally { cleanup(env); }
+});
+
+test("Codex 未インストール（~/.codex が無い）なら codex/skills は作られない", () => {
+  const env = fixture();
+  try {
+    assert.equal(run(env).status, 0);
+    assert.equal(fs.existsSync(path.join(env.codexDir, "skills")), false);
+  } finally { cleanup(env); }
+});
+
+test("Codex インストール済みなら同じスキルを ~/.codex/skills にも配備する", () => {
+  const env = fixture();
+  try {
+    fs.mkdirSync(env.codexDir, { recursive: true });
+    assert.equal(run(env).status, 0);
+    assert.equal(fs.readFileSync(path.join(env.codexDir, "skills", "skill-a", "SKILL.md"), "utf8"), "repo skill-a\n");
+    assert.equal(fs.readFileSync(path.join(env.codexDir, "skills", "skill-b", "SKILL.md"), "utf8"), "repo skill-b\n");
+  } finally { cleanup(env); }
+});
+
+test("Codex 側も既存スキルは上書きせず --update は管理済みだけ更新する", () => {
+  const env = fixture();
+  try {
+    fs.mkdirSync(env.codexDir, { recursive: true });
+    assert.equal(run(env).status, 0);
+    write(path.join(env.codexDir, "skills", "skill-a", "SKILL.md"), "changed on codex side\n");
+    write(path.join(env.codexDir, "skills", "user-x", "SKILL.md"), "user skill\n");
+    assert.equal(run(env, "--update").status, 0);
+    assert.equal(fs.readFileSync(path.join(env.codexDir, "skills", "skill-a", "SKILL.md"), "utf8"), "repo skill-a\n");
+    assert.equal(fs.readFileSync(path.join(env.codexDir, "skills", "user-x", "SKILL.md"), "utf8"), "user skill\n");
   } finally { cleanup(env); }
 });
