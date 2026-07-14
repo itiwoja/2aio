@@ -2,7 +2,16 @@
 // ガバナーが「使用率0%」として無制限 admit する故障モード（実事故 e7518b3）を固定する。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { blockTokens, pickActiveBlock } from '../lib/ccusage.mjs';
+import { blockTokens, buildCcusageCommand, pickActiveBlock } from '../lib/ccusage.mjs';
+
+test('buildCcusageCommand accepts only shell-safe version and argument tokens', () => {
+  assert.equal(
+    buildCcusageCommand('20.0.17', ['blocks', '--active', '--json']),
+    'npx -y ccusage@20.0.17 blocks --active --json',
+  );
+  assert.throws(() => buildCcusageCommand('20.0.17 & whoami', ['blocks']), /version/i);
+  assert.throws(() => buildCcusageCommand('20.0.17', ['--json & whoami']), /argument/i);
+});
 
 // ---- blockTokens: バージョン差フィクスチャ ----
 
