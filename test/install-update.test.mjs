@@ -43,6 +43,7 @@ function fixture() {
   write(path.join(repo, "agents", "2aio-keep.md"), "keep\n");
   write(path.join(repo, "commands", "2aio-create.md"), "create\n");
   write(path.join(repo, "commands", "2aio-check.md"), "check\n");
+  write(path.join(repo, "commands", "2aio-dev.md"), "dev\n");
   write(path.join(repo, "lanes", "2aio-build.md"), "build lane\n");
   write(path.join(repo, "scripts", "ui-smoke.mjs"), "// smoke\n");
   write(path.join(repo, "skills", "cat", "skill-a", "SKILL.md"), "repo skill-a\n");
@@ -149,7 +150,7 @@ test("不明なフラグは失敗する", () => {
   } finally { cleanup(env); }
 });
 
-test("入口 2 コマンドと lanes を配備し、引退した 2aio コマンドだけ掃除する", () => {
+test("入口 3 コマンドと lanes を配備し、引退した 2aio コマンドだけ掃除する", () => {
   const env = fixture();
   try {
     write(path.join(env.claudeDir, "commands", "2aio-old.md"), "retired\n");
@@ -160,6 +161,7 @@ test("入口 2 コマンドと lanes を配備し、引退した 2aio コマン�
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "user-note.md"), "utf8"), "preserve\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-create.md"), "utf8"), "create\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-check.md"), "utf8"), "check\n");
+    assert.equal(fs.readFileSync(path.join(env.claudeDir, "commands", "2aio-dev.md"), "utf8"), "dev\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "lanes", "2aio-build.md"), "utf8"), "build lane\n");
     assert.equal(fs.readFileSync(path.join(env.claudeDir, "2aio", "scripts", "ui-smoke.mjs"), "utf8"), "// smoke\n");
     assert.match(result.stdout, /removed retired command: 2aio-old\.md/);
